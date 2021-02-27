@@ -11,7 +11,7 @@ void Cpu::step() {
     u8 opcode = mem.read<u8>(regs.pc, regs.pc);
     switch(opcode) {
         case 0: break;
-        case 0x01: case 0x11: case 0x21: case 0x31:
+        case 0x01: case 0x11: case 0x21: case 0x31:  //LD r16, u16
         write_r16<1>((opcode >> 4) & 3, mem.read<u16>(regs.pc, regs.pc));
         break;
         default:
