@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
     Mem mem(argv[1], argv[2]);
-    Cpu emu;
+    Cpu cpu(mem);
 
     SDL_Event event;
     bool quit = false;
@@ -34,6 +34,9 @@ int main(int argc, char* argv[]) {
                 case SDL_QUIT: quit = true; break;
             }
         }
+
+        for(int i = 0; i < 69905; i++)
+            cpu.step();
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);

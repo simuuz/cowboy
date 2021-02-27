@@ -1,9 +1,10 @@
 #pragma once
-#include "common.h"
+#include "mem.h"
 
 class Cpu {
 public:
-    Cpu();
+    Cpu(Mem& mem);
+    void step();
 private:
     struct registers {
         struct {
@@ -55,4 +56,21 @@ private:
     };
 
     registers regs;
+    Mem mem;
+
+    template <int group>
+    u16 read_r16(u8 bits);
+    template <int group>
+    void write_r16(u8 bits, u16 val);
+
+    u8 read_r8(u8 bits);
+    void write_r8(u8 bits, u8 value);
+
+    void push(u16 val);
+    u16 pop();
+
+    const bool conds[4] = {
+        !regs.zero, regs.zero,
+        !regs.carry, regs.carry
+    };
 };

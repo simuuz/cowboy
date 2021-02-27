@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.7.0)
 
 project(gb)
 
-set(CORE src/core/)
 set(CMAKE_CXX_STANDARD 17)
+set(CORE src/core/)
 
 include_directories(include/)
 include_directories(include/core/)
