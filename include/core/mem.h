@@ -22,6 +22,9 @@ private:
         void write(u32 addr, u8 val) {
             switch(addr & 0xff) {
                 case 0x50: bootrom = val; break;
+                case 0x10 ... 0x12: case 0x14: case 0x17: 
+                case 0x19 ... 0x1c: case 0x1e: case 0x20 ... 0x26: 
+                break; //STUB
                 default:
                 printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);
                 exit(1);
@@ -31,6 +34,9 @@ private:
         u8 read(u32 addr) {
             switch(addr & 0xff) {
                 case 0x50: return bootrom;
+                case 0x10 ... 0x12: case 0x14: case 0x17: 
+                case 0x19 ... 0x1c: case 0x1e: case 0x20 ... 0x26:
+                return 0xff; //STUB
                 default:
                 printf("IO READ: Unsupported IO %02x\n", addr & 0xff);
                 exit(1);

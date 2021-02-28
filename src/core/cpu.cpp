@@ -8,6 +8,7 @@ Cpu::Cpu(Mem& mem) : mem(mem) {
 
 void Cpu::step() {
     u8 opcode = mem.read<u8>(regs.pc, regs.pc);
+
     switch(opcode) {
         case 0: break;
         case 0x01: case 0x11: case 0x21: case 0x31:  //LD r16, u16
@@ -16,21 +17,45 @@ void Cpu::step() {
         case 0x40 ... 0x75: case 0x77 ... 0x7f:
         write_r8((opcode >> 3) & 7, read_r8(opcode & 7));
         break;
+        case 0x06: case 0x16: case 0x26: case 0x36:
+        case 0x0e: case 0x1e: case 0x2e: case 0x3e:
+        write_r8((opcode >> 3) & 7, mem.read<u8>(regs.pc, regs.pc));
+        break;
         case 0xa8 ... 0xaf:
         regs.a ^= read_r8((opcode & 0xf) % 8);
         flags.set(regs.f, regs.a == 0, false, false, false);
+        break;
+        case 0xe0:
+        mem.write<u8>(0xff00 + mem.read<u8>(regs.pc, regs.pc), regs.a);
+        break;
+        case 0xf0:
+        regs.a = mem.read<u8>(0xff00 + mem.read<u8>(regs.pc, regs.pc), regs.pc, false);
+        break;
+        case 0xe2:
+        mem.write<u8>(0xff00 + regs.c, regs.a);
+        break;
+        case 0xf2:
+        regs.a = mem.read<u8>(0xff00 + regs.c, regs.pc, false);
         break;
         case 0x02: case 0x12: case 0x22: case 0x32:
         mem.write<u8>(read_r16<2>((opcode >> 4) & 3), regs.a);
         regs.hl += (((opcode >> 4) & 3) == 2) ? 1 : 0;
         regs.hl -= (((opcode >> 4) & 3) == 3) ? 1 : 0;
         break;
-        case 0x20: break;
+        case 0x18: {
+            i8 offset = (i8)mem.read<u8>(regs.pc, regs.pc);
+            regs.pc += offset;
+        } break;
+        case 0x20: case 0x30: case 0x28: case 0x38: {
+            i8 offset = (i8)mem.read<u8>(regs.pc, regs.pc);
+            if(cond((opcode >> 3) & 3))
+                regs.pc += offset;
+        } break;
         case 0xcb: {
             u8 cbop = mem.read<u8>(regs.pc, regs.pc);
             switch(cbop) {
                 case 0x40 ... 0x7f:
-                flags.set(regs.f, bit(read_r8(cbop & 7), (cbop >> 3) & 7), false, true, (regs.f >> 4) & 1);
+                flags.set(regs.f, !bit(read_r8(cbop & 7), (cbop >> 3) & 7), false, true, (regs.f >> 4) & 1);
                 break;
                 default:
                 printf("unrecognized cb prefix opcode: %02x\n", cbop);
@@ -71,14 +96,14 @@ u8 Cpu::read_r8(u8 bits) {
 
 void Cpu::write_r8(u8 bits, u8 val) {
     switch(bits) {
-        case 0: regs.b = val;
-        case 1: regs.c = val;
-        case 2: regs.d = val;
-        case 3: regs.e = val;
-        case 4: regs.h = val;
-        case 5: regs.l = val;
-        case 6: mem.write<u8>(regs.hl, val);
-        case 7: regs.a = val;
+        case 0: regs.b = val; break;
+        case 1: regs.c = val; break;
+        case 2: regs.d = val; break;
+        case 3: regs.e = val; break;
+        case 4: regs.h = val; break;
+        case 5: regs.l = val; break;
+        case 6: mem.write<u8>(regs.hl, val); break;
+        case 7: regs.a = val; break;
     }
 }
 

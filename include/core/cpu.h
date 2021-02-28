@@ -50,7 +50,7 @@ private:
     Mem mem;
 
     struct Flags {
-        bool z, n, h, c;
+        bool z = false, n = false, h = false, c = false;
         void set(u8& f, bool z, bool n, bool h, bool c) {
             this->z = z;
             this->n = n;
@@ -62,6 +62,15 @@ private:
     };
 
     Flags flags;
+
+    bool cond(u8 bits) {
+        switch(bits) {
+            case 0: return !flags.z;
+            case 1: return  flags.z;
+            case 2: return !flags.c;
+            case 3: return  flags.c;
+        }    
+    }
 
     template <int group>
     u16 read_r16(u8 bits);
