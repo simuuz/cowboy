@@ -10,16 +10,7 @@ private:
         struct {
 		    union {
 			    struct {
-                    struct {
-                        union {
-                            struct {
-                                unsigned:1;unsigned:1;unsigned:1;unsigned:1;
-                                unsigned carry:1;unsigned hcarry:1;unsigned neg:1;unsigned zero:1;
-                            };
-                            u8 f;
-                        };
-                    };
-                    u8 a;
+                    u8 f, a;
 			    };
 			    u16 af;
             };
@@ -58,6 +49,11 @@ private:
     registers regs;
     Mem mem;
 
+    void set_flags(bool z, bool n, bool h, bool c) {
+        regs.f = (z << 7) | (n << 6) | (h << 5) | (c << 4)
+               | (0 << 3) | (0 << 2) | (0 << 1) | 0;
+    }
+
     template <int group>
     u16 read_r16(u8 bits);
     template <int group>
@@ -68,9 +64,4 @@ private:
 
     void push(u16 val);
     u16 pop();
-
-    const bool conds[4] = {
-        !regs.zero, regs.zero,
-        !regs.carry, regs.carry
-    };
 };

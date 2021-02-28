@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
         SDL_RenderPresent(renderer);
-        SDL_Delay(1);
+
         float frametime = std::chrono::duration<float, std::milli>(cl_hires::now() - start).count();
         std::string frametimestr = std::to_string(frametime);
         std::string fps = std::to_string(1000 / frametime);
