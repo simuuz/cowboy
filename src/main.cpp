@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 #include <chrono>
 #include <SDL2/SDL.h>
 #include "cpu.h"
@@ -15,15 +16,19 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::string title = "Cowboy";
-    SDL_SetWindowTitle(window, title.c_str());
-
     if(argc < 3) {
         printf("Usage: %s <bootrom> <rom>\n", argv[0]);
         exit(1);
     }
+
+    std::filesystem::path rompath(argv[2]);
+    std::string rom_stem = rompath.stem().string();
+
     Mem mem(argv[1], argv[2]);
     Cpu cpu(mem);
+
+    std::string title = "Cowboy - \"" + rom_stem + "\"";
+    SDL_SetWindowTitle(window, title.c_str());
 
     SDL_Event event;
     bool quit = false;
@@ -43,9 +48,9 @@ int main(int argc, char* argv[]) {
         SDL_RenderPresent(renderer);
 
         float frametime = std::chrono::duration<float, std::milli>(cl_hires::now() - start).count();
-        std::string frametimestr = std::to_string(frametime);
-        std::string fps = std::to_string(1000 / frametime);
-        SDL_SetWindowTitle(window, std::string(title + " | " + fps.erase(fps.find_first_of('.')) + " fps | " + frametimestr.erase(frametimestr.find_first_of('.')) + " ms").c_str());
+        char fps_frametime[32];
+        snprintf(fps_frametime, 32, " | %.2f fps | %.2f ms", 1000 / frametime, frametime);
+        SDL_SetWindowTitle(window, std::string(title + fps_frametime).c_str());
     }
 
     SDL_DestroyRenderer(renderer);

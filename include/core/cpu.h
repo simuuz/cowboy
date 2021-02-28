@@ -49,10 +49,19 @@ private:
     registers regs;
     Mem mem;
 
-    void set_flags(bool z, bool n, bool h, bool c) {
-        regs.f = (z << 7) | (n << 6) | (h << 5) | (c << 4)
-               | (0 << 3) | (0 << 2) | (0 << 1) | 0;
-    }
+    struct Flags {
+        bool z, n, h, c;
+        void set(u8& f, bool z, bool n, bool h, bool c) {
+            this->z = z;
+            this->n = n;
+            this->h = h;
+            this->c = c;
+            f = (z << 7) | (n << 6) | (h << 5) | (c << 4)
+              | (0 << 3) | (0 << 2) | (0 << 1) | 0;
+        }
+    };
+
+    Flags flags;
 
     template <int group>
     u16 read_r16(u8 bits);

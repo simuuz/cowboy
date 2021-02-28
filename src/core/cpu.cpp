@@ -18,8 +18,25 @@ void Cpu::step() {
         break;
         case 0xa8 ... 0xaf:
         regs.a ^= read_r8((opcode & 0xf) % 8);
-        set_flags(regs.a == 0, false, false, false);
+        flags.set(regs.f, regs.a == 0, false, false, false);
         break;
+        case 0x02: case 0x12: case 0x22: case 0x32:
+        mem.write<u8>(read_r16<2>((opcode >> 4) & 3), regs.a);
+        regs.hl += (((opcode >> 4) & 3) == 2) ? 1 : 0;
+        regs.hl -= (((opcode >> 4) & 3) == 3) ? 1 : 0;
+        break;
+        case 0x20: break;
+        case 0xcb: {
+            u8 cbop = mem.read<u8>(regs.pc, regs.pc);
+            switch(cbop) {
+                case 0x40 ... 0x7f:
+                flags.set(regs.f, bit(read_r8(cbop & 7), (cbop >> 3) & 7), false, true, (regs.f >> 4) & 1);
+                break;
+                default:
+                printf("unrecognized cb prefix opcode: %02x\n", cbop);
+                exit(1);
+            }
+        } break;
         default:
         printf("unrecognized opcode: %02x\n", opcode);
         exit(1);
@@ -112,7 +129,7 @@ void Cpu::write_r16(u8 bits, u16 value) {
             case 2: regs.hl = value; break;
             case 3:
             regs.a = (value >> 8);
-            set_flags(value >> 7, value >> 6, value >> 5, value >> 4);
+            flags.set(regs.f, value >> 7, value >> 6, value >> 5, value >> 4);
             break;
         }
     }
