@@ -5,7 +5,10 @@
 
 class Mem {
 public:
-    Mem(std::string bootrom, std::string rom);
+    Mem();
+    void loadROM(std::string filename);
+    void loadBootROM(std::string filename);
+    bool rom_opened = false;
     friend class Cpu;
 private:
     std::vector<u8> rom;

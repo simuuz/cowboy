@@ -2,11 +2,20 @@
 #include <fstream>
 #include <memory.h>
 
-Mem::Mem(std::string bootrom_filename, std::string rom_filename) {
-    std::ifstream rom_file(rom_filename, std::ios::binary);
+Mem::Mem() {
+    std::fill(vram.begin(), vram.end(), 0);
+    std::fill(extram.begin(), extram.end(), 0);
+    std::fill(eram.begin(), eram.end(), 0);
+    std::fill(wram.begin(), wram.end(), 0);
+    std::fill(hram.begin(), hram.end(), 0);
+    std::fill(oam.begin(), oam.end(), 0);
+}
+
+void Mem::loadROM(std::string filename) {
+    std::ifstream rom_file(filename, std::ios::binary);
 
     if(!rom_file.good()) {
-        printf("Couldn't open %s\n", rom_filename.c_str());
+        printf("Couldn't open %s\n", filename.c_str());
         exit(1);
     }
 
@@ -16,22 +25,18 @@ Mem::Mem(std::string bootrom_filename, std::string rom_filename) {
     rom_file.seekg(0, std::ios::beg);
 
     rom_file.read((char*)rom.data(), size);
+    rom_opened = true;
+}
 
-    std::ifstream bootrom_file(bootrom_filename, std::ios::binary);
+void Mem::loadBootROM(std::string filename) {
+    std::ifstream bootrom_file(filename, std::ios::binary);
     
     if(!bootrom_file.good()) {
-        printf("Couldn't open %s\n", bootrom_filename.c_str());
+        printf("Couldn't open %s\n", filename.c_str());
         exit(1);
     }
 
-    bootrom_file.read((char*)bootrom.data(), size);
-
-    std::fill(vram.begin(), vram.end(), 0);
-    std::fill(extram.begin(), extram.end(), 0);
-    std::fill(eram.begin(), eram.end(), 0);
-    std::fill(wram.begin(), wram.end(), 0);
-    std::fill(hram.begin(), hram.end(), 0);
-    std::fill(oam.begin(), oam.end(), 0);
+    bootrom_file.read((char*)bootrom.data(), 256);
 }
 
 template <typename T>

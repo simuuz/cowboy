@@ -1,3 +1,9 @@
 [submodule "dependencies/imgui"]
 	path = dependencies/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "dependencies/tinyfiledialogs"]
+	path = dependencies/tinyfiledialogs
+	url = https://github.com/native-toolkit/tinyfiledialogs
+[submodule "dependencies/mINI"]
+	path = dependencies/mINI
+	url = https://github.com/pulzed/mINI
