@@ -3,8 +3,10 @@
 
 class Cpu {
 public:
-    Cpu(Mem& mem);
+    Cpu();
     void step();
+    void reset();
+    Mem mem;
 private:
     struct registers {
         struct {
@@ -47,7 +49,6 @@ private:
     };
 
     registers regs;
-    Mem mem;
 
     struct Flags {
         bool z = false, n = false, h = false, c = false;

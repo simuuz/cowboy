@@ -11,6 +11,17 @@ Mem::Mem() {
     std::fill(oam.begin(), oam.end(), 0);
 }
 
+void Mem::reset() {
+    std::fill(rom.begin(), rom.end(), 0);
+    std::fill(vram.begin(), vram.end(), 0);
+    std::fill(extram.begin(), extram.end(), 0);
+    std::fill(eram.begin(), eram.end(), 0);
+    std::fill(wram.begin(), wram.end(), 0);
+    std::fill(hram.begin(), hram.end(), 0);
+    std::fill(oam.begin(), oam.end(), 0);
+    rom_opened = false;
+}
+
 void Mem::loadROM(std::string filename) {
     std::ifstream rom_file(filename, std::ios::binary);
 

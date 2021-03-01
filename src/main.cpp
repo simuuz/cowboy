@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(0);
 
     if(glewInit() != GLEW_OK) {
         printf("Failed to initialize OpenGL loader!\n");
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
     }
 
     Mem mem;
-    Cpu cpu(mem);
+    Cpu cpu;
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -51,6 +51,8 @@ int main(int argc, char* argv[]) {
 
     SDL_Event event;
     bool quit = false;
+    bool pause = false;
+    std::filesystem::path rom;
     while(!quit) {
         auto start = cl_hires::now();
         while(SDL_PollEvent(&event)) {
@@ -64,9 +66,10 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        for(int i = 0; mem.rom_opened && i < 69905; i++)
+        for(int i = 0; !pause && mem.rom_opened && i < 69905; i++)
             cpu.step();
         
+        SDL_Delay(1);
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
@@ -86,10 +89,17 @@ int main(int argc, char* argv[]) {
                     }
                     mem.loadBootROM(bootrom);
                     char const* filter = "*.gb";
-                    std::string rom = tinyfd_openFileDialog("Select a GameBoy rom",
+                    rom = tinyfd_openFileDialog("Select a GameBoy rom",
                                 std::filesystem::current_path().string().c_str(), 1, &filter, "Valid GameBoy rom", 0);
-                    mem.loadROM(rom);
+                    mem.loadROM(rom.string());
+                    cpu.mem = mem;
                 }
+                if(ImGui::MenuItem("Exit")) { quit = true; }
+                ImGui::EndMenu();
+            }
+            if(ImGui::BeginMenu("Emulation")) {
+                if(ImGui::MenuItem((pause) ? "Resume" : "Pause")) { pause = !pause; }
+                if(ImGui::MenuItem("Stop")) { cpu.reset(); mem.reset(); }
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
@@ -105,7 +115,8 @@ int main(int argc, char* argv[]) {
         float frametime = std::chrono::duration<float, std::milli>(cl_hires::now() - start).count();
         char fps_frametime[32];
         snprintf(fps_frametime, 32, " | %.2f fps | %.2f ms", 1000 / frametime, frametime);
-        SDL_SetWindowTitle(window, std::string(title + fps_frametime).c_str());
+        SDL_SetWindowTitle(window, (mem.rom_opened) ? std::string(title + " - \"" + rom.stem().string() + "\"" + fps_frametime).c_str()
+                                                    : std::string(title + " - Nothing playing" + fps_frametime).c_str());
     }
 
     ImGui_ImplOpenGL3_Shutdown();

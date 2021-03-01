@@ -20,3 +20,7 @@ constexpr int ROM_SZ_MIN = 0x8000;
 constexpr bool bit(u8 num, u8 pos) {
     return (num & (1 << pos));
 }
+
+constexpr void setbit(u8& num, u8 pos) {
+    num |= (1 << pos);
+}

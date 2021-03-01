@@ -1,2 +1,2 @@
 all:
-	make -j -C build/
+	make -j$(nproc --all) -C build/
