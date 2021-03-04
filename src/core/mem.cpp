@@ -81,6 +81,7 @@ T Mem::read(u16 addr, u16& pc, bool inc) {
 }
 
 template u8 Mem::read<u8>(u16, u16&, bool);
+template i8 Mem::read<i8>(u16, u16&, bool);
 template u16 Mem::read<u16>(u16, u16&, bool);
 template u32 Mem::read<u32>(u16, u16&, bool);
 
@@ -114,5 +115,6 @@ void Mem::write(u16 addr, T val) {
 }
 
 template void Mem::write<u8>(u16, u8);
+template void Mem::write<i8>(u16, i8);
 template void Mem::write<u16>(u16, u16);
 template void Mem::write<u32>(u16, u32);

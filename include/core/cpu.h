@@ -7,6 +7,9 @@ public:
     void step();
     void reset();
     Mem mem;
+    //u16 getHL() {         //debugging purposes
+    //    return regs.hl;
+    //}
 private:
     struct registers {
         struct {
@@ -52,11 +55,7 @@ private:
 
     struct Flags {
         bool z = false, n = false, h = false, c = false;
-        void set(u8& f, bool z, bool n, bool h, bool c) {
-            this->z = z;
-            this->n = n;
-            this->h = h;
-            this->c = c;
+        void set(u8& f) {
             f = (z << 7) | (n << 6) | (h << 5) | (c << 4)
               | (0 << 3) | (0 << 2) | (0 << 1) | 0;
         }
