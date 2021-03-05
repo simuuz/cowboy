@@ -17,10 +17,12 @@ constexpr int OAM_SZ = 0xa0;
 constexpr int HRAM_SZ = 0x7f;
 constexpr int ROM_SZ_MIN = 0x8000;
 
-constexpr bool bit(u8 num, u8 pos) {
-    return (num & (1 << pos));
+template <typename T>
+constexpr bool bit(T num, u8 pos) {
+    return (num >> pos) & 1;
 }
 
-constexpr void setbit(u8& num, u8 pos) {
-    num |= (1 << pos);
+template <typename T>
+constexpr void setbit(T& num, u8 pos, bool val) {
+    num ^= (-(!!val) ^ num) & (1 << pos);
 }

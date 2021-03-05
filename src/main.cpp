@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(0);
 
     if(glewInit() != GLEW_OK) {
         printf("Failed to initialize OpenGL loader!\n");
@@ -86,6 +86,8 @@ int main(int argc, char* argv[]) {
         if(ImGui::BeginMainMenuBar()) {
             if(ImGui::BeginMenu("File")) {
                 if(ImGui::MenuItem("Open rom")) {
+                    mem.reset();
+                    cpu.reset();
                     mINI::INIFile file("config.ini");
                     mINI::INIStructure ini;
                     file.read(ini);
@@ -140,6 +142,7 @@ int main(int argc, char* argv[]) {
         snprintf(fps_frametime, 32, " | %.2f fps | %.2f ms", 1000 / frametime, frametime);
         SDL_SetWindowTitle(window, (mem.rom_opened) ? (title + " - \"" + rom.stem().string() + "\"" + fps_frametime).c_str()
                                                     : (title + " - Nothing playing" + fps_frametime).c_str());
+        SDL_Delay(1);
     }
 
     ImGui_ImplOpenGL3_Shutdown();

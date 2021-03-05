@@ -82,4 +82,5 @@ private:
 
     void push(u16 val);
     u16 pop();
+    FILE* log;
 };

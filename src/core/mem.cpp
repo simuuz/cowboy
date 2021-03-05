@@ -58,9 +58,11 @@ T Mem::Read(void* buffer, u16 addr) {
 template <typename T>
 T Mem::read(u16 addr, u16& pc, bool inc) {
     pc += (inc) ? sizeof(T) : 0;
-    if(addr >= 0 && addr <= 0x7fff) {
+    if(addr >= 0 && addr <= 0xff) {
         return (io.bootrom != 0) ? Read<T>(bootrom.data(), addr)
                                  : Read<T>(rom.data(), addr);
+    } else if (addr >= 0x100 && addr <= 0x7fff) {
+        return Read<T>(rom.data(), addr);
     } else if (addr >= 0x8000 && addr <= 0x9fff) {
         return Read<T>(vram.data(), addr & 0x1fff);
     } else if (addr >= 0xa000 && addr <= 0xbfff) {
@@ -118,3 +120,40 @@ template void Mem::write<u8>(u16, u8);
 template void Mem::write<i8>(u16, i8);
 template void Mem::write<u16>(u16, u16);
 template void Mem::write<u32>(u16, u32);
+
+u8 Mem::IO::read(u16 addr) {
+    switch(addr & 0xff) {
+        case 0x07: return tac;
+        case 0x0f: return intf;
+        case 0x47: return bgp;
+        case 0x50: return bootrom;
+        case 0x10 ... 0x1e: case 0x20 ... 0x26:
+        return 0xff; //STUB
+        case 0x44: return 0x90;
+        case 0x42: return scy;
+        case 0x43: return scx;
+        case 0x40: return lcdc;
+        default:
+        printf("IO READ: Unsupported IO %02x\n", addr & 0xff);
+        exit(1);
+    }
+}
+
+void Mem::IO::write(u16 addr, u8 val) {
+    switch(addr & 0xff) {
+        case 0x01: printf("%c", val); break;
+        case 0x02: break;
+        case 0x07: tac = val; break;
+        case 0x0f: intf = val; break;
+        case 0x47: bgp = val; break;
+        case 0x50: bootrom = val; break;
+        case 0x10 ... 0x1e: case 0x20 ... 0x26:
+        break; //STUB
+        case 0x42: scy = val; break;
+        case 0x43: scx = val; break;
+        case 0x40: lcdc = val; break;
+        default:
+        printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);
+        exit(1);
+    }
+}
