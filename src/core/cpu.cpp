@@ -2,15 +2,23 @@
 
 Cpu::Cpu() {
     //log = fopen("log.txt", "w");
-    regs.af = 0; regs.bc = 0;
-    regs.de = 0; regs.hl = 0;
-    regs.sp = 0; regs.pc = 0;
+    //regs.af = 0; regs.bc = 0;
+    //regs.de = 0; regs.hl = 0;
+    //regs.sp = 0; regs.pc = 0;
+    flags.z = true; flags.h = true; flags.c = true;
+    regs.af = 0x1b0; regs.bc = 0x13;
+    regs.de = 0xd8; regs.hl = 0x14d;
+    regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::reset() {
-    regs.af = 0; regs.bc = 0;
-    regs.de = 0; regs.hl = 0;
-    regs.sp = 0; regs.pc = 0;
+    //regs.af = 0; regs.bc = 0;
+    //regs.de = 0; regs.hl = 0;
+    //regs.sp = 0; regs.pc = 0;
+    flags.z = true; flags.n = false; flags.h = true; flags.c = true;
+    regs.af = 0x1b0; regs.bc = 0x13;
+    regs.de = 0xd8; regs.hl = 0x14d;
+    regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::step() {
@@ -55,6 +63,23 @@ void Cpu::step() {
             flags.h = ((val & 0xf) == 0);
             flags.set(regs.f);
             write_r8((opcode >> 3) & 7, result);
+        } break;
+        case 0x27: {
+            u8 offset = 0;
+
+            if (flags.h || (!flags.n && ((regs.a & 0xf) > 9))) {
+                offset |= 0x6;
+            }
+
+            if (flags.c || (!flags.n && (regs.a > 0x99))) {
+                offset |= 0x60;
+                flags.c = true;
+            }
+
+            regs.a += (flags.n) ? -offset : offset;
+            flags.z = (regs.a == 0);
+            flags.h = false;
+            flags.set(regs.f);
         } break;
         case 0xf3: break; //TODO:                     DI STUB
         case 0x03: case 0x13: case 0x23: case 0x33: { //INC r16
@@ -171,9 +196,6 @@ void Cpu::step() {
             flags.c = old_a & 1;
             flags.set(regs.f);
         } break;
-        case 0xc9: case 0xd9:                         //RET / RETI
-        regs.pc = pop();
-        break;
         case 0x90 ... 0x97: {                         //SUB r8
             u8 reg = read_r8(opcode & 7);
             u8 result = regs.a - reg;
@@ -312,46 +334,43 @@ void Cpu::step() {
             flags.c = result > regs.a;
             flags.set(regs.f);
         } break;
-        case 0xc0: case 0xd0: case 0xc8: case 0xd8:   //RET cond  
-        if(cond((opcode >> 3) & 3))
+        case 0xc9: case 0xd9: case 0xc0: case 0xd0:   //RET cond
+        case 0xc8: case 0xd8:
+        if(cond(opcode))
             regs.pc = pop();
         break;
         case 0xc7: case 0xd7: case 0xe7: case 0xf7:
         case 0xcf: case 0xdf: case 0xef: case 0xff: { //RST vec
             push(regs.pc);
-            regs.pc = opcode & 0x38;
+            regs.pc = u16(opcode & 0x38);
         } break;
-        case 0x2f:
+        case 0x2f:                                    //CPL
         regs.a = ~regs.a;
         flags.n = true;
         flags.h = true;
         flags.set(regs.f);
         break;
-        case 0x37:
+        case 0x37:                                    //SCF
         flags.n = false;
         flags.h = false;
         flags.c = true;
         flags.set(regs.f);
         break;
-        case 0x3f:
+        case 0x3f:                                    //CCF
         flags.n = false;
         flags.h = false;
         flags.c = !flags.c;
         flags.set(regs.f);
         break;
-        case 0xcd: {                                  //CALL u16
+        case 0x76: halt = true; break;                //CALL cond u16
+        case 0xc4: case 0xd4: case 0xcc: case 0xcd: case 0xdc: {
             u16 addr = mem.read<u16>(regs.pc, regs.pc);
-            push(regs.pc);
-            regs.pc = addr;
-        } break;
-        case 0xc4: case 0xd4: case 0xcc: case 0xdc: { //CALL cond u16
-            u16 addr = mem.read<u16>(regs.pc, regs.pc);
-            if(cond((opcode >> 3) & 3)) {
+            if(cond(opcode)) {
                 push(regs.pc);
                 regs.pc = addr;
             }
         } break;
-        case 0x09: case 0x19: case 0x29: case 0x39: {
+        case 0x09: case 0x19: case 0x29: case 0x39: { //ADD HL, r16
             u16 reg = read_r16<1>((opcode >> 4) & 3);
             flags.n = false;
             flags.h = (regs.hl & 0xfff) + (reg & 0xfff) > 0xfff;
@@ -364,24 +383,19 @@ void Cpu::step() {
         break;
         case 0xfa:                                    //LD A, (u16)
         regs.a = mem.read<u8>(mem.read<u16>(regs.pc, regs.pc), regs.pc, false);
-        break;
-        case 0xc3: {                                  //JP u16
+        break;                                        //JP cond u16
+        case 0xc2: case 0xc3: case 0xd2: case 0xca: case 0xda: {
             u16 addr = mem.read<u16>(regs.pc, regs.pc);
-            regs.pc = addr;
-        } break;
-        case 0xc2: case 0xd2: case 0xca: case 0xda: { //JP cond u16
-            u16 addr = mem.read<u16>(regs.pc, regs.pc);
-            if(cond((opcode >> 3) & 3))
+            if(cond(opcode))
                 regs.pc = addr;
         } break;
         case 0xe9: regs.pc = regs.hl; break;          //JP HL
         case 0x18: {                                  //JR i8
-            i8 offset = (i8)mem.read<u8>(regs.pc, regs.pc);
-            regs.pc += offset;
+            regs.pc += mem.read<i8>(regs.pc, regs.pc);
         } break;
         case 0x20: case 0x30: case 0x28: case 0x38: { //JR cond i8
-            i8 offset = (i8)mem.read<u8>(regs.pc, regs.pc);
-            if(cond((opcode >> 3) & 3))
+            i8 offset = mem.read<i8>(regs.pc, regs.pc);
+            if(cond(opcode))
                 regs.pc += offset;
         } break;
         case 0xcb: {
@@ -393,19 +407,19 @@ void Cpu::step() {
                 flags.h = true;
                 flags.set(regs.f);
                 break;
-                case 0x80 ... 0xbf: {                  //RES pos, r8
+                case 0x80 ... 0xbf: {                 //RES pos, r8
                     u8 reg = read_r8(cbop & 7);
                     u8 pos = (cbop >> 3) & 7;
                     reg &= ~(1 << pos);
                     write_r8(cbop & 7, reg);
                 } break;
-                case 0xc0 ... 0xff: {                  //SET pos, r8
+                case 0xc0 ... 0xff: {                 //SET pos, r8
                     u8 reg = read_r8(cbop & 7);
                     u8 pos = (cbop >> 3) & 7;
                     reg |= (1 << pos);
                     write_r8(cbop & 7, reg);
                 } break;
-                case 0 ... 0x07: {                     //RLC r8
+                case 0 ... 0x07: {                    //RLC r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
                     reg = (reg << 1) | bit<u8>(old_reg, 7);
@@ -416,7 +430,7 @@ void Cpu::step() {
                     flags.set(regs.f);
                     write_r8(cbop & 7, reg);
                 } break;
-                case 0x08 ... 0x0f: {                  //RRC r8
+                case 0x08 ... 0x0f: {                 //RRC r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
                     reg >>= 1;

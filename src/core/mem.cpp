@@ -59,7 +59,7 @@ template <typename T>
 T Mem::read(u16 addr, u16& pc, bool inc) {
     pc += (inc) ? sizeof(T) : 0;
     if(addr >= 0 && addr <= 0xff) {
-        return (io.bootrom != 0) ? Read<T>(bootrom.data(), addr)
+        return (io.bootrom == 0) ? Read<T>(bootrom.data(), addr)
                                  : Read<T>(rom.data(), addr);
     } else if (addr >= 0x100 && addr <= 0x7fff) {
         return Read<T>(rom.data(), addr);

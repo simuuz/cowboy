@@ -7,9 +7,7 @@ public:
     void step();
     void reset();
     Mem mem;
-    //u16 getHL() {         //debugging purposes
-    //    return regs.hl;
-    //}
+    bool halt = false;
 private:
     struct registers {
         struct {
@@ -63,7 +61,9 @@ private:
 
     Flags flags;
 
-    bool cond(u8 bits) {
+    bool cond(u8 opcode) {
+        if(opcode & 1) return true;
+        u8 bits = (opcode >> 3) & 3;
         switch(bits) {
             case 0: return !flags.z;
             case 1: return  flags.z;
