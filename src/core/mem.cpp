@@ -58,7 +58,7 @@ T Mem::Read(void* buffer, u16 addr) {
 template <typename T>
 T Mem::read(u16 addr, u16& pc, bool inc) {
     pc += (inc) ? sizeof(T) : 0;
-    if(addr >= 0 && addr <= 0xff) {
+    if(addr <= 0xff) {
         return (io.bootrom == 0) ? Read<T>(bootrom.data(), addr)
                                  : Read<T>(rom.data(), addr);
     } else if (addr >= 0x100 && addr <= 0x7fff) {
@@ -94,7 +94,7 @@ void Mem::Write(void* buffer, u16 addr, T val) {
 
 template <typename T>
 void Mem::write(u16 addr, T val) {
-    if(addr >= 0 && addr <= 0x7fff) {
+    if(addr <= 0x7fff) {
         printf("Tried to write to ROM space\n");
         exit(1);
     } else if (addr >= 0x8000 && addr <= 0x9fff) {
