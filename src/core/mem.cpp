@@ -76,9 +76,13 @@ T Mem::read(u16 addr, u16& pc, bool inc) {
     } else if (addr >= 0xfea0 && addr <= 0xfeff) {
         return 0xff;
     } else if (addr >= 0xff00 && addr <= 0xff7f) {
-        return io.read(addr);
+        if(sizeof(T) == 1)
+            return io.read(addr);
     } else if (addr >= 0xff80 && addr <= 0xfffe) {
         return Read<T>(hram.data(), addr & 0x7f);
+    } else {
+        if(sizeof(T) == 1)
+            return ie;
     }
 }
 
@@ -110,9 +114,13 @@ void Mem::write(u16 addr, T val) {
     } else if (addr >= 0xfea0 && addr <= 0xfeff) {
         return;
     } else if (addr >= 0xff00 && addr <= 0xff7f) {
-        io.write(addr, val);
+        if(sizeof(T) == 1)
+            io.write(addr, val);
     } else if (addr >= 0xff80 && addr <= 0xfffe) {
         Write<T>(hram.data(), addr & 0x7f, val);
+    } else {
+        if(sizeof(T) == 1)
+            ie = val;
     }
 }
 

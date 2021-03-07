@@ -83,4 +83,7 @@ private:
     void push(u16 val);
     u16 pop();
     FILE* log;
+
+    bool ime = false;
+    bool ei = false;
 };

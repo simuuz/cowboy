@@ -2,23 +2,23 @@
 
 Cpu::Cpu() {
     //log = fopen("log.txt", "w");
-    //regs.af = 0; regs.bc = 0;
-    //regs.de = 0; regs.hl = 0;
-    //regs.sp = 0; regs.pc = 0;
-    flags.z = true; flags.h = true; flags.c = true;
-    regs.af = 0x1b0; regs.bc = 0x13;
-    regs.de = 0xd8; regs.hl = 0x14d;
-    regs.sp = 0xfffe; regs.pc = 0x100;
+    regs.af = 0; regs.bc = 0;
+    regs.de = 0; regs.hl = 0;
+    regs.sp = 0; regs.pc = 0;
+    //flags.z = true; flags.h = true; flags.c = true;
+    //regs.af = 0x1b0; regs.bc = 0x13;
+    //regs.de = 0xd8; regs.hl = 0x14d;
+    //regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::reset() {
-    //regs.af = 0; regs.bc = 0;
-    //regs.de = 0; regs.hl = 0;
-    //regs.sp = 0; regs.pc = 0;
-    flags.z = true; flags.n = false; flags.h = true; flags.c = true;
-    regs.af = 0x1b0; regs.bc = 0x13;
-    regs.de = 0xd8; regs.hl = 0x14d;
-    regs.sp = 0xfffe; regs.pc = 0x100;
+    regs.af = 0; regs.bc = 0;
+    regs.de = 0; regs.hl = 0;
+    regs.sp = 0; regs.pc = 0;
+    //flags.z = true; flags.n = false; flags.h = true; flags.c = true;
+    //regs.af = 0x1b0; regs.bc = 0x13;
+    //regs.de = 0xd8; regs.hl = 0x14d;
+    //regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::step() {
@@ -31,6 +31,16 @@ void Cpu::step() {
     //        mem.read<u8>(regs.pc, regs.pc, false), mem.read<u8>(regs.pc + 1, regs.pc, false), mem.read<u8>(regs.pc + 2, regs.pc, false), mem.read<u8>(regs.pc + 3, regs.pc, false));
 
     u8 opcode = mem.read<u8>(regs.pc, regs.pc);    
+    
+    if(ei) {
+        ime = true;
+        ei = false;
+    }
+
+    u8 int_mask = mem.read<u8>(0xffff, regs.pc, false) & mem.read<u8>(0xff0f, regs.pc, false);
+    if((int_mask != 0) && ime) {
+        //process interrupt
+    }
 
     switch(opcode) {
         case 0: break;                                //NOP
@@ -81,7 +91,8 @@ void Cpu::step() {
             flags.h = false;
             flags.set(regs.f);
         } break;
-        case 0xf3: break; //TODO:                     DI STUB
+        case 0xf3: ime = false; break;                //DI
+        case 0xfb: ei = true; break;                  //EI
         case 0x03: case 0x13: case 0x23: case 0x33: { //INC r16
             u16 reg = read_r16<1>((opcode >> 4) & 3);
             reg++;
@@ -334,7 +345,11 @@ void Cpu::step() {
             flags.c = result > regs.a;
             flags.set(regs.f);
         } break;
-        case 0xc9: case 0xd9: case 0xc0: case 0xd0:   //RET cond
+        case 0xd9:
+        ime = true;
+        regs.pc = pop();
+        break;
+        case 0xc9: case 0xc0: case 0xd0:              //RET cond
         case 0xc8: case 0xd8:
         if(cond(opcode))
             regs.pc = pop();
