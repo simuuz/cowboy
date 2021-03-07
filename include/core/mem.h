@@ -10,7 +10,6 @@ public:
     void loadBootROM(std::string filename);
     void reset();
     bool rom_opened = false;
-
     template <typename T>
     T read(u16 addr, u16& pc, bool inc = true);
     template <typename T>
@@ -26,8 +25,8 @@ private:
     std::array<u8, HRAM_SZ> hram;
 
     struct IO {
-        u8 bootrom = 0, bgp = 0, scy = 0, scx = 0, lcdc = 0, tac = 0, intf = 0;
-        //u8 bootrom = 1, bgp = 0xfc, scy = 0, scx = 0, lcdc = 0x91, tac = 0, intf = 0;
+        //u8 bootrom = 0, bgp = 0, scy = 0, scx = 0, lcdc = 0, tac = 0, intf = 0;
+        u8 bootrom = 1, bgp = 0xfc, scy = 0, scx = 0, lcdc = 0x91, tac = 0, intf = 0;
         void write(u16 addr, u8 val);
         u8 read(u16 addr);
     } io;

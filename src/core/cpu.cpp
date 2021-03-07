@@ -2,23 +2,23 @@
 
 Cpu::Cpu() {
     //log = fopen("log.txt", "w");
-    regs.af = 0; regs.bc = 0;
-    regs.de = 0; regs.hl = 0;
-    regs.sp = 0; regs.pc = 0;
-    //flags.z = true; flags.h = true; flags.c = true;
-    //regs.af = 0x1b0; regs.bc = 0x13;
-    //regs.de = 0xd8; regs.hl = 0x14d;
-    //regs.sp = 0xfffe; regs.pc = 0x100;
+    //regs.af = 0; regs.bc = 0;
+    //regs.de = 0; regs.hl = 0;
+    //regs.sp = 0; regs.pc = 0;
+    regs.af = 0x1b0; regs.bc = 0x13;
+    flags.z = true; flags.h = true; flags.c = true;
+    regs.de = 0xd8; regs.hl = 0x14d;
+    regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::reset() {
-    regs.af = 0; regs.bc = 0;
-    regs.de = 0; regs.hl = 0;
-    regs.sp = 0; regs.pc = 0;
-    //flags.z = true; flags.n = false; flags.h = true; flags.c = true;
-    //regs.af = 0x1b0; regs.bc = 0x13;
-    //regs.de = 0xd8; regs.hl = 0x14d;
-    //regs.sp = 0xfffe; regs.pc = 0x100;
+    //regs.af = 0; regs.bc = 0;
+    //regs.de = 0; regs.hl = 0;
+    //regs.sp = 0; regs.pc = 0;
+    regs.af = 0x1b0; regs.bc = 0x13;
+    flags.z = true; flags.h = true; flags.c = true;
+    regs.de = 0xd8; regs.hl = 0x14d;
+    regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::step() {
@@ -42,6 +42,10 @@ void Cpu::step() {
         //process interrupt
     }
 
+    execute(opcode);
+}
+
+void Cpu::execute(u8 opcode) {
     switch(opcode) {
         case 0: break;                                //NOP
         case 0x01: case 0x11: case 0x21: case 0x31:   //LD r16, u16

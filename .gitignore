@@ -1,5 +1,5 @@
 build/
 .vscode/
 roms/
-*.ini
+imgui.ini
 *.txt

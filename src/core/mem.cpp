@@ -23,31 +23,33 @@ void Mem::reset() {
 }
 
 void Mem::loadROM(std::string filename) {
-    std::ifstream rom_file(filename, std::ios::binary);
-
-    if(!rom_file.good()) {
+    std::ifstream file(filename, std::ios::binary);
+    
+    if(!file.good()) {
         printf("Couldn't open %s\n", filename.c_str());
         exit(1);
     }
 
-    rom_file.seekg(0, std::ios::end);
-    auto size = rom_file.tellg();
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg();
+    file.seekg(0, std::ios::beg);
     rom.resize(size);
-    rom_file.seekg(0, std::ios::beg);
 
-    rom_file.read((char*)rom.data(), size);
+    file.read((char*)rom.data(), size);
+    file.close();
     rom_opened = true;
 }
 
 void Mem::loadBootROM(std::string filename) {
-    std::ifstream bootrom_file(filename, std::ios::binary);
+    std::ifstream file(filename, std::ios::binary);
     
-    if(!bootrom_file.good()) {
+    if(!file.good()) {
         printf("Couldn't open %s\n", filename.c_str());
         exit(1);
     }
 
-    bootrom_file.read((char*)bootrom.data(), 256);
+    file.read((char*)bootrom.data(), 256);
+    file.close();
 }
 
 template <typename T>
