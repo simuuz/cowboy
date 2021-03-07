@@ -2,23 +2,21 @@
 
 Cpu::Cpu() {
     //log = fopen("log.txt", "w");
-    //regs.af = 0; regs.bc = 0;
-    //regs.de = 0; regs.hl = 0;
-    //regs.sp = 0; regs.pc = 0;
-    regs.af = 0x1b0; regs.bc = 0x13;
-    flags.z = true; flags.h = true; flags.c = true;
-    regs.de = 0xd8; regs.hl = 0x14d;
-    regs.sp = 0xfffe; regs.pc = 0x100;
+    regs.af = 0; regs.bc = 0;
+    regs.de = 0; regs.hl = 0;
+    regs.sp = 0; regs.pc = 0;
+    //regs.af = 0x1b0; regs.bc = 0x13;
+    //regs.de = 0xd8; regs.hl = 0x14d;
+    //regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::reset() {
-    //regs.af = 0; regs.bc = 0;
-    //regs.de = 0; regs.hl = 0;
-    //regs.sp = 0; regs.pc = 0;
-    regs.af = 0x1b0; regs.bc = 0x13;
-    flags.z = true; flags.h = true; flags.c = true;
-    regs.de = 0xd8; regs.hl = 0x14d;
-    regs.sp = 0xfffe; regs.pc = 0x100;
+    regs.af = 0; regs.bc = 0;
+    regs.de = 0; regs.hl = 0;
+    regs.sp = 0; regs.pc = 0;
+    //regs.af = 0x1b0; regs.bc = 0x13;
+    //regs.de = 0xd8; regs.hl = 0x14d;
+    //regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::step() {
@@ -62,38 +60,43 @@ void Cpu::execute(u8 opcode) {
         case 0x0c: case 0x1c: case 0x2c: case 0x3c: { //INC r8
             u8 val = read_r8((opcode >> 3) & 7);
             u8 result = val + 1;
-            flags.z = (result == 0);
-            flags.n = false;
-            flags.h = ((val & 0xf) == 0xf);
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = false;
+            bool h = ((val & 0xf) == 0xf);
+            updateF(z, n, h, (regs.f >> 4) & 1);
             write_r8((opcode >> 3) & 7, result);
         } break;
         case 0x05: case 0x15: case 0x25: case 0x35:
         case 0x0d: case 0x1d: case 0x2d: case 0x3d: { //DEC r8
             u8 val = read_r8((opcode >> 3) & 7);
             u8 result = val - 1;
-            flags.z = (result == 0);
-            flags.n = true;
-            flags.h = ((val & 0xf) == 0);
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = true;
+            bool h = ((val & 0xf) == 0);
+            updateF(z, n, h, (regs.f >> 4) & 1);
             write_r8((opcode >> 3) & 7, result);
         } break;
         case 0x27: {
             u8 offset = 0;
+            
+            bool z = (regs.f >> 7) & 1;
+            bool n = (regs.f >> 6) & 1;
+            bool h = (regs.f >> 5) & 1;
+            bool c = (regs.f >> 4) & 1;
 
-            if (flags.h || (!flags.n && ((regs.a & 0xf) > 9))) {
+            if (h || (!n && ((regs.a & 0xf) > 9))) {
                 offset |= 0x6;
             }
 
-            if (flags.c || (!flags.n && (regs.a > 0x99))) {
+            if (c || (!n && (regs.a > 0x99))) {
                 offset |= 0x60;
-                flags.c = true;
+                c = true;
             }
 
-            regs.a += (flags.n) ? -offset : offset;
-            flags.z = (regs.a == 0);
-            flags.h = false;
-            flags.set(regs.f);
+            regs.a += (n) ? -offset : offset;
+            z = (regs.a == 0);
+            h = false;
+            updateF(z, n, h, c);
         } break;
         case 0xf3: ime = false; break;                //DI
         case 0xfb: ei = true; break;                  //EI
@@ -109,19 +112,19 @@ void Cpu::execute(u8 opcode) {
         } break;
         case 0xa8 ... 0xaf: {                         //XOR r8
             regs.a ^= read_r8(opcode & 7);
-            flags.z = (regs.a == 0);
-            flags.n = false;
-            flags.h = false;
-            flags.c = false;
-            flags.set(regs.f);
+            bool z = (regs.a == 0);
+            bool n = false;
+            bool h = false;
+            bool c = false;
+            updateF(z, n, h, c);
         } break;
         case 0xee: {                                  //XOR u8
             regs.a ^= mem.read<u8>(regs.pc, regs.pc);
-            flags.z = (regs.a == 0);
-            flags.n = false;
-            flags.h = false;
-            flags.c = false;
-            flags.set(regs.f);
+            bool z = (regs.a == 0);
+            bool n = false;
+            bool h = false;
+            bool c = false;
+            updateF(z, n, h, c);
         } break;
         case 0xe0:                                    //LD (FF00 + u8), A
         mem.write<u8>(0xff00 + mem.read<u8>(regs.pc, regs.pc), regs.a);
@@ -157,197 +160,203 @@ void Cpu::execute(u8 opcode) {
         break;
         case 0xe8: {                                  //ADD SP, i8
             u8 offset = mem.read<u8>(regs.pc, regs.pc);
-            flags.z = false;
-            flags.n = false;
-            flags.h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
-            flags.c = bit<u16>((regs.sp & 0xff) + offset, 8);
-            flags.set(regs.f);
+            bool z = false;
+            bool n = false;
+            bool h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
+            bool c = bit<u16>((regs.sp & 0xff) + offset, 8);
+            updateF(z, n, h, c);
             regs.sp += (i8)offset;
         } break;
         case 0xf8: {                                  //LD HL, SP+i8
             u8 offset = mem.read<u8>(regs.pc, regs.pc);
-            flags.z = false;
-            flags.n = false;
-            flags.h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
-            flags.c = bit<u16>((regs.sp & 0xff) + offset, 8);
-            flags.set(regs.f);
+            bool z = false;
+            bool n = false;
+            bool h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
+            bool c = bit<u16>((regs.sp & 0xff) + offset, 8);
+            updateF(z, n, h, c);
             regs.hl = regs.sp + (i8)offset;
         } break;
         case 0x17: {                                  //RLA
             u8 old_a = regs.a;
-            regs.a = (regs.a << 1) | flags.c;
-            flags.z = false;
-            flags.n = false;
-            flags.h = false;
-            flags.c = bit<u8>(old_a, 7);
-            flags.set(regs.f);
+            bool c = (regs.f >> 4) & 1;
+            regs.a = (regs.a << 1) | c;
+            bool z = false;
+            bool n = false;
+            bool h = false;
+            c = bit<u8>(old_a, 7);
+            updateF(z, n, h, c);
         } break;
         case 0x07: {                                  //RLCA
             u8 old_a = regs.a;
             regs.a = (regs.a << 1) | bit<u8>(old_a, 7);
-            flags.z = false;
-            flags.n = false;
-            flags.h = false;
-            flags.c = bit<u8>(old_a, 7);
-            flags.set(regs.f);
+            bool z = false;
+            bool n = false;
+            bool h = false;
+            bool c = bit<u8>(old_a, 7);
+            updateF(z, n, h, c);
         } break;
         case 0x1f: {                                  //RRA
             u8 old_a = regs.a;
             regs.a >>= 1;
-            setbit<u8>(regs.a, 7, flags.c);
-            flags.z = false;
-            flags.n = false;
-            flags.h = false;
-            flags.c = old_a & 1;
-            flags.set(regs.f);
+            bool c = (regs.f >> 4) & 1;
+            setbit<u8>(regs.a, 7, c);
+            bool z = false;
+            bool n = false;
+            bool h = false;
+            c = old_a & 1;
+            updateF(z, n, h, c);
         } break;
         case 0x0f: {                                  //RRCA
             u8 old_a = regs.a;
             regs.a >>= 1;
             setbit<u8>(regs.a, 7, old_a & 1);
-            flags.z = false;
-            flags.n = false;
-            flags.h = false;
-            flags.c = old_a & 1;
-            flags.set(regs.f);
+            bool z = false;
+            bool n = false;
+            bool h = false;
+            bool c = old_a & 1;
+            updateF(z, n, h, c);
         } break;
         case 0x90 ... 0x97: {                         //SUB r8
             u8 reg = read_r8(opcode & 7);
             u8 result = regs.a - reg;
-            flags.z = (result == 0);
-            flags.n = true;
-            flags.h = (reg & 0xf) > (regs.a & 0xf);
-            flags.c = result > regs.a;
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = true;
+            bool h = (reg & 0xf) > (regs.a & 0xf);
+            bool c = result > regs.a;
+            updateF(z, n, h, c);
             regs.a = result;
         } break;
         case 0xd6: {                                  //SUB u8
             u8 op2 = mem.read<u8>(regs.pc, regs.pc);
             u8 result = regs.a - op2;
-            flags.z = (result == 0);
-            flags.n = true;
-            flags.h = (op2 & 0xf) > (regs.a & 0xf);
-            flags.c = result > regs.a;
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = true;
+            bool h = (op2 & 0xf) > (regs.a & 0xf);
+            bool c = result > regs.a;
+            updateF(z, n, h, c);
             regs.a = result;
         } break;
         case 0x80 ... 0x87: {                         //ADD r8
             u8 reg = read_r8(opcode & 7);
             u8 result = regs.a + reg;
-            flags.z = (result == 0);
-            flags.n = false;
-            flags.h = (reg & 0xf) + (regs.a & 0xf) > 0xf;
-            flags.c = result < regs.a;
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = false;
+            bool h = (reg & 0xf) + (regs.a & 0xf) > 0xf;
+            bool c = result < regs.a;
+            updateF(z, n, h, c);
             regs.a = result;
         } break;
         case 0xc6: {                                  //ADD u8
             u8 op2 = mem.read<u8>(regs.pc, regs.pc);
             u8 result = regs.a + op2;
-            flags.z = (result == 0);
-            flags.n = false;
-            flags.h = (op2 & 0xf) + (regs.a & 0xf) > 0xf;
-            flags.c = result < regs.a;
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = false;
+            bool h = (op2 & 0xf) + (regs.a & 0xf) > 0xf;
+            bool c = result < regs.a;
+            updateF(z, n, h, c);
             regs.a = result;            
         } break;
         case 0x88 ... 0x8f: {                         //ADC r8
             u8 reg = read_r8(opcode & 7);
-            u16 result = u16(regs.a + reg + flags.c);
-            flags.z = ((result & 0xff) == 0);
-            flags.n = false;
-            flags.h = (flags.c) ? (regs.a & 0xf) + (reg & 0xf) >= 0xf
+            bool c = (regs.f >> 4) & 1;
+            u16 result = u16(regs.a + reg + c);
+            bool z = ((result & 0xff) == 0);
+            bool n = false;
+            bool h = (c) ? (regs.a & 0xf) + (reg & 0xf) >= 0xf
                                 : (regs.a & 0xf) + (reg & 0xf) > 0xf;
-            flags.c = bit<u16>(result, 8);
-            flags.set(regs.f);
+            c = bit<u16>(result, 8);
+            updateF(z, n, h, c);
             regs.a = (result & 0xff);
         } break;
         case 0xce: {                                  //ADC u8
             u8 op2 = mem.read<u8>(regs.pc, regs.pc);
-            u16 result = u16(regs.a + op2 + flags.c);
-            flags.z = ((result & 0xff) == 0);
-            flags.n = false;
-            flags.h = (flags.c) ? (regs.a & 0xf) + (op2 & 0xf) >= 0xf
+            bool c = (regs.f >> 4) & 1;
+            u16 result = u16(regs.a + op2 + c);
+            bool z = ((result & 0xff) == 0);
+            bool n = false;
+            bool h = (c) ? (regs.a & 0xf) + (op2 & 0xf) >= 0xf
                                 : (regs.a & 0xf) + (op2 & 0xf) > 0xf;
-            flags.c = bit<u16>(result, 8);
-            flags.set(regs.f);
+            c = bit<u16>(result, 8);
+            updateF(z, n, h, c);
             regs.a = (result & 0xff);
         } break;
         case 0x98 ... 0x9f: {                         //SBC r8
             u8 reg = read_r8(opcode & 7);
-            u16 result = u16(regs.a - reg - flags.c);
-            flags.z = ((result & 0xff) == 0);
-            flags.n = true;
-            flags.h = (!flags.c) ? (regs.a & 0xf) < (reg & 0xf)
-                                 : (regs.a & 0xf) < (reg & 0xf) + flags.c;
-            flags.c = bit<u16>(result, 8);
-            flags.set(regs.f);
+            bool c = (regs.f >> 4) & 1;
+            u16 result = u16(regs.a - reg - c);
+            bool z = ((result & 0xff) == 0);
+            bool n = true;
+            bool h = (!c) ? (regs.a & 0xf) < (reg & 0xf)
+                                 : (regs.a & 0xf) < (reg & 0xf) + c;
+            c = bit<u16>(result, 8);
+            updateF(z, n, h, c);
             regs.a = (result & 0xff);
         } break;
         case 0xde: {                                  //SBC u8
             u8 op2 = mem.read<u8>(regs.pc, regs.pc);
-            u16 result = u16(regs.a - op2 - flags.c);
-            flags.z = ((result & 0xff) == 0);
-            flags.n = true;
-            flags.h = (!flags.c) ? (regs.a & 0xf) < (op2 & 0xf)
-                                 : (regs.a & 0xf) < (op2 & 0xf) + flags.c;
-            flags.c = bit<u16>(result, 8);
-            flags.set(regs.f);
+            bool c = (regs.f >> 4) & 1;
+            u16 result = u16(regs.a - op2 - c);
+            bool z = ((result & 0xff) == 0);
+            bool n = true;
+            bool h = (!c) ? (regs.a & 0xf) < (op2 & 0xf)
+                                 : (regs.a & 0xf) < (op2 & 0xf) + c;
+            c = bit<u16>(result, 8);
+            updateF(z, n, h, c);
             regs.a = (result & 0xff);
         } break;
         case 0xa0 ... 0xa7: {                         //AND r8
             u8 reg = read_r8(opcode & 7);
             regs.a &= reg;
-            flags.z = (regs.a == 0);
-            flags.n = false;
-            flags.h = true;
-            flags.c = false;
-            flags.set(regs.f);
+            bool z = (regs.a == 0);
+            bool n = false;
+            bool h = true;
+            bool c = false;
+            updateF(z, n, h, c);
         } break;
         case 0xe6: {                                  //AND u8
             u8 op2 = mem.read<u8>(regs.pc, regs.pc);
             regs.a &= op2;
-            flags.z = (regs.a == 0);
-            flags.n = false;
-            flags.h = true;
-            flags.c = false;
-            flags.set(regs.f);
+            bool z = (regs.a == 0);
+            bool n = false;
+            bool h = true;
+            bool c = false;
+            updateF(z, n, h, c);
         } break;
         case 0xb0 ... 0xb7: {                         //OR r8
             u8 reg = read_r8(opcode & 7);
             regs.a |= reg;
-            flags.z = (regs.a == 0);
-            flags.n = false;
-            flags.h = false;
-            flags.c = false;
-            flags.set(regs.f);
+            bool z = (regs.a == 0);
+            bool n = false;
+            bool h = false;
+            bool c = false;
+            updateF(z, n, h, c);
         } break;
         case 0xf6: {                                  //OR u8
             u8 op2 = mem.read<u8>(regs.pc, regs.pc);
             regs.a |= op2;
-            flags.z = (regs.a == 0);
-            flags.n = false;
-            flags.h = false;
-            flags.c = false;
-            flags.set(regs.f);
+            bool z = (regs.a == 0);
+            bool n = false;
+            bool h = false;
+            bool c = false;
+            updateF(z, n, h, c);
         } break;
         case 0xb8 ... 0xbf: {                         //CP r8
             u8 reg = read_r8(opcode & 7);
             u8 result = regs.a - reg;
-            flags.z = (result == 0);
-            flags.n = true;
-            flags.h = (reg & 0xf) > (regs.a & 0xf);
-            flags.c = result > regs.a;
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = true;
+            bool h = (reg & 0xf) > (regs.a & 0xf);
+            bool c = result > regs.a;
+            updateF(z, n, h, c);
         } break;
         case 0xfe: {                                  //CP u8
             u8 op2 = mem.read<u8>(regs.pc, regs.pc);
             u8 result = regs.a - op2;
-            flags.z = (result == 0);
-            flags.n = true;
-            flags.h = (op2 & 0xf) > (regs.a & 0xf);
-            flags.c = result > regs.a;
-            flags.set(regs.f);
+            bool z = (result == 0);
+            bool n = true;
+            bool h = (op2 & 0xf) > (regs.a & 0xf);
+            bool c = result > regs.a;
+            updateF(z, n, h, c);
         } break;
         case 0xd9:
         ime = true;
@@ -363,24 +372,24 @@ void Cpu::execute(u8 opcode) {
             push(regs.pc);
             regs.pc = u16(opcode & 0x38);
         } break;
-        case 0x2f:                                    //CPL
-        regs.a = ~regs.a;
-        flags.n = true;
-        flags.h = true;
-        flags.set(regs.f);
-        break;
-        case 0x37:                                    //SCF
-        flags.n = false;
-        flags.h = false;
-        flags.c = true;
-        flags.set(regs.f);
-        break;
-        case 0x3f:                                    //CCF
-        flags.n = false;
-        flags.h = false;
-        flags.c = !flags.c;
-        flags.set(regs.f);
-        break;
+        case 0x2f: {                                  //CPL
+            regs.a = ~regs.a;
+            bool n = true;
+            bool h = true;
+            updateF((regs.f >> 7) & 1, n, h, (regs.f >> 4) & 1);
+        } break;
+        case 0x37: {                                  //SCF
+            bool n = false;
+            bool h = false;
+            bool c = true;
+            updateF((regs.f >> 7) & 1, n, h, c);
+        } break;
+        case 0x3f: {                                  //CCF
+            bool n = false;
+            bool h = false;
+            bool c = !((regs.f >> 4) & 1);
+            updateF((regs.f >> 7) & 1, n, h, c);
+        } break;
         case 0x76: halt = true; break;                //CALL cond u16
         case 0xc4: case 0xd4: case 0xcc: case 0xcd: case 0xdc: {
             u16 addr = mem.read<u16>(regs.pc, regs.pc);
@@ -391,10 +400,10 @@ void Cpu::execute(u8 opcode) {
         } break;
         case 0x09: case 0x19: case 0x29: case 0x39: { //ADD HL, r16
             u16 reg = read_r16<1>((opcode >> 4) & 3);
-            flags.n = false;
-            flags.h = (regs.hl & 0xfff) + (reg & 0xfff) > 0xfff;
-            flags.c = bit<u32>(regs.hl + reg, 16);
-            flags.set(regs.f);
+            bool n = false;
+            bool h = (regs.hl & 0xfff) + (reg & 0xfff) > 0xfff;
+            bool c = bit<u32>(regs.hl + reg, 16);
+            updateF((regs.f >> 7) & 1, n, h, c);
             regs.hl += reg;
         } break;
         case 0xea:                                    //LD (u16), A
@@ -420,12 +429,12 @@ void Cpu::execute(u8 opcode) {
         case 0xcb: {
             u8 cbop = mem.read<u8>(regs.pc, regs.pc);
             switch(cbop) {
-                case 0x40 ... 0x7f:                   //BIT pos, r8
-                flags.z = !bit<u8>(read_r8(cbop & 7), (cbop >> 3) & 7);
-                flags.n = false;
-                flags.h = true;
-                flags.set(regs.f);
-                break;
+                case 0x40 ... 0x7f: {                  //BIT pos, r8
+                    bool z = !bit<u8>(read_r8(cbop & 7), (cbop >> 3) & 7);
+                    bool n = false;
+                    bool h = true;
+                    updateF(z, n, h, (regs.f >> 4) & 1);
+                } break;
                 case 0x80 ... 0xbf: {                 //RES pos, r8
                     u8 reg = read_r8(cbop & 7);
                     u8 pos = (cbop >> 3) & 7;
@@ -442,11 +451,11 @@ void Cpu::execute(u8 opcode) {
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
                     reg = (reg << 1) | bit<u8>(old_reg, 7);
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.c = bit<u8>(old_reg, 7);
-                    flags.set(regs.f);
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    bool c = bit<u8>(old_reg, 7);
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 case 0x08 ... 0x0f: {                 //RRC r8
@@ -454,44 +463,46 @@ void Cpu::execute(u8 opcode) {
                     u8 old_reg = reg;
                     reg >>= 1;
                     setbit<u8>(reg, 7, old_reg & 1);
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.c = old_reg & 1;
-                    flags.set(regs.f);
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    bool c = old_reg & 1;
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 case 0x10 ... 0x17: {                 //RL r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
-                    reg = (reg << 1) | flags.c;
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.c = bit<u8>(old_reg, 7);
-                    flags.set(regs.f);
+                    bool c = (regs.f >> 4) & 1;
+                    reg = (reg << 1) | c;
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    c = bit<u8>(old_reg, 7);
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 case 0x18 ... 0x1f: {                 //RR r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
                     reg >>= 1;
-                    setbit<u8>(reg, 7, flags.c);
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.c = old_reg & 1;
-                    flags.set(regs.f);
+                    bool c = (regs.f >> 4) & 1;
+                    setbit<u8>(reg, 7, c);
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    c = old_reg & 1;
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 case 0x20 ... 0x27: {                 //SLA r8
                     u8 reg = read_r8(cbop & 7);
-                    flags.c = bit<u8>(reg, 7);
+                    bool c = bit<u8>(reg, 7);
                     reg <<= 1;
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.set(regs.f);
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 case 0x28 ... 0x2f: {                 //SRA r8
@@ -499,31 +510,31 @@ void Cpu::execute(u8 opcode) {
                     u8 old_reg = reg;
                     reg >>= 1;
                     setbit<u8>(reg, 7, bit<u8>(old_reg, 7));
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.c = old_reg & 1;
-                    flags.set(regs.f);
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    bool c = old_reg & 1;
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 case 0x30 ... 0x37: {                 //SWAP r8
                     u8 reg = read_r8(cbop & 7);
                     reg = (reg << 4) | (reg >> 4);
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.c = false;
-                    flags.set(regs.f);
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    bool c = false;
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 case 0x38 ... 0x3f: {                 //SRL r8
                     u8 reg = read_r8(cbop & 7);
-                    flags.c = reg & 1;
+                    bool c = reg & 1;
                     reg >>= 1;
-                    flags.z = (reg == 0);
-                    flags.n = false;
-                    flags.h = false;
-                    flags.set(regs.f);
+                    bool z = (reg == 0);
+                    bool n = false;
+                    bool h = false;
+                    updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
                 } break;
                 default:
@@ -625,14 +636,14 @@ void Cpu::write_r16(u8 bits, u16 value) {
             case 0: regs.bc = value; break;
             case 1: regs.de = value; break;
             case 2: regs.hl = value; break;
-            case 3:
-            regs.a = (value >> 8) & 0xff;
-            flags.z = (value >> 7) & 1;
-            flags.n = (value >> 6) & 1;
-            flags.h = (value >> 5) & 1;
-            flags.c = (value >> 4) & 1;
-            flags.set(regs.f);
-            break;
+            case 3: {
+                regs.a = (value >> 8) & 0xff;
+                bool z = (value >> 7) & 1;
+                bool n = (value >> 6) & 1;
+                bool h = (value >> 5) & 1;
+                bool c = (value >> 4) & 1;
+                updateF(z, n, h, c);
+            } break;
         }
     }
 }
