@@ -19,7 +19,6 @@ void Mem::reset() {
     std::fill(wram.begin(), wram.end(), 0);
     std::fill(hram.begin(), hram.end(), 0);
     std::fill(oam.begin(), oam.end(), 0);
-    rom_opened = false;
 }
 
 void Mem::loadROM(std::string filename) {
@@ -37,7 +36,6 @@ void Mem::loadROM(std::string filename) {
 
     file.read((char*)rom.data(), size);
     file.close();
-    rom_opened = true;
 }
 
 void Mem::loadBootROM(std::string filename) {
@@ -133,6 +131,12 @@ template void Mem::write<u32>(u16, u32);
 
 u8 Mem::IO::read(u16 addr) {
     switch(addr & 0xff) {
+        case 0x00: return joypad;
+        case 0x01: return serial;
+        case 0x02: return SC;
+        case 0x04: return div;
+        case 0x05: return tima;
+        case 0x06: return tma;
         case 0x07: return tac;
         case 0x0f: return intf;
         case 0x47: return bgp;
@@ -151,8 +155,12 @@ u8 Mem::IO::read(u16 addr) {
 
 void Mem::IO::write(u16 addr, u8 val) {
     switch(addr & 0xff) {
-        case 0x01: printf("%c", val); break;
-        case 0x02: break;
+        //case 0x00: handleJoypad(val); break;
+        case 0x01: serial = val; printf("%c", val); break;
+        case 0x02: SC = val; break;
+        case 0x04: div = 0; break;
+        case 0x06: tma = val; break;
+        case 0x05: tima = val; break;
         case 0x07: tac = val; break;
         case 0x0f: intf = val; break;
         case 0x47: bgp = val; break;

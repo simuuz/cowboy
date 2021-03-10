@@ -1,60 +1,51 @@
 #include "cpu.h"
 
 Cpu::Cpu() {
-    //log = fopen("log.txt", "w");
     regs.af = 0; regs.bc = 0;
     regs.de = 0; regs.hl = 0;
     regs.sp = 0; regs.pc = 0;
-    //regs.af = 0x1b0; regs.bc = 0x13;
-    //regs.de = 0xd8; regs.hl = 0x14d;
-    //regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::reset() {
+    bus.reset();
     regs.af = 0; regs.bc = 0;
     regs.de = 0; regs.hl = 0;
     regs.sp = 0; regs.pc = 0;
-    //regs.af = 0x1b0; regs.bc = 0x13;
-    //regs.de = 0xd8; regs.hl = 0x14d;
-    //regs.sp = 0xfffe; regs.pc = 0x100;
 }
 
 void Cpu::step() {
-    //printf("A: %02x F: %02x B: %02x C: %02x D: %02x E: %02x H: %02x L: %02x SP: %04x PC: 00:%04x (%02x %02x %02x %02x)\n",
-    //        regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc,
-    //        mem.read<u8>(regs.pc, regs.pc, false), mem.read<u8>(regs.pc + 1, regs.pc, false), mem.read<u8>(regs.pc + 2, regs.pc, false), mem.read<u8>(regs.pc + 3, regs.pc, false));
-
-    //fprintf(log, "A: %02x F: %02x B: %02x C: %02x D: %02x E: %02x H: %02x L: %02x SP: %04x PC: 00:%04x (%02x %02x %02x %02x)\n",
-    //        regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc,
-    //        mem.read<u8>(regs.pc, regs.pc, false), mem.read<u8>(regs.pc + 1, regs.pc, false), mem.read<u8>(regs.pc + 2, regs.pc, false), mem.read<u8>(regs.pc + 3, regs.pc, false));
-
-    u8 opcode = mem.read<u8>(regs.pc, regs.pc);    
+    u8 opcode = bus.nextByte(regs.pc, regs.pc);
     
+    if(!halt) {
+        cycles = opcycles[opcode];
+        execute(opcode);
+    } else {
+        cycles = 4;
+    }
+
+    total_cycles += cycles;
+
+    handleTimers();
+    handleInterrupts();
+
     if(ei) {
         ime = true;
         ei = false;
     }
-
-    u8 int_mask = mem.read<u8>(0xffff, regs.pc, false) & mem.read<u8>(0xff0f, regs.pc, false);
-    if((int_mask != 0) && ime) {
-        //process interrupt
-    }
-
-    execute(opcode);
 }
 
 void Cpu::execute(u8 opcode) {
     switch(opcode) {
         case 0: break;                                //NOP
         case 0x01: case 0x11: case 0x21: case 0x31:   //LD r16, u16
-        write_r16<1>((opcode >> 4) & 3, mem.read<u16>(regs.pc, regs.pc));
+        write_r16<1>((opcode >> 4) & 3, bus.nextWord(regs.pc, regs.pc));
         break;
         case 0x40 ... 0x75: case 0x77 ... 0x7f:       //LD r8, r8
         write_r8((opcode >> 3) & 7, read_r8(opcode & 7));
         break;
         case 0x06: case 0x16: case 0x26: case 0x36:
         case 0x0e: case 0x1e: case 0x2e: case 0x3e:   //LD r8, u8
-        write_r8((opcode >> 3) & 7, mem.read<u8>(regs.pc, regs.pc));
+        write_r8((opcode >> 3) & 7, bus.nextByte(regs.pc, regs.pc));
         break;
         case 0x04: case 0x14: case 0x24: case 0x34:
         case 0x0c: case 0x1c: case 0x2c: case 0x3c: { //INC r8
@@ -99,7 +90,7 @@ void Cpu::execute(u8 opcode) {
             updateF(z, n, h, c);
         } break;
         case 0xf3: ime = false; break;                //DI
-        case 0xfb: ei = true; break;                  //EI
+        case 0xfb: ei = true; break;                 //EI
         case 0x03: case 0x13: case 0x23: case 0x33: { //INC r16
             u16 reg = read_r16<1>((opcode >> 4) & 3);
             reg++;
@@ -119,7 +110,7 @@ void Cpu::execute(u8 opcode) {
             updateF(z, n, h, c);
         } break;
         case 0xee: {                                  //XOR u8
-            regs.a ^= mem.read<u8>(regs.pc, regs.pc);
+            regs.a ^= bus.nextByte(regs.pc, regs.pc);
             bool z = (regs.a == 0);
             bool n = false;
             bool h = false;
@@ -127,39 +118,39 @@ void Cpu::execute(u8 opcode) {
             updateF(z, n, h, c);
         } break;
         case 0xe0:                                    //LD (FF00 + u8), A
-        mem.write<u8>(0xff00 + mem.read<u8>(regs.pc, regs.pc), regs.a);
+        bus.writeByte(0xff00 + bus.nextByte(regs.pc, regs.pc), regs.a);
         break;
         case 0xf0:                                    //LD A, (FF00 + u8)
-        regs.a = mem.read<u8>(0xff00 + mem.read<u8>(regs.pc, regs.pc), regs.pc, false);
+        regs.a = bus.readByte(0xff00 + bus.nextByte(regs.pc, regs.pc));
         break;
         case 0xe2:                                    //LD (FF00 + C), A
-        mem.write<u8>(0xff00 + regs.c, regs.a);
+        bus.writeByte(0xff00 + regs.c, regs.a);
         break;
         case 0xf2:                                    //LD A, (FF00 + C)
-        regs.a = mem.read<u8>(0xff00 + regs.c, regs.pc, false);
+        regs.a = bus.readByte(0xff00 + regs.c);
         break;
         case 0x02: case 0x12: case 0x22: case 0x32:   //LD (R16), A
-        mem.write<u8>(read_r16<2>((opcode >> 4) & 3), regs.a);
+        bus.writeByte(read_r16<2>((opcode >> 4) & 3), regs.a);
         if(opcode == 0x22)
             regs.hl++;
         if(opcode == 0x32)
             regs.hl--;
         break;
         case 0x0a: case 0x1a: case 0x2a: case 0x3a:   //LD A, (R16)
-        regs.a = mem.read<u8>(read_r16<2>((opcode >> 4) & 3), regs.pc, false);
+        regs.a = bus.readByte(read_r16<2>((opcode >> 4) & 3));
         if(opcode == 0x2a)
             regs.hl++;
         if(opcode == 0x3a)
             regs.hl--;
         break;
         case 0x08:                                    //LD (u16), SP
-        mem.write<u16>(mem.read<u16>(regs.pc, regs.pc), regs.sp);
+        bus.writeWord(bus.nextWord(regs.pc, regs.pc), regs.sp);
         break;
         case 0xf9:                                    //LD SP, HL
         regs.sp = regs.hl;
         break;
         case 0xe8: {                                  //ADD SP, i8
-            u8 offset = mem.read<u8>(regs.pc, regs.pc);
+            u8 offset = bus.nextByte(regs.pc, regs.pc);
             bool z = false;
             bool n = false;
             bool h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
@@ -168,7 +159,7 @@ void Cpu::execute(u8 opcode) {
             regs.sp += (i8)offset;
         } break;
         case 0xf8: {                                  //LD HL, SP+i8
-            u8 offset = mem.read<u8>(regs.pc, regs.pc);
+            u8 offset = bus.nextByte(regs.pc, regs.pc);
             bool z = false;
             bool n = false;
             bool h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
@@ -227,7 +218,7 @@ void Cpu::execute(u8 opcode) {
             regs.a = result;
         } break;
         case 0xd6: {                                  //SUB u8
-            u8 op2 = mem.read<u8>(regs.pc, regs.pc);
+            u8 op2 = bus.nextByte(regs.pc, regs.pc);
             u8 result = regs.a - op2;
             bool z = (result == 0);
             bool n = true;
@@ -247,7 +238,7 @@ void Cpu::execute(u8 opcode) {
             regs.a = result;
         } break;
         case 0xc6: {                                  //ADD u8
-            u8 op2 = mem.read<u8>(regs.pc, regs.pc);
+            u8 op2 = bus.nextByte(regs.pc, regs.pc);
             u8 result = regs.a + op2;
             bool z = (result == 0);
             bool n = false;
@@ -269,7 +260,7 @@ void Cpu::execute(u8 opcode) {
             regs.a = (result & 0xff);
         } break;
         case 0xce: {                                  //ADC u8
-            u8 op2 = mem.read<u8>(regs.pc, regs.pc);
+            u8 op2 = bus.nextByte(regs.pc, regs.pc);
             bool c = (regs.f >> 4) & 1;
             u16 result = u16(regs.a + op2 + c);
             bool z = ((result & 0xff) == 0);
@@ -293,7 +284,7 @@ void Cpu::execute(u8 opcode) {
             regs.a = (result & 0xff);
         } break;
         case 0xde: {                                  //SBC u8
-            u8 op2 = mem.read<u8>(regs.pc, regs.pc);
+            u8 op2 = bus.nextByte(regs.pc, regs.pc);
             bool c = (regs.f >> 4) & 1;
             u16 result = u16(regs.a - op2 - c);
             bool z = ((result & 0xff) == 0);
@@ -314,7 +305,7 @@ void Cpu::execute(u8 opcode) {
             updateF(z, n, h, c);
         } break;
         case 0xe6: {                                  //AND u8
-            u8 op2 = mem.read<u8>(regs.pc, regs.pc);
+            u8 op2 = bus.nextByte(regs.pc, regs.pc);
             regs.a &= op2;
             bool z = (regs.a == 0);
             bool n = false;
@@ -332,7 +323,7 @@ void Cpu::execute(u8 opcode) {
             updateF(z, n, h, c);
         } break;
         case 0xf6: {                                  //OR u8
-            u8 op2 = mem.read<u8>(regs.pc, regs.pc);
+            u8 op2 = bus.nextByte(regs.pc, regs.pc);
             regs.a |= op2;
             bool z = (regs.a == 0);
             bool n = false;
@@ -350,7 +341,7 @@ void Cpu::execute(u8 opcode) {
             updateF(z, n, h, c);
         } break;
         case 0xfe: {                                  //CP u8
-            u8 op2 = mem.read<u8>(regs.pc, regs.pc);
+            u8 op2 = bus.nextByte(regs.pc, regs.pc);
             u8 result = regs.a - op2;
             bool z = (result == 0);
             bool n = true;
@@ -392,7 +383,7 @@ void Cpu::execute(u8 opcode) {
         } break;
         case 0x76: halt = true; break;                //CALL cond u16
         case 0xc4: case 0xd4: case 0xcc: case 0xcd: case 0xdc: {
-            u16 addr = mem.read<u16>(regs.pc, regs.pc);
+            u16 addr = bus.nextWord(regs.pc, regs.pc);
             if(cond(opcode)) {
                 push(regs.pc);
                 regs.pc = addr;
@@ -407,27 +398,28 @@ void Cpu::execute(u8 opcode) {
             regs.hl += reg;
         } break;
         case 0xea:                                    //LD (u16), A
-        mem.write<u8>(mem.read<u16>(regs.pc, regs.pc), regs.a);
+        bus.writeByte(bus.nextWord(regs.pc, regs.pc), regs.a);
         break;
         case 0xfa:                                    //LD A, (u16)
-        regs.a = mem.read<u8>(mem.read<u16>(regs.pc, regs.pc), regs.pc, false);
+        regs.a = bus.readByte(bus.nextWord(regs.pc, regs.pc));
         break;                                        //JP cond u16
         case 0xc2: case 0xc3: case 0xd2: case 0xca: case 0xda: {
-            u16 addr = mem.read<u16>(regs.pc, regs.pc);
+            u16 addr = bus.nextWord(regs.pc, regs.pc);
             if(cond(opcode))
                 regs.pc = addr;
         } break;
         case 0xe9: regs.pc = regs.hl; break;          //JP HL
         case 0x18: {                                  //JR i8
-            regs.pc += mem.read<i8>(regs.pc, regs.pc);
+            regs.pc += (i8)bus.nextByte(regs.pc, regs.pc);
         } break;
         case 0x20: case 0x30: case 0x28: case 0x38: { //JR cond i8
-            i8 offset = mem.read<i8>(regs.pc, regs.pc);
+            i8 offset = (i8)bus.nextByte(regs.pc, regs.pc);
             if(cond(opcode))
                 regs.pc += offset;
         } break;
         case 0xcb: {
-            u8 cbop = mem.read<u8>(regs.pc, regs.pc);
+            u8 cbop = bus.nextByte(regs.pc, regs.pc);
+            cycles = cbopcycles[cbop];
             switch(cbop) {
                 case 0x40 ... 0x7f: {                  //BIT pos, r8
                     bool z = !bit<u8>(read_r8(cbop & 7), (cbop >> 3) & 7);
@@ -555,14 +547,14 @@ void Cpu::execute(u8 opcode) {
 }
 
 u16 Cpu::pop() {
-    u16 val = mem.read<u16>(regs.sp, regs.pc, false);
+    u16 val = bus.readWord(regs.sp);
     regs.sp += 2;
     return val;
 }
 
 void Cpu::push(u16 val) {
     regs.sp -= 2;
-    mem.write<u16>(regs.sp, val);
+    bus.writeWord(regs.sp, val);
 }
 
 u8 Cpu::read_r8(u8 bits) {
@@ -573,7 +565,7 @@ u8 Cpu::read_r8(u8 bits) {
         case 3: return regs.e;
         case 4: return regs.h;
         case 5: return regs.l;
-        case 6: return mem.read<u8>(regs.hl, regs.pc, false);
+        case 6: return bus.readByte(regs.hl);
         case 7: return regs.a;
     }
 }
@@ -586,7 +578,7 @@ void Cpu::write_r8(u8 bits, u8 val) {
         case 3: regs.e = val; break;
         case 4: regs.h = val; break;
         case 5: regs.l = val; break;
-        case 6: mem.write<u8>(regs.hl, val); break;
+        case 6: bus.writeByte(regs.hl, val); break;
         case 7: regs.a = val; break;
     }
 }
@@ -645,5 +637,69 @@ void Cpu::write_r16(u8 bits, u16 value) {
                 updateF(z, n, h, c);
             } break;
         }
+    }
+}
+
+void Cpu::handleInterrupts() {
+    u8 int_mask = bus.mem.ie & bus.mem.io.intf;
+    u8 vector = 0;
+
+    if(int_mask) {
+        halt = false;
+        if(ime) {
+            if((bus.mem.ie & 1) && (bus.mem.io.intf & 1)) {
+                vector = 0x40;
+                bus.mem.io.intf &= ~1;
+            } else if(((bus.mem.ie >> 1) & 1) && ((bus.mem.io.intf >> 1) & 1)) {
+                vector = 0x48;
+                bus.mem.io.intf &= ~2;
+            } else if(((bus.mem.ie >> 2) & 1) && ((bus.mem.io.intf >> 2) & 1)) {
+                vector = 0x50;
+                bus.mem.io.intf &= ~4;
+            } else if(((bus.mem.ie >> 3) & 1) && ((bus.mem.io.intf >> 3) & 1)) {
+                vector = 0x58;
+                bus.mem.io.intf &= ~8;
+            } else if(((bus.mem.ie >> 4) & 1) && ((bus.mem.io.intf >> 4) & 1)) {
+                vector = 0x60;
+                bus.mem.io.intf &= ~16;
+            }
+            
+            push(regs.pc);
+            regs.pc = vector;
+            ime = false;
+            cycles += 20;
+        }
+    }
+}
+
+constexpr u8 get_div_shift(u8 bits) {
+    switch(bits) {
+        case 0: return 9;
+        case 1: return 3;
+        case 2: return 5;
+        case 3: return 7;
+    }
+}
+
+void Cpu::handleTimers() {
+    constexpr int tima_vals[4] = { 1024, 16, 64, 256 };
+    if((bus.mem.io.tac >> 2) & 1) {
+        int tima_val = tima_vals[bus.mem.io.tac & 3];
+        tima_cycles += cycles;
+        while(tima_cycles >= tima_val) {
+            tima_cycles -= tima_val;
+            if(bus.mem.io.tima == 0xff) {
+                bus.mem.io.tima = bus.mem.io.tma;
+                bus.mem.io.intf |= 0b100;
+            } else {
+                bus.mem.io.tima++;
+            }
+        }
+    }
+
+    div_cycles += cycles;
+    if(div_cycles >= 256) {
+        div_cycles -= 256;
+        bus.mem.io.div++;
     }
 }

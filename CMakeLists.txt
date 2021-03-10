@@ -20,6 +20,7 @@ add_executable(gb
     src/main.cpp
     ${CORE}cpu.cpp
     ${CORE}mem.cpp
+    ${CORE}bus.cpp
     dependencies/tinyfiledialogs/tinyfiledialogs.c
 )
 

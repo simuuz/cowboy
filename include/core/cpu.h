@@ -1,13 +1,14 @@
 #pragma once
-#include "mem.h"
+#include "bus.h"
 
 class Cpu {
 public:
     Cpu();
     void step();
     void reset();
-    Mem mem;
+    Bus bus;
     bool halt = false;
+    int total_cycles = 0;
 private:
     struct registers {
         union {
@@ -69,6 +70,11 @@ private:
     void push(u16 val);
     u16 pop();
     FILE* log;
+    void handleInterrupts();
+    void handleTimers();
+    int cycles = 0;
+    int tima_cycles = 0;
+    int div_cycles = 0;
 
     bool ime = false;
     bool ei = false;

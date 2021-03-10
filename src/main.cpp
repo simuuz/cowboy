@@ -5,18 +5,18 @@
 #include "tinyfiledialogs.h"
 #include "ini.h"
 #include "cpu.h"
-#include "mem.h"
 
 using cl_hires = std::chrono::high_resolution_clock;
 
 int main(int argc, char* argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
 
+    constexpr int cycles_frame = 4194300 / 60;
+
     std::string title = "Cowboy";
-    SDL_Window* window = SDL_CreateWindow("Cowboy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 3, 144 * 3, SDL_WINDOW_OPENGL);
+    SDL_Window* window = SDL_CreateWindow("Cowboy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 3, 144 * 3, SDL_WINDOW_SHOWN);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
 
-    Mem mem;
     Cpu cpu;
     
     SDL_Event event;
@@ -35,12 +35,11 @@ int main(int argc, char* argv[]) {
                 case SDL_KEYDOWN:
                 switch(event.key.keysym.sym) {
                     case SDLK_p:
-                    if(pause && mem.rom_opened) {
+                    if(pause && cpu.bus.rom_opened) {
                         cpu.step();
                     }
                     break;
                     case SDLK_BACKSPACE: {
-                        mem.reset();
                         cpu.reset();
                         mINI::INIFile file("config.ini");
                         mINI::INIStructure ini;
@@ -52,51 +51,47 @@ int main(int argc, char* argv[]) {
                             ini["emulator"]["bootrom"] = bootrom;
                             file.write(ini);
                         }
-                        mem.loadBootROM(bootrom);
+                        cpu.bus.loadBootROM(bootrom);
                         char const* filter = "*.gb";
                         const char* rom_charstr = tinyfd_openFileDialog("Select a GameBoy rom",
                                     (std::filesystem::current_path().string() + "/").c_str(), 1, &filter, "Valid GameBoy rom", 0);
 
                         if(rom_charstr != nullptr) {
                             rom = rom_charstr;
-                            mem.loadROM(rom.string());
-                            cpu.mem = mem;
+                            cpu.bus.loadROM(rom.string());
                         }
                     } break;
                     case SDLK_ESCAPE:
                     cpu.reset();
-                    mem.reset();
                     rom.clear();
-                    cpu.mem = mem;
                     break;
                     case SDLK_RETURN:
                     pause = !pause;
                     break;
                     case SDLK_RSHIFT:
                     cpu.reset();
-                    mem.reset();
                     if(!rom.empty())
-                        mem.loadROM(rom.string());
-                    cpu.mem = mem;
+                        cpu.bus.loadROM(rom.string());
                     break;
                 }
                 break;
             }
         }
 
-        for(int i = 0; !pause && mem.rom_opened && i < 69905; i++) {
+        for(int i = 0; !pause && cpu.bus.rom_opened && i < cycles_frame; i++) {
             cpu.step();
         }
+        cpu.total_cycles -= cycles_frame;
 
-        SDL_SetRenderDrawColor(renderer, 0,0,0,0);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
         SDL_RenderPresent(renderer);
 
         float frametime = std::chrono::duration<float, std::milli>(cl_hires::now() - start).count();
         char fps_frametime[32];
         snprintf(fps_frametime, 32, " | %.2f fps | %.2f ms", 1000 / frametime, frametime);
-        SDL_SetWindowTitle(window, (mem.rom_opened) ? (title + " - \"" + rom.stem().string() + "\"" + fps_frametime).c_str()
-                                                    : (title + " - Nothing playing" + fps_frametime).c_str());
+        SDL_SetWindowTitle(window, (cpu.bus.rom_opened) ? (title + " - \"" + rom.stem().string() + "\"" + fps_frametime).c_str()
+                                                        : (title + " - Nothing playing" + fps_frametime).c_str());
         SDL_Delay(1);
     }
 
