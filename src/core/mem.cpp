@@ -12,7 +12,7 @@ Mem::Mem(bool skip) : skip(skip) {
         io.scx = 0; io.lcdc = 0; io.tac = 0; io.tima = 0;
         io.tma = 0; io.intf = 0; io.div = 0;
     }
-    
+
     std::fill(vram.begin(), vram.end(), 0);
     std::fill(extram.begin(), extram.end(), 0);
     std::fill(eram.begin(), eram.end(), 0);
@@ -83,13 +83,16 @@ T Mem::Read(void* buffer, u16 addr) {
 template <typename T>
 T Mem::read(u16 addr, u16& pc, bool inc) {
     pc += (inc) ? sizeof(T) : 0;
-    if(addr <= 0xff) {
+    switch(addr) {
+        case 0 ... 0xff:
         if(io.bootrom == 0) {
             return Read<T>(bootrom.data(), addr);
         } else {
             if(mode) {
                 u8 zero_bank = 0;
-                if (ROM_SIZE == ROM_1mb) {
+                if(ROM_SIZE < ROM_1mb) {
+                    zero_bank = 0;
+                } else if (ROM_SIZE == ROM_1mb) {
                     zero_bank |= (ram_bank & 1) << 5;
                 } else if (ROM_SIZE == ROM_2mb) {
                     zero_bank |= (ram_bank & 3) << 5;
@@ -99,10 +102,13 @@ T Mem::read(u16 addr, u16& pc, bool inc) {
                 return Read<T>(rom.data(), addr);
             }
         }
-    } else if (addr >= 0x100 && addr <= 0x3fff) {
+        break;
+        case 0x100 ... 0x3fff:
         if(mode) {
             u8 zero_bank = 0;
-            if (ROM_SIZE == ROM_1mb) {
+            if(ROM_SIZE < ROM_1mb) {
+                zero_bank = 0;
+            } else if (ROM_SIZE == ROM_1mb) {
                 zero_bank |= (ram_bank & 1) << 5;
             } else if (ROM_SIZE == ROM_2mb) {
                 zero_bank |= (ram_bank & 3) << 5;
@@ -111,37 +117,40 @@ T Mem::read(u16 addr, u16& pc, bool inc) {
         } else {
             return Read<T>(rom.data(), addr);
         }
-    } else if (addr >= 0x4000 && addr <= 0x7fff) {
-        u8 high_bank;
-        if(ROM_SIZE < ROM_1mb) {
-            high_bank = rom_bank & MBC1_BITMASK_LUT[ROM_SIZE];
-        } else if (ROM_SIZE == ROM_1mb) {
-            high_bank = rom_bank & MBC1_BITMASK_LUT[ROM_SIZE];
-            high_bank ^= (high_bank & 0b100000);
-            high_bank |= (ram_bank & 1) << 5;
-        } else if (ROM_SIZE == ROM_2mb) {
-            high_bank = rom_bank & MBC1_BITMASK_LUT[ROM_SIZE];
-            high_bank ^= (high_bank & 0b1100000);
-            high_bank |= (ram_bank & 3) << 5;
+        break;
+        case 0x4000 ... 0x7fff: {
+            u8 high_bank;
+            if(ROM_SIZE < ROM_1mb) {
+                high_bank = rom_bank & MBC1_BITMASK_LUT[ROM_SIZE];
+            } else if (ROM_SIZE == ROM_1mb) {
+                high_bank = rom_bank & MBC1_BITMASK_LUT[ROM_SIZE];
+                high_bank ^= (high_bank & 0b100000);
+                high_bank |= (ram_bank & 1) << 5;
+            } else if (ROM_SIZE == ROM_2mb) {
+                high_bank = rom_bank & MBC1_BITMASK_LUT[ROM_SIZE];
+                high_bank ^= (high_bank & 0b1100000);
+                high_bank |= (ram_bank & 3) << 5;
+            }
+            return Read<T>(rom.data(), 0x4000 * high_bank + (addr - 0x4000));
         }
-        return Read<T>(rom.data(), 0x4000 * high_bank + (addr - 0x4000));
-    } else if (addr >= 0x8000 && addr <= 0x9fff) {
+        break;
+        case 0x8000 ... 0x9fff:
         return Read<T>(vram.data(), addr & 0x1fff);
-    } else if (addr >= 0xa000 && addr <= 0xbfff) {
-        return Read<T>(extram.data(), addr & 0x1fff);
-    } else if (addr >= 0xc000 && addr <= 0xdfff) {
+        case 0xa000 ... 0xbfff:
+        return (extram_enable) ? Read<T>(extram.data(), addr & 0x1fff) : 0xff;
+        case 0xc000 ... 0xdfff:
         return Read<T>(wram.data(), addr & 0x1fff);
-    } else if (addr >= 0xe000 && addr <= 0xfdff) {
+        case 0xe000 ... 0xfdff:
         return Read<T>(eram.data(), addr & 0x1dff);
-    } else if (addr >= 0xfe00 && addr <= 0xfe9f) {
+        case 0xfe00 ... 0xfe9f:
         return Read<T>(oam.data(), addr & 0x9f);
-    } else if (addr >= 0xfea0 && addr <= 0xfeff) {
+        case 0xfea0 ... 0xfeff:
         return (T)0xff;
-    } else if (addr >= 0xff00 && addr <= 0xff7f) {
+        case 0xff00 ... 0xff7f:
         return io.read(addr);
-    } else if (addr >= 0xff80 && addr <= 0xfffe) {
+        case 0xff80 ... 0xfffe:
         return Read<T>(hram.data(), addr & 0x7f);
-    } else {
+        case 0xffff:
         return ie;
     }
 }
@@ -158,20 +167,27 @@ void Mem::Write(void* buffer, u16 addr, T val) {
 
 template <typename T>
 void Mem::write(u16 addr, T val) {
-    if(addr <= 0x1fff) {
+    switch(addr) {
+        case 0x0000 ... 0x1fff:
         extram_enable = ((val & 0xF) == 0xA);
-    } else if(addr >= 0x2000 && addr <= 0x3fff) {
-        if(ROM_SIZE == ROM_32kb)
-            rom_bank = 0;
-        u8 mask = val & MBC1_BITMASK_LUT[ROM_SIZE];
-        rom_bank = (mask == 0) ? 1 : mask;
-    } else if (addr >= 0x4000 && addr <= 0x5fff) {
+        break;
+        case 0x2000 ... 0x3fff: {
+            if(ROM_SIZE == ROM_32kb)
+                rom_bank = 0;
+            u8 mask = val & MBC1_BITMASK_LUT[ROM_SIZE];
+            rom_bank = (mask == 0) ? 1 : mask;
+        }
+        break;
+        case 0x4000 ... 0x5fff:
         ram_bank = val & 3;
-    } else if (addr >= 0x6000 && addr <= 0x7fff) {
+        break;
+        case 0x6000 ... 0x7fff:
         mode = (val & 1);
-    } else if (addr >= 0x8000 && addr <= 0x9fff) {
+        break;
+        case 0x8000 ... 0x9fff:
         Write<T>(vram.data(), addr & 0x1fff, val);
-    } else if (addr >= 0xa000 && addr <= 0xbfff) {
+        break;
+        case 0xa000 ... 0xbfff:
         if(extram_enable) {
             if(RAM_SIZE == RAM_2kb || RAM_SIZE == RAM_8kb) {
                 Write<T>(extram.data(), (addr - 0xa000) % RAM_SIZE, val);
@@ -182,20 +198,28 @@ void Mem::write(u16 addr, T val) {
                     Write<T>(extram.data(), addr - 0xa000, val);
             }
         }
-    } else if (addr >= 0xc000 && addr <= 0xdfff) {
+        break;
+        case 0xc000 ... 0xdfff:
         Write<T>(wram.data(), addr & 0x1fff, val);
-    } else if (addr >= 0xe000 && addr <= 0xfdff) {
+        break;
+        case 0xe000 ... 0xfdff:
         Write<T>(eram.data(), addr & 0x1dff, val);
-    } else if (addr >= 0xfe00 && addr <= 0xfe9f) {
+        break;
+        case 0xfe00 ... 0xfe9f:
         Write<T>(oam.data(), addr & 0x9f, val);
-    } else if (addr >= 0xfea0 && addr <= 0xfeff) {
+        break;
+        case 0xfea0 ... 0xfeff:
         return;
-    } else if (addr >= 0xff00 && addr <= 0xff7f) {
+        break;
+        case 0xff00 ... 0xff7f:
         io.write(addr, val);
-    } else if (addr >= 0xff80 && addr <= 0xfffe) {
+        break;
+        case 0xff80 ... 0xfffe:
         Write<T>(hram.data(), addr & 0x7f, val);
-    } else {
+        break;
+        case 0xffff:
         ie = val;
+        break;
     }
 }
 
