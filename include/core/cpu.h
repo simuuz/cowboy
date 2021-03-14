@@ -3,7 +3,7 @@
 
 class Cpu {
 public:
-    Cpu();
+    Cpu(bool skip);
     void step();
     void reset();
     Bus bus;
@@ -47,8 +47,11 @@ private:
                | (0 << 3) | (0 << 2) | (0 << 1) | 0;
     }
 
+    bool skip;
+
     bool cond(u8 opcode) {
-        if(opcode & 1) return true;
+        if(opcode & 1)
+            return true;
         u8 bits = (opcode >> 3) & 3;
         switch(bits) {
             case 0: return !((regs.f >> 7) & 1);

@@ -1,22 +1,33 @@
 #include "cpu.h"
 
-Cpu::Cpu() {
-    regs.af = 0; regs.bc = 0;
-    regs.de = 0; regs.hl = 0;
-    regs.sp = 0; regs.pc = 0;
+Cpu::Cpu(bool skip) : bus(skip) {
+    if(skip) {
+        regs.af = 0x1b0; regs.bc = 0x13;
+        regs.de = 0xd8; regs.hl = 0x14d;
+        regs.sp = 0xfffe; regs.pc = 0x100;
+    } else {
+        regs.af = 0; regs.bc = 0;
+        regs.de = 0; regs.hl = 0;
+        regs.sp = 0; regs.pc = 0;
+    }
 }
 
 void Cpu::reset() {
     bus.reset();
-    regs.af = 0; regs.bc = 0;
-    regs.de = 0; regs.hl = 0;
-    regs.sp = 0; regs.pc = 0;
+    if(skip) {
+        regs.af = 0x1b0; regs.bc = 0x13;
+        regs.de = 0xd8; regs.hl = 0x14d;
+        regs.sp = 0xfffe; regs.pc = 0x100;
+    } else {
+        regs.af = 0; regs.bc = 0;
+        regs.de = 0; regs.hl = 0;
+        regs.sp = 0; regs.pc = 0;
+    }
 }
 
 void Cpu::step() {
-    u8 opcode = bus.nextByte(regs.pc, regs.pc);
-    
     if(!halt) {
+        u8 opcode = bus.nextByte(regs.pc, regs.pc);
         cycles = opcycles[opcode];
         execute(opcode);
     } else {
@@ -25,13 +36,8 @@ void Cpu::step() {
 
     total_cycles += cycles;
 
-    handleTimers();
     handleInterrupts();
-
-    if(ei) {
-        ime = true;
-        ei = false;
-    }
+    handleTimers();
 }
 
 void Cpu::execute(u8 opcode) {
@@ -56,7 +62,8 @@ void Cpu::execute(u8 opcode) {
             bool h = ((val & 0xf) == 0xf);
             updateF(z, n, h, (regs.f >> 4) & 1);
             write_r8((opcode >> 3) & 7, result);
-        } break;
+        }
+        break;
         case 0x05: case 0x15: case 0x25: case 0x35:
         case 0x0d: case 0x1d: case 0x2d: case 0x3d: { //DEC r8
             u8 val = read_r8((opcode >> 3) & 7);
@@ -66,8 +73,9 @@ void Cpu::execute(u8 opcode) {
             bool h = ((val & 0xf) == 0);
             updateF(z, n, h, (regs.f >> 4) & 1);
             write_r8((opcode >> 3) & 7, result);
-        } break;
-        case 0x27: {
+        }
+        break;
+        case 0x27: {                                  //DAA
             u8 offset = 0;
             
             bool z = (regs.f >> 7) & 1;
@@ -88,19 +96,22 @@ void Cpu::execute(u8 opcode) {
             z = (regs.a == 0);
             h = false;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xf3: ime = false; break;                //DI
-        case 0xfb: ei = true; break;                 //EI
+        case 0xfb: ime = true; break;                 //EI
         case 0x03: case 0x13: case 0x23: case 0x33: { //INC r16
             u16 reg = read_r16<1>((opcode >> 4) & 3);
             reg++;
             write_r16<1>((opcode >> 4) & 3, reg);
-        } break;
+        }
+        break;
         case 0x0b: case 0x1b: case 0x2b: case 0x3b: { //DEC r16
             u16 reg = read_r16<1>((opcode >> 4) & 3);
             reg--;
             write_r16<1>((opcode >> 4) & 3, reg);
-        } break;
+        }
+        break;
         case 0xa8 ... 0xaf: {                         //XOR r8
             regs.a ^= read_r8(opcode & 7);
             bool z = (regs.a == 0);
@@ -108,7 +119,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             bool c = false;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xee: {                                  //XOR u8
             regs.a ^= bus.nextByte(regs.pc, regs.pc);
             bool z = (regs.a == 0);
@@ -116,7 +128,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             bool c = false;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xe0:                                    //LD (FF00 + u8), A
         bus.writeByte(0xff00 + bus.nextByte(regs.pc, regs.pc), regs.a);
         break;
@@ -157,7 +170,8 @@ void Cpu::execute(u8 opcode) {
             bool c = bit<u16>((regs.sp & 0xff) + offset, 8);
             updateF(z, n, h, c);
             regs.sp += (i8)offset;
-        } break;
+        }
+        break;
         case 0xf8: {                                  //LD HL, SP+i8
             u8 offset = bus.nextByte(regs.pc, regs.pc);
             bool z = false;
@@ -166,7 +180,8 @@ void Cpu::execute(u8 opcode) {
             bool c = bit<u16>((regs.sp & 0xff) + offset, 8);
             updateF(z, n, h, c);
             regs.hl = regs.sp + (i8)offset;
-        } break;
+        }
+        break;
         case 0x17: {                                  //RLA
             u8 old_a = regs.a;
             bool c = (regs.f >> 4) & 1;
@@ -176,7 +191,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             c = bit<u8>(old_a, 7);
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0x07: {                                  //RLCA
             u8 old_a = regs.a;
             regs.a = (regs.a << 1) | bit<u8>(old_a, 7);
@@ -185,7 +201,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             bool c = bit<u8>(old_a, 7);
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0x1f: {                                  //RRA
             u8 old_a = regs.a;
             regs.a >>= 1;
@@ -196,7 +213,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             c = old_a & 1;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0x0f: {                                  //RRCA
             u8 old_a = regs.a;
             regs.a >>= 1;
@@ -206,7 +224,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             bool c = old_a & 1;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0x90 ... 0x97: {                         //SUB r8
             u8 reg = read_r8(opcode & 7);
             u8 result = regs.a - reg;
@@ -216,7 +235,8 @@ void Cpu::execute(u8 opcode) {
             bool c = result > regs.a;
             updateF(z, n, h, c);
             regs.a = result;
-        } break;
+        }
+        break;
         case 0xd6: {                                  //SUB u8
             u8 op2 = bus.nextByte(regs.pc, regs.pc);
             u8 result = regs.a - op2;
@@ -226,7 +246,8 @@ void Cpu::execute(u8 opcode) {
             bool c = result > regs.a;
             updateF(z, n, h, c);
             regs.a = result;
-        } break;
+        }
+        break;
         case 0x80 ... 0x87: {                         //ADD r8
             u8 reg = read_r8(opcode & 7);
             u8 result = regs.a + reg;
@@ -236,7 +257,8 @@ void Cpu::execute(u8 opcode) {
             bool c = result < regs.a;
             updateF(z, n, h, c);
             regs.a = result;
-        } break;
+        }
+        break;
         case 0xc6: {                                  //ADD u8
             u8 op2 = bus.nextByte(regs.pc, regs.pc);
             u8 result = regs.a + op2;
@@ -246,7 +268,8 @@ void Cpu::execute(u8 opcode) {
             bool c = result < regs.a;
             updateF(z, n, h, c);
             regs.a = result;            
-        } break;
+        }
+        break;
         case 0x88 ... 0x8f: {                         //ADC r8
             u8 reg = read_r8(opcode & 7);
             bool c = (regs.f >> 4) & 1;
@@ -258,7 +281,8 @@ void Cpu::execute(u8 opcode) {
             c = bit<u16>(result, 8);
             updateF(z, n, h, c);
             regs.a = (result & 0xff);
-        } break;
+        }
+        break;
         case 0xce: {                                  //ADC u8
             u8 op2 = bus.nextByte(regs.pc, regs.pc);
             bool c = (regs.f >> 4) & 1;
@@ -270,7 +294,8 @@ void Cpu::execute(u8 opcode) {
             c = bit<u16>(result, 8);
             updateF(z, n, h, c);
             regs.a = (result & 0xff);
-        } break;
+        }
+        break;
         case 0x98 ... 0x9f: {                         //SBC r8
             u8 reg = read_r8(opcode & 7);
             bool c = (regs.f >> 4) & 1;
@@ -282,7 +307,8 @@ void Cpu::execute(u8 opcode) {
             c = bit<u16>(result, 8);
             updateF(z, n, h, c);
             regs.a = (result & 0xff);
-        } break;
+        }
+        break;
         case 0xde: {                                  //SBC u8
             u8 op2 = bus.nextByte(regs.pc, regs.pc);
             bool c = (regs.f >> 4) & 1;
@@ -294,7 +320,8 @@ void Cpu::execute(u8 opcode) {
             c = bit<u16>(result, 8);
             updateF(z, n, h, c);
             regs.a = (result & 0xff);
-        } break;
+        }
+        break;
         case 0xa0 ... 0xa7: {                         //AND r8
             u8 reg = read_r8(opcode & 7);
             regs.a &= reg;
@@ -303,7 +330,8 @@ void Cpu::execute(u8 opcode) {
             bool h = true;
             bool c = false;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xe6: {                                  //AND u8
             u8 op2 = bus.nextByte(regs.pc, regs.pc);
             regs.a &= op2;
@@ -312,7 +340,8 @@ void Cpu::execute(u8 opcode) {
             bool h = true;
             bool c = false;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xb0 ... 0xb7: {                         //OR r8
             u8 reg = read_r8(opcode & 7);
             regs.a |= reg;
@@ -321,7 +350,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             bool c = false;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xf6: {                                  //OR u8
             u8 op2 = bus.nextByte(regs.pc, regs.pc);
             regs.a |= op2;
@@ -330,7 +360,8 @@ void Cpu::execute(u8 opcode) {
             bool h = false;
             bool c = false;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xb8 ... 0xbf: {                         //CP r8
             u8 reg = read_r8(opcode & 7);
             u8 result = regs.a - reg;
@@ -339,7 +370,8 @@ void Cpu::execute(u8 opcode) {
             bool h = (reg & 0xf) > (regs.a & 0xf);
             bool c = result > regs.a;
             updateF(z, n, h, c);
-        } break;
+        }
+        break;
         case 0xfe: {                                  //CP u8
             u8 op2 = bus.nextByte(regs.pc, regs.pc);
             u8 result = regs.a - op2;
@@ -348,47 +380,56 @@ void Cpu::execute(u8 opcode) {
             bool h = (op2 & 0xf) > (regs.a & 0xf);
             bool c = result > regs.a;
             updateF(z, n, h, c);
-        } break;
-        case 0xd9:
-        ime = true;
-        regs.pc = pop();
+        }
         break;
-        case 0xc9: case 0xc0: case 0xd0:              //RET cond
-        case 0xc8: case 0xd8:
-        if(cond(opcode))
+        case 0xd9:                                    //RETI
+        regs.pc = pop();
+        ime = true;
+        break;
+        case 0xc0: case 0xd0: case 0xc8: case 0xd8: case 0xc9: //RET cond
+        if(cond(opcode)) {
             regs.pc = pop();
+            cycles += 12;
+        }
         break;
         case 0xc7: case 0xd7: case 0xe7: case 0xf7:
-        case 0xcf: case 0xdf: case 0xef: case 0xff: { //RST vec
-            push(regs.pc);
-            regs.pc = u16(opcode & 0x38);
-        } break;
+        case 0xcf: case 0xdf: case 0xef: case 0xff:   //RST vec
+        push(regs.pc);
+        regs.pc = opcode & 0x38;
+        break;
         case 0x2f: {                                  //CPL
             regs.a = ~regs.a;
             bool n = true;
             bool h = true;
             updateF((regs.f >> 7) & 1, n, h, (regs.f >> 4) & 1);
-        } break;
+        }
+        break;
         case 0x37: {                                  //SCF
             bool n = false;
             bool h = false;
             bool c = true;
             updateF((regs.f >> 7) & 1, n, h, c);
-        } break;
+        }
+        break;
         case 0x3f: {                                  //CCF
             bool n = false;
             bool h = false;
             bool c = !((regs.f >> 4) & 1);
             updateF((regs.f >> 7) & 1, n, h, c);
-        } break;
-        case 0x76: halt = true; break;                //CALL cond u16
-        case 0xc4: case 0xd4: case 0xcc: case 0xcd: case 0xdc: {
+        }
+        break;
+        case 0x76:                                    //HALT
+        halt = true;
+        break;
+        case 0xc4: case 0xd4: case 0xcc: case 0xdc: case 0xcd: { //CALL cond u16
             u16 addr = bus.nextWord(regs.pc, regs.pc);
             if(cond(opcode)) {
                 push(regs.pc);
                 regs.pc = addr;
+                cycles += 12;
             }
-        } break;
+        }
+        break;
         case 0x09: case 0x19: case 0x29: case 0x39: { //ADD HL, r16
             u16 reg = read_r16<1>((opcode >> 4) & 3);
             bool n = false;
@@ -396,49 +437,61 @@ void Cpu::execute(u8 opcode) {
             bool c = bit<u32>(regs.hl + reg, 16);
             updateF((regs.f >> 7) & 1, n, h, c);
             regs.hl += reg;
-        } break;
+        }
+        break;
         case 0xea:                                    //LD (u16), A
         bus.writeByte(bus.nextWord(regs.pc, regs.pc), regs.a);
         break;
         case 0xfa:                                    //LD A, (u16)
         regs.a = bus.readByte(bus.nextWord(regs.pc, regs.pc));
-        break;                                        //JP cond u16
-        case 0xc2: case 0xc3: case 0xd2: case 0xca: case 0xda: {
+        break;
+        case 0xc2: case 0xd2: case 0xca: case 0xda: case 0xc3: { //JP cond u16
             u16 addr = bus.nextWord(regs.pc, regs.pc);
-            if(cond(opcode))
+            if(cond(opcode)) {
                 regs.pc = addr;
-        } break;
-        case 0xe9: regs.pc = regs.hl; break;          //JP HL
-        case 0x18: {                                  //JR i8
-            regs.pc += (i8)bus.nextByte(regs.pc, regs.pc);
-        } break;
+                cycles += 4;
+            }
+        }
+        break;
+        case 0xe9:                                    //JP HL
+        regs.pc = regs.hl;
+        break;
+        case 0x18:                                    //JR i8
+        regs.pc += (i8)bus.nextByte(regs.pc, regs.pc);
+        break;
         case 0x20: case 0x30: case 0x28: case 0x38: { //JR cond i8
             i8 offset = (i8)bus.nextByte(regs.pc, regs.pc);
-            if(cond(opcode))
+            if(cond(opcode)) {
                 regs.pc += offset;
-        } break;
+                cycles += 4;
+            }
+        }
+        break;
         case 0xcb: {
             u8 cbop = bus.nextByte(regs.pc, regs.pc);
             cycles = cbopcycles[cbop];
             switch(cbop) {
-                case 0x40 ... 0x7f: {                  //BIT pos, r8
+                case 0x40 ... 0x7f: {                 //BIT pos, r8
                     bool z = !bit<u8>(read_r8(cbop & 7), (cbop >> 3) & 7);
                     bool n = false;
                     bool h = true;
                     updateF(z, n, h, (regs.f >> 4) & 1);
-                } break;
+                }
+                break;
                 case 0x80 ... 0xbf: {                 //RES pos, r8
                     u8 reg = read_r8(cbop & 7);
                     u8 pos = (cbop >> 3) & 7;
                     reg &= ~(1 << pos);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0xc0 ... 0xff: {                 //SET pos, r8
                     u8 reg = read_r8(cbop & 7);
                     u8 pos = (cbop >> 3) & 7;
                     reg |= (1 << pos);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0 ... 0x07: {                    //RLC r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
@@ -449,7 +502,8 @@ void Cpu::execute(u8 opcode) {
                     bool c = bit<u8>(old_reg, 7);
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0x08 ... 0x0f: {                 //RRC r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
@@ -461,7 +515,8 @@ void Cpu::execute(u8 opcode) {
                     bool c = old_reg & 1;
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0x10 ... 0x17: {                 //RL r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
@@ -473,7 +528,8 @@ void Cpu::execute(u8 opcode) {
                     c = bit<u8>(old_reg, 7);
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0x18 ... 0x1f: {                 //RR r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
@@ -486,7 +542,8 @@ void Cpu::execute(u8 opcode) {
                     c = old_reg & 1;
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0x20 ... 0x27: {                 //SLA r8
                     u8 reg = read_r8(cbop & 7);
                     bool c = bit<u8>(reg, 7);
@@ -496,7 +553,8 @@ void Cpu::execute(u8 opcode) {
                     bool h = false;
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0x28 ... 0x2f: {                 //SRA r8
                     u8 reg = read_r8(cbop & 7);
                     u8 old_reg = reg;
@@ -508,7 +566,8 @@ void Cpu::execute(u8 opcode) {
                     bool c = old_reg & 1;
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0x30 ... 0x37: {                 //SWAP r8
                     u8 reg = read_r8(cbop & 7);
                     reg = (reg << 4) | (reg >> 4);
@@ -518,7 +577,8 @@ void Cpu::execute(u8 opcode) {
                     bool c = false;
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 case 0x38 ... 0x3f: {                 //SRL r8
                     u8 reg = read_r8(cbop & 7);
                     bool c = reg & 1;
@@ -528,12 +588,14 @@ void Cpu::execute(u8 opcode) {
                     bool h = false;
                     updateF(z, n, h, c);
                     write_r8(cbop & 7, reg);
-                } break;
+                }
+                break;
                 default:
                 printf("Unrecognized CB prefix opcode: %02x\n", cbop);
                 exit(1);
             }
-        } break;
+        }
+        break;
         case 0xc1: case 0xd1: case 0xe1: case 0xf1:   //POP r16
         write_r16<3>((opcode >> 4) & 3,  pop());
         break;
@@ -642,42 +704,42 @@ void Cpu::write_r16(u8 bits, u16 value) {
 
 void Cpu::handleInterrupts() {
     u8 int_mask = bus.mem.ie & bus.mem.io.intf;
-    u8 vector = 0;
 
     if(int_mask) {
         halt = false;
         if(ime) {
             if((bus.mem.ie & 1) && (bus.mem.io.intf & 1)) {
-                vector = 0x40;
                 bus.mem.io.intf &= ~1;
-            } else if(((bus.mem.ie >> 1) & 1) && ((bus.mem.io.intf >> 1) & 1)) {
-                vector = 0x48;
+                push(regs.pc);
+                regs.pc = 0x40;
+                ime = false;
+                cycles += 20;
+            } else if(bit(bus.mem.ie, 1) && bit(bus.mem.io.intf, 1)) {
                 bus.mem.io.intf &= ~2;
-            } else if(((bus.mem.ie >> 2) & 1) && ((bus.mem.io.intf >> 2) & 1)) {
-                vector = 0x50;
+                push(regs.pc);
+                regs.pc = 0x48;
+                ime = false;
+                cycles += 20;
+            } else if(bit(bus.mem.ie, 2) && bit(bus.mem.io.intf, 2)) {
                 bus.mem.io.intf &= ~4;
-            } else if(((bus.mem.ie >> 3) & 1) && ((bus.mem.io.intf >> 3) & 1)) {
-                vector = 0x58;
+                push(regs.pc);
+                regs.pc = 0x50;
+                ime = false;
+                cycles += 20;
+            } else if(bit(bus.mem.ie, 5) && bit(bus.mem.io.intf, 3)) {
                 bus.mem.io.intf &= ~8;
-            } else if(((bus.mem.ie >> 4) & 1) && ((bus.mem.io.intf >> 4) & 1)) {
-                vector = 0x60;
+                push(regs.pc);
+                regs.pc = 0x58;
+                ime = false;
+                cycles += 20;
+            } else if(bit(bus.mem.ie, 4) && bit(bus.mem.io.intf, 4)) {
                 bus.mem.io.intf &= ~16;
+                push(regs.pc);
+                regs.pc = 0x60;
+                ime = false;
+                cycles += 20;
             }
-            
-            push(regs.pc);
-            regs.pc = vector;
-            ime = false;
-            cycles += 20;
         }
-    }
-}
-
-constexpr u8 get_div_shift(u8 bits) {
-    switch(bits) {
-        case 0: return 9;
-        case 1: return 3;
-        case 2: return 5;
-        case 3: return 7;
     }
 }
 

@@ -3,7 +3,7 @@
 
 class Bus {
 public:
-    Bus();
+    Bus(bool skip);
     u8 readByte(u16 addr);
     u8 nextByte(u16 addr, u16& pc);
     void writeByte(u16 addr, u8 val);

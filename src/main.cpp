@@ -17,7 +17,10 @@ int main(int argc, char* argv[]) {
     SDL_Window* window = SDL_CreateWindow("Cowboy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 3, 144 * 3, SDL_WINDOW_SHOWN);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
 
-    Cpu cpu;
+    mINI::INIFile file("config.ini");
+    mINI::INIStructure ini;
+    file.read(ini);
+    Cpu cpu(ini["emulator"]["skip_bootrom"] == "true");
     
     SDL_Event event;
     bool quit = false;
@@ -41,9 +44,6 @@ int main(int argc, char* argv[]) {
                     break;
                     case SDLK_BACKSPACE: {
                         cpu.reset();
-                        mINI::INIFile file("config.ini");
-                        mINI::INIStructure ini;
-                        file.read(ini);
                         std::string bootrom = ini["emulator"]["bootrom"];
                         if(bootrom.empty()) {
                             bootrom = tinyfd_openFileDialog("This is a one-time thing. You need to select a bootrom file and I'll remember it for you.",

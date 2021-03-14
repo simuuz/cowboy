@@ -1,6 +1,6 @@
 #include "bus.h"
 
-Bus::Bus() { }
+Bus::Bus(bool skip) : mem(skip) { }
 
 u8 Bus::readByte(u16 addr) {
     u16 dummy;
