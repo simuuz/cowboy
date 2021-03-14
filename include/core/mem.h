@@ -62,8 +62,9 @@ public:
     bool skip;
 
     struct IO {
-        u8 bootrom = 1, bgp = 0xfc, scy = 0, scx = 0, lcdc = 0x91, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
-        //u8 bootrom = 0, bgp = 0, scy = 0, scx = 0, lcdc = 0, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
+        u8 bootrom = 1, bgp = 0xfc, scy = 0, scx = 0, lcdc = 0x91;
+        u8 tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
+        u8 wx = 0, wy = 0;
         void write(u16 addr, u8 val);
         u8 read(u16 addr);
         void handleJoypad(u8 val);

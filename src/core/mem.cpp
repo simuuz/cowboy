@@ -12,6 +12,7 @@ Mem::Mem(bool skip) : skip(skip) {
         io.scx = 0; io.lcdc = 0; io.tac = 0; io.tima = 0;
         io.tma = 0; io.intf = 0; io.div = 0;
     }
+    
     std::fill(vram.begin(), vram.end(), 0);
     std::fill(extram.begin(), extram.end(), 0);
     std::fill(eram.begin(), eram.end(), 0);
@@ -30,6 +31,7 @@ void Mem::reset() {
         io.scx = 0; io.lcdc = 0; io.tac = 0; io.tima = 0;
         io.tma = 0; io.intf = 0; io.div = 0;
     }
+
     std::fill(rom.begin(), rom.end(), 0);
     std::fill(vram.begin(), vram.end(), 0);
     std::fill(extram.begin(), extram.end(), 0);
@@ -219,6 +221,8 @@ u8 Mem::IO::read(u16 addr) {
         case 0x43: return scx;
         case 0x40: return lcdc;
         case 0x4d: return 0xff;
+        case 0x4a: return wy;
+        case 0x4b: return wx;
         default:
         printf("IO READ: Unsupported IO %02x\n", addr & 0xff);
         exit(1);
@@ -242,6 +246,8 @@ void Mem::IO::write(u16 addr, u8 val) {
         case 0x42: scy = val; break;
         case 0x43: scx = val; break;
         case 0x40: lcdc = val; break;
+        case 0x4a: wy = val; break;
+        case 0x4b: wx = val; break;
         default:
         printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);
         exit(1);

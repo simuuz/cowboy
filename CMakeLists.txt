@@ -21,6 +21,7 @@ add_executable(gb
     ${CORE}cpu.cpp
     ${CORE}mem.cpp
     ${CORE}bus.cpp
+    ${CORE}ppu.cpp
     dependencies/tinyfiledialogs/tinyfiledialogs.c
 )
 
