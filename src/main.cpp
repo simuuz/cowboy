@@ -13,7 +13,6 @@ int main(int argc, char* argv[]) {
 
     constexpr int cycles_frame = 4194300 / 60;
 
-    std::string title = "Cowboy";
     SDL_Window* window = SDL_CreateWindow("Cowboy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 3, 144 * 3, SDL_WINDOW_SHOWN);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
 
@@ -90,8 +89,8 @@ int main(int argc, char* argv[]) {
         float frametime = std::chrono::duration<float, std::milli>(cl_hires::now() - start).count();
         char fps_frametime[32];
         snprintf(fps_frametime, 32, " | %.2f fps | %.2f ms", 1000 / frametime, frametime);
-        SDL_SetWindowTitle(window, (cpu.bus.rom_opened) ? (title + " - \"" + rom.stem().string() + "\"" + fps_frametime).c_str()
-                                                        : (title + " - Nothing playing" + fps_frametime).c_str());
+        SDL_SetWindowTitle(window, (cpu.bus.rom_opened) ? ("Cowboy" + std::string(" - \"") + rom.stem().string() + "\"" + fps_frametime).c_str()
+                                                        : ("Cowboy" + std::string(" - Nothing playing") + fps_frametime).c_str());
         SDL_Delay(1);
     }
 
