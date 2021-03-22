@@ -4,57 +4,45 @@
 
 Mem::Mem(bool skip) : skip(skip) {
     if(skip) {
-        io.bootrom = 1; io.bgp = 0xfc; io.scy = 0;
-        io.scx = 0; io.lcdc = 0x91; io.tac = 0; io.tima = 0;
+        io.bootrom = 1; io.tac = 0; io.tima = 0;
         io.tma = 0; io.intf = 0; io.div = 0;
     } else {
-        io.bootrom = 0; io.bgp = 0; io.scy = 0;
-        io.scx = 0; io.lcdc = 0; io.tac = 0; io.tima = 0;
+        io.bootrom = 0; io.tac = 0; io.tima = 0;
         io.tma = 0; io.intf = 0; io.div = 0;
     }
 
-    std::fill(vram.begin(), vram.end(), 0);
     std::fill(extram.begin(), extram.end(), 0);
     std::fill(eram.begin(), eram.end(), 0);
     std::fill(wram.begin(), wram.end(), 0);
     std::fill(hram.begin(), hram.end(), 0);
-    std::fill(oam.begin(), oam.end(), 0);
 }
 
 void Mem::reset() {
     if(skip) {
-        io.bootrom = 1; io.bgp = 0xfc; io.scy = 0;
-        io.scx = 0; io.lcdc = 0x91; io.tac = 0; io.tima = 0;
+        io.bootrom = 1; io.tac = 0; io.tima = 0;
         io.tma = 0; io.intf = 0; io.div = 0;
     } else {
-        io.bootrom = 0; io.bgp = 0; io.scy = 0;
-        io.scx = 0; io.lcdc = 0; io.tac = 0; io.tima = 0;
+        io.bootrom = 0; io.tac = 0; io.tima = 0;
         io.tma = 0; io.intf = 0; io.div = 0;
     }
 
     std::fill(rom.begin(), rom.end(), 0);
-    std::fill(vram.begin(), vram.end(), 0);
     std::fill(extram.begin(), extram.end(), 0);
     std::fill(eram.begin(), eram.end(), 0);
     std::fill(wram.begin(), wram.end(), 0);
     std::fill(hram.begin(), hram.end(), 0);
-    std::fill(oam.begin(), oam.end(), 0);
 }
 
-void Mem::loadROM(std::string filename) {
+void Mem::load_rom(std::string filename) {
     std::ifstream file(filename, std::ios::binary);
+    file.unsetf(std::ios::skipws);
     
     if(!file.good()) {
         printf("Couldn't open %s\n", filename.c_str());
         exit(1);
     }
 
-    file.seekg(0, std::ios::end);
-    auto size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    rom.resize(size);
-
-    file.read((char*)rom.data(), size);
+    rom.insert(rom.begin(), std::istream_iterator<u8>(file), std::istream_iterator<u8>());
     file.close();
 
     MBC = rom[0x147];
@@ -64,7 +52,7 @@ void Mem::loadROM(std::string filename) {
     printf("\nMBC: %s\nRom size: %s\nRam size: %s\n\n", MBCs[MBC].c_str(), ROMs[ROM_SIZE].c_str(), RAMs[RAM_SIZE].c_str());
 }
 
-void Mem::loadBootROM(std::string filename) {
+void Mem::load_bootrom(std::string filename) {
     std::ifstream file(filename, std::ios::binary);
     
     if(!file.good()) {
@@ -82,8 +70,7 @@ T Mem::Read(void* buffer, u16 addr) {
 }
 
 template <typename T>
-T Mem::read(u16 addr, u16& pc, bool inc) {
-    pc += (inc) ? sizeof(T) : 0;
+T Mem::read(u16 addr) {
     switch(addr) {
         case 0 ... 0xff:
         if (io.bootrom == 0) {
@@ -150,8 +137,6 @@ T Mem::read(u16 addr, u16& pc, bool inc) {
             return Read<T>(rom.data(), 0x4000 * mbc5_t.rom_bank + (addr - 0x4000));
         }
         break;
-        case 0x8000 ... 0x9fff:
-        return Read<T>(vram.data(), addr & 0x1fff);
         case 0xa000 ... 0xbfff:
         if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
             return (extram_enable) ? Read<T>(extram.data(), addr & 0x1fff) : 0xff;
@@ -165,8 +150,6 @@ T Mem::read(u16 addr, u16& pc, bool inc) {
         return Read<T>(wram.data(), addr & 0x1fff);
         case 0xe000 ... 0xfdff:
         return Read<T>(eram.data(), addr & 0x1dff);
-        case 0xfe00 ... 0xfe9f:
-        return Read<T>(oam.data(), addr & 0x9f);
         case 0xfea0 ... 0xfeff:
         return (T)0xff;
         case 0xff00 ... 0xff7f:
@@ -178,10 +161,10 @@ T Mem::read(u16 addr, u16& pc, bool inc) {
     }
 }
 
-template u8 Mem::read<u8>(u16, u16&, bool);
-template i8 Mem::read<i8>(u16, u16&, bool);
-template u16 Mem::read<u16>(u16, u16&, bool);
-template u32 Mem::read<u32>(u16, u16&, bool);
+template u8 Mem::read<u8>(u16);
+template i8 Mem::read<i8>(u16);
+template u16 Mem::read<u16>(u16);
+template u32 Mem::read<u32>(u16);
 
 template <typename T>
 void Mem::Write(void* buffer, u16 addr, T val) {
@@ -223,9 +206,6 @@ void Mem::write(u16 addr, T val) {
         case 0x6000 ... 0x7fff:
         mbc1_t.mode = val & 1;
         break;
-        case 0x8000 ... 0x9fff:
-        Write<T>(vram.data(), addr & 0x1fff, val);
-        break;
         case 0xa000 ... 0xbfff:
         if (extram_enable) {
             if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
@@ -249,9 +229,6 @@ void Mem::write(u16 addr, T val) {
         break;
         case 0xe000 ... 0xfdff:
         Write<T>(eram.data(), addr & 0x1dff, val);
-        break;
-        case 0xfe00 ... 0xfe9f:
-        Write<T>(oam.data(), addr & 0x9f, val);
         break;
         case 0xfea0 ... 0xfeff:
         break;
@@ -280,17 +257,10 @@ u8 Mem::IO::read(u16 addr) {
         case 0x06: return tma;
         case 0x07: return tac;
         case 0x0f: return intf;
-        case 0x47: return bgp;
-        case 0x50: return bootrom;
         case 0x10 ... 0x1e: return 0xff;
         case 0x20 ... 0x26: return 0xff;
-        case 0x44: return 0x90;
-        case 0x42: return scy;
-        case 0x43: return scx;
-        case 0x40: return lcdc;
         case 0x4d: return 0xff;
-        case 0x4a: return wy;
-        case 0x4b: return wx;
+        case 0x50: return bootrom;
         default:
         printf("IO READ: Unsupported IO %02x\n", addr & 0xff);
         exit(1);
@@ -303,19 +273,13 @@ void Mem::IO::write(u16 addr, u8 val) {
         case 0x01: printf("%c", val); break;
         case 0x02: break;
         case 0x04: div = 0; break;
-        case 0x06: tma = val; break;
         case 0x05: tima = val; break;
+        case 0x06: tma = val; break;
         case 0x07: tac = val; break;
         case 0x0f: intf = val; break;
-        case 0x47: bgp = val; break;
-        case 0x50: bootrom = val; break;
         case 0x10 ... 0x1e: break;
         case 0x20 ... 0x26: break; //STUB
-        case 0x42: scy = val; break;
-        case 0x43: scx = val; break;
-        case 0x40: lcdc = val; break;
-        case 0x4a: wy = val; break;
-        case 0x4b: wx = val; break;
+        case 0x50: bootrom = val; break;
         default:
         printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);
         exit(1);

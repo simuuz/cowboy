@@ -5,6 +5,7 @@
 #include "tinyfiledialogs.h"
 #include "ini.h"
 #include "cpu.h"
+#include "ppu.h"
 
 using cl_hires = std::chrono::high_resolution_clock;
 
@@ -19,7 +20,9 @@ int main(int argc, char* argv[]) {
     mINI::INIFile file("config.ini");
     mINI::INIStructure ini;
     file.read(ini);
-    Cpu cpu(ini["emulator"]["skip_bootrom"] == "true");
+    bool skip = ini["emulator"]["skip_bootrom"] == "true";
+    Cpu cpu(skip);
+    Bus bus(skip);
     
     SDL_Event event;
     bool quit = false;
@@ -50,14 +53,14 @@ int main(int argc, char* argv[]) {
                             ini["emulator"]["bootrom"] = bootrom;
                             file.write(ini);
                         }
-                        cpu.bus.loadBootROM(bootrom);
+                        cpu.bus.load_bootrom(bootrom);
                         char const* filter = "*.gb";
                         const char* rom_charstr = tinyfd_openFileDialog("Select a GameBoy rom",
                                     (std::filesystem::current_path().string() + "/").c_str(), 1, &filter, "Valid GameBoy rom", 0);
 
                         if(rom_charstr != nullptr) {
                             rom = rom_charstr;
-                            cpu.bus.loadROM(rom.string());
+                            cpu.bus.load_rom(rom.string());
                         }
                     } break;
                     case SDLK_ESCAPE:
@@ -70,18 +73,22 @@ int main(int argc, char* argv[]) {
                     case SDLK_RSHIFT:
                     cpu.reset();
                     if(!rom.empty())
-                        cpu.bus.loadROM(rom.string());
+                        cpu.bus.load_rom(rom.string());
                     break;
                 }
                 break;
             }
         }
 
-        for(int i = 0; !pause && cpu.bus.rom_opened && i < cycles_frame; i++) {
-            cpu.step();
+        if(!pause && cpu.bus.rom_opened) {
+            while(cpu.total_cycles < cycles_frame) {
+                cpu.step();
+                bus.ppu.step(cpu.total_cycles);
+                cpu.handle_timers();
+            }
+            cpu.total_cycles -= cycles_frame;
         }
-        cpu.total_cycles -= cycles_frame;
-
+        
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
         SDL_RenderPresent(renderer);

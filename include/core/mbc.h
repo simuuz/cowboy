@@ -22,22 +22,32 @@ enum RAM_SIZE {
     RAM_128kb, RAM_64kb
 };
 
-const std::string MBCs[35] = {
-    "None", "MBC1", "MBC + RAM", "MBC1 + Battery-buffered RAM",
-    "", "MBC2", "MBC2 + Battery-buffered RAM", "", "None + RAM", "None + Battery-buffered RAM",
-    "", "MMM01", "MMM01 + RAM", "MMM01 + Battery-buffered RAM", "",
-    "MBC3 + RTC", "MBC3 + RTC + Battery-buffered RAM", "MBC3", "MBC3 + RAM",
-    "MBC3 + Battery-buffered RAM", "", "", "", "", "", "MBC5", "MBC5 + RAM",
-    "MBC5 + Battery-buffered RAM", "MBC5 + Rumble", "MBC5 + Rumble + RAM", "MBC5 + Rumble + Battery-buffered RAM",
-    "", "MBC6", "", "MBC7"
+const std::string MBCs[33] = {
+    "ROM Only", "MBC1", "MBC1+RAM", "MBC1+RAM+Battery", "", "MBC2", "MBC2+Battery", "", "ROM+RAM", "ROM+RAM+Battery",
+    "", "MMM01", "MMM01+RAM", "MMM01+RAM+Battery", "", "MBC3+Timer+Battery", "MBC3+Timer+RAM+Battery",
+    "MBC3", "MBC3+RAM", "MBC3+RAM+Battery", "", "", "", "", "", "MBC5", "MBC5+RAM", "MBC5+RAM+Battery",
+    "MBC5+Rumble", "MBC5+Rumble+RAM", "MBC5+Rumble+RAM+Battery", "", "MBC6"
 };
 
 const std::string ROMs[9] = {
-    "32 KiB", "64 KiB", "128 KiB", "256 KiB", "512 KiB", "1 MiB", "2 MiB", "4 MiB", "8 MiB"
+    " 32 KiB",
+    " 64 KiB",
+    "128 KiB",
+    "256 KiB",
+    "512 KiB",
+    "  1 MiB",
+    "  2 MiB",
+    "  4 MiB",
+    "  8 MiB"
 };
 
 const std::string RAMs[6] = {
-    "None", "2 KiB", "8 KiB", "32 KiB", "128 KiB", "64 KiB"
+    "   None",
+    "  2 KiB",
+    "  8 KiB",
+    " 32 KiB",
+    "128 KiB",
+    " 64 KiB"
 };
 
 const u8 MBC_BITMASK_LUT[9] = {
