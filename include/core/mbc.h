@@ -22,14 +22,14 @@ enum RAM_SIZE {
     RAM_128kb, RAM_64kb
 };
 
-const std::string MBCs[33] = {
-    "ROM Only", "MBC1", "MBC1+RAM", "MBC1+RAM+Battery", "", "MBC2", "MBC2+Battery", "", "ROM+RAM", "ROM+RAM+Battery",
-    "", "MMM01", "MMM01+RAM", "MMM01+RAM+Battery", "", "MBC3+Timer+Battery", "MBC3+Timer+RAM+Battery",
-    "MBC3", "MBC3+RAM", "MBC3+RAM+Battery", "", "", "", "", "", "MBC5", "MBC5+RAM", "MBC5+RAM+Battery",
-    "MBC5+Rumble", "MBC5+Rumble+RAM", "MBC5+Rumble+RAM+Battery", "", "MBC6"
+const char* MBCs[] = {
+    "ROM Only", "MBC1", "MBC1+RAM", "MBC1+RAM+Battery", [5] = "MBC2", "MBC2+Battery", [8] = "ROM+RAM", "ROM+RAM+Battery",
+    [0xB] = "MMM01", "MMM01+RAM", "MMM01+RAM+Battery", [0xF] = "MBC3+Timer+Battery", "MBC3+Timer+RAM+Battery",
+    "MBC3", "MBC3+RAM", "MBC3+RAM+Battery", [0x19] = "MBC5", "MBC5+RAM", "MBC5+RAM+Battery",
+    "MBC5+Rumble", "MBC5+Rumble+RAM", "MBC5+Rumble+RAM+Battery", [0x20] = "MBC6"
 };
 
-const std::string ROMs[9] = {
+const char* ROMs[9] = {
     " 32 KiB",
     " 64 KiB",
     "128 KiB",
@@ -41,7 +41,7 @@ const std::string ROMs[9] = {
     "  8 MiB"
 };
 
-const std::string RAMs[6] = {
+const char* RAMs[6] = {
     "   None",
     "  2 KiB",
     "  8 KiB",
@@ -50,6 +50,17 @@ const std::string RAMs[6] = {
     " 64 KiB"
 };
 
-const u8 MBC_BITMASK_LUT[9] = {
-    0, 3, 7, 0xF, 0x1F, 0x1F, 0x1F, 0, 0
+const uint8_t MBC_BITMASK_LUT[9] = {
+    [1] = 3, 7, 0xF, 0x1F, 0x1F, 0x1F
 };
+
+typedef struct _mbc1_t {
+    unsigned rom_bank:5;
+    unsigned ram_bank:2;
+    unsigned mode:1;
+} mbc1_t;
+
+typedef struct _mbc5_t {
+    unsigned rom_bank:9;
+    unsigned ram_bank:4;
+} mbc5_t;

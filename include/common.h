@@ -1,19 +1,29 @@
 #pragma once
-#include <iostream>
-#include <cstdint>
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-using i8 = int8_t;
-using i16 = int16_t;
-using i32 = int32_t;
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-template <typename T>
-constexpr bool bit(T num, u8 pos) {
+bool bit8(uint8_t num, uint8_t pos) {
     return (num >> pos) & 1;
 }
 
-template <typename T>
-constexpr void setbit(T& num, u8 pos, bool val) {
-    num ^= (-(!!val) ^ num) & (1 << pos);
+bool bit16(uint16_t num, uint8_t pos) {
+    return (num >> pos) & 1;
+}
+
+bool bit32(uint32_t num, uint8_t pos) {
+    return (num >> pos) & 1;
+}
+
+void setbit8(uint8_t* num, uint8_t pos, bool val) {
+    *num ^= (-(!!val) ^ *num) & (1 << pos);
+}
+
+void setbit16(uint16_t* num, uint8_t pos, bool val) {
+    *num ^= (-(!!val) ^ *num) & (1 << pos);
+}
+
+void setbit32(uint32_t* num, uint8_t pos, bool val) {
+    *num ^= (-(!!val) ^ *num) & (1 << pos);
 }

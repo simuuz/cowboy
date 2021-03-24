@@ -1,34 +1,35 @@
 #pragma once
 #include "mem.h"
 
-constexpr int VRAM_SZ = 0x2000;
-constexpr int OAM_SZ = 0xa0;
+const int VRAM_SZ = 0x2000;
+const int OAM_SZ = 0xa0;
 
-class Ppu {
-public:
-    Ppu(bool skip);
-    void step(int cycles);
+typedef struct ppu_IO {
+    uint8_t bgp, scy, scx, lcdc;
+    uint8_t wx, wy, obp0, obp1;
+    uint8_t lyc, ly, stat;
+} ppu_io;
 
-    u8 pixels[160*144*3]{};
-    u8 background[256*256*3]{};
-    u8 window[256*256*3]{};
-    u8 vram[VRAM_SZ]{};
-    u8 oam[OAM_SZ]{};
-private:
-    Mem mem;
-    struct IO {
-        u8 bgp = 0, scy = 0, scx = 0, lcdc = 0;
-        u8 wx = 0, wy = 0, obp0 = 0, obp1 = 0;
-        u8 lyc = 0, ly = 0, stat = 0;
-        u8 read(u16 addr);
-        void write(Ppu& ppu, u16 addr, u8 val);
-    } io;
+typedef struct _ppu_t {
+    uint8_t pixels[160*144*3];
+    uint8_t background[256*256*3];
+    uint8_t window[256*256*3];
+    uint8_t vram[VRAM_SZ];
+    uint8_t oam[OAM_SZ];
+    ppu_io io;
+} ppu_t;
 
-    void do_background();
-    const u8 palette[12] = {
-        0x9f, 0xf4, 0xe5,
-        0x00, 0xb9, 0xbe,
-        0x00, 0x5f, 0x8c,
-        0x00, 0x2b, 0x59
-    };
+uint8_t read_io_ppu(ppu_io* io, uint16_t addr);
+void write_io_ppu(ppu_t* ppu, mem_t* mem, uint16_t addr, uint8_t val);
+
+void init_ppu(ppu_t* ppu, bool skip);
+void step_ppu(ppu_t* ppu, int cycles);
+
+const uint8_t palette[12] = {
+    0x9f, 0xf4, 0xe5,
+    0x00, 0xb9, 0xbe,
+    0x00, 0x5f, 0x8c,
+    0x00, 0x2b, 0x59
 };
+
+void do_background(ppu_t* ppu);
