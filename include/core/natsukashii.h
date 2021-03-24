@@ -2,7 +2,7 @@
 #include "bus.h"
 #include "cpu.h"
 
-const int cycles_frame = 4194300 / 60;
+static const int cycles_frame = 4194300 / 60;
 
 typedef struct _emu {
     bool rom_opened;

@@ -12,7 +12,7 @@ void init_ppu(ppu_t* ppu, bool skip) {
     }
 }
 
-void step(ppu_t* ppu, int cycles) {
+void step_ppu(ppu_t* ppu, int cycles) {
     
 }
 

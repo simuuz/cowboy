@@ -14,15 +14,14 @@ int main(int argc, char* argv[]) {
 
     ini_table_s* file = ini_table_create();
 
-    char* bootrom_path;
+    char* bootrom_path = "bootrom.bin";
 
     bool skip = false;
     if(!ini_table_read_from_file(file, "config.ini")) {
         printf("Generating config.ini\n");
-        ini_table_create_entry(file, "emulator", "bootrom", "bootrom.bin");
+        ini_table_create_entry(file, "emulator", "bootrom", bootrom_path);
         ini_table_create_entry(file, "emulator", "skip", "false");
         ini_table_write_to_file(file, "config.ini");
-        bootrom_path = ini_table_get_entry(file, "emulator", "bootrom");
     } else {
         ini_table_get_entry_as_bool(file, "emulator", "skip", &skip);
         bootrom_path = ini_table_get_entry(file, "emulator", "bootrom");
@@ -51,14 +50,14 @@ int main(int argc, char* argv[]) {
                     break;
                     case SDLK_BACKSPACE: {
                         reset_emu(&emu);
-                        if(bootrom_path == NULL) {
+                        if(!load_bootrom(emu.bus.mem, bootrom_path)) {
                             bootrom_path = tinyfd_openFileDialog("This is a one-time thing. You need to select a bootrom file and I'll remember it for you.",
                                                                     NULL, 0, NULL, "Valid GameBoy bootrom", 0);
                             
+                            load_bootrom(emu.bus.mem, bootrom_path);
                             ini_table_create_entry(file, "emulator", "bootrom", bootrom_path);
                             ini_table_write_to_file(file, "config.ini");
                         }
-                        load_bootrom(emu.bus.mem, bootrom_path);
                         char const* filter = "*.gb";
                         const char* rom_charstr = tinyfd_openFileDialog("Select a GameBoy rom", NULL, 1, &filter, "Valid GameBoy rom", 0);
 
@@ -69,7 +68,7 @@ int main(int argc, char* argv[]) {
                     } break;
                     case SDLK_ESCAPE:
                     reset_emu(&emu);
-                    rom = (char*)malloc(sizeof(char));
+                    rom = NULL;
                     break;
                     case SDLK_RETURN:
                     pause = !pause;

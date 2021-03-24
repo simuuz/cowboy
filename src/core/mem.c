@@ -59,10 +59,10 @@ void load_rom(mem_t* mem, char* filename) {
     }
 
     fseek(file, 0, SEEK_END);
-    long size = ftell(file);
+    int size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    mem->rom = (char*)malloc(size * sizeof(char));
+    mem->rom = (uint8_t*)malloc(size * sizeof(uint8_t));
     fread(mem->rom, size, 1, file);
     fclose(file);
 
@@ -74,16 +74,17 @@ void load_rom(mem_t* mem, char* filename) {
     printf("\nMBC: %s\nRom size: %s\nRam size: %s\n\n", MBCs[mem->MBC], ROMs[mem->ROM_SIZE], RAMs[mem->RAM_SIZE]);
 }
 
-void load_bootrom(mem_t* mem, char* filename) {
+bool load_bootrom(mem_t* mem, char* filename) {
     FILE* file = fopen(filename, "rb");
     
     if(file == NULL) {
         printf("Couldn't open %s\n", filename);
-        exit(1);
+        return false;
     }
 
     fread(mem->bootrom, 256, 1, file);
     fclose(file);
+    return true;
 }
 
 uint8_t read(mem_t* mem, uint16_t addr) {
@@ -161,7 +162,7 @@ uint8_t read(mem_t* mem, uint16_t addr) {
                    mem->MBC == MBC5_RUMBLE_RAM) {
             return (mem->extram_enable) ? mem->extram[0x2000 * mem->mbc5.ram_bank + (addr - 0xa000)] : 0xff;
         }
-        break;
+        return 0xff;
         case 0xc000 ... 0xdfff:
         return mem->wram[addr & 0x1fff];
         case 0xe000 ... 0xfdff:

@@ -3,3 +3,4 @@ build/
 roms/
 imgui.ini
 *.txt
+vgcore.*

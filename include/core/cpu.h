@@ -67,7 +67,7 @@ void push(bus_t* bus, uint16_t* sp, uint16_t val);
 uint16_t pop(bus_t* bus,uint16_t* sp);
 void handle_interrupts(cpu_t* cpu);
 
-const int opcycles[256] = {
+static const int opcycles[256] = {
   //0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
     4,  12, 8,  8,  4,  4,  8,  4,  20, 8,  8,  8,  4,  4,  8,  4, //0
 	4,  12, 8,  8,  4,  4,  8,  4,  12, 8,  8,  8,  4,  4,  8,  4, //1
@@ -87,7 +87,7 @@ const int opcycles[256] = {
     12, 12, 8,  4,  0,  16, 8,  16, 12, 8,  16, 4,  0,  0,  8, 16  //F
 };
 
-const int cbopcycles[256] = {
+static const int cbopcycles[256] = {
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8, //0
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8, //1
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8, //2

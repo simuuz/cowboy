@@ -9,7 +9,7 @@ void init_emu(emu_t *emu, bool skip) {
 void run(emu_t *emu) {
     while(emu->cpu.total_cycles < cycles_frame) {
         handle_timers(&emu->cpu);
-        step_ppu(&emu->cpu.bus->ppu, emu->cpu.total_cycles);
+        step_ppu(emu->cpu.bus->ppu, emu->cpu.total_cycles);
         step_cpu(&emu->cpu);
     }
 
@@ -18,7 +18,7 @@ void run(emu_t *emu) {
 
 void step_emu(emu_t* emu) {
     handle_timers(&emu->cpu);
-    step_ppu(&emu->cpu.bus->ppu, emu->cpu.total_cycles);
+    step_ppu(emu->cpu.bus->ppu, emu->cpu.total_cycles);
     step_cpu(&emu->cpu);
 
     if(emu->cpu.total_cycles >= cycles_frame) {

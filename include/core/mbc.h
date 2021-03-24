@@ -22,14 +22,14 @@ enum RAM_SIZE {
     RAM_128kb, RAM_64kb
 };
 
-const char* MBCs[] = {
+static const char* MBCs[33] = {
     "ROM Only", "MBC1", "MBC1+RAM", "MBC1+RAM+Battery", [5] = "MBC2", "MBC2+Battery", [8] = "ROM+RAM", "ROM+RAM+Battery",
     [0xB] = "MMM01", "MMM01+RAM", "MMM01+RAM+Battery", [0xF] = "MBC3+Timer+Battery", "MBC3+Timer+RAM+Battery",
     "MBC3", "MBC3+RAM", "MBC3+RAM+Battery", [0x19] = "MBC5", "MBC5+RAM", "MBC5+RAM+Battery",
     "MBC5+Rumble", "MBC5+Rumble+RAM", "MBC5+Rumble+RAM+Battery", [0x20] = "MBC6"
 };
 
-const char* ROMs[9] = {
+static const char* ROMs[9] = {
     " 32 KiB",
     " 64 KiB",
     "128 KiB",
@@ -41,7 +41,7 @@ const char* ROMs[9] = {
     "  8 MiB"
 };
 
-const char* RAMs[6] = {
+static const char* RAMs[6] = {
     "   None",
     "  2 KiB",
     "  8 KiB",
@@ -50,7 +50,7 @@ const char* RAMs[6] = {
     " 64 KiB"
 };
 
-const uint8_t MBC_BITMASK_LUT[9] = {
+static const uint8_t MBC_BITMASK_LUT[9] = {
     [1] = 3, 7, 0xF, 0x1F, 0x1F, 0x1F
 };
 

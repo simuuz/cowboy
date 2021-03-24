@@ -1,8 +1,8 @@
 #pragma once
 #include "mem.h"
 
-const int VRAM_SZ = 0x2000;
-const int OAM_SZ = 0xa0;
+static const int VRAM_SZ = 0x2000;
+static const int OAM_SZ = 0xa0;
 
 typedef struct ppu_IO {
     uint8_t bgp, scy, scx, lcdc;
@@ -25,7 +25,7 @@ void write_io_ppu(ppu_t* ppu, mem_t* mem, uint16_t addr, uint8_t val);
 void init_ppu(ppu_t* ppu, bool skip);
 void step_ppu(ppu_t* ppu, int cycles);
 
-const uint8_t palette[12] = {
+static const uint8_t palette[12] = {
     0x9f, 0xf4, 0xe5,
     0x00, 0xb9, 0xbe,
     0x00, 0x5f, 0x8c,
