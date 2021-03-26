@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
     bool pause = false;
     char* rom;
     emu_t emu;
+    init_emu(&emu, skip);
     
     while(!quit) {
         while(SDL_PollEvent(&event)) {

@@ -18,7 +18,7 @@ typedef struct _mem_t {
     mem_io io;
     uint8_t ie, MBC, ROM_SIZE, RAM_SIZE;
     uint8_t zero_bank, high_bank;
-    uint8_t* rom;
+    uint8_t *rom;
     uint8_t bootrom[BOOTROM_SZ];
     uint8_t extram[EXTRAM_SZ];
     uint8_t wram[WRAM_SZ];

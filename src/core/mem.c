@@ -20,6 +20,9 @@ void init_mem(mem_t* mem, bool skip) {
         mem->io.div = 0;
     }
 
+    mem->rom = NULL;
+
+    memset(mem->bootrom, 0, BOOTROM_SZ);
     memset(mem->extram, 0, EXTRAM_SZ);
     memset(mem->eram, 0, ERAM_SZ);
     memset(mem->wram, 0, WRAM_SZ);
@@ -52,6 +55,10 @@ void reset_mem(mem_t* mem) {
 
 void load_rom(mem_t* mem, char* filename) {
     FILE* file = fopen(filename, "rb");
+
+    if(mem->rom != NULL) {
+        mem->rom = NULL;
+    }
     
     if(file == NULL) {
         printf("Couldn't open %s\n", filename);
@@ -82,7 +89,7 @@ bool load_bootrom(mem_t* mem, char* filename) {
         return false;
     }
 
-    fread(mem->bootrom, 256, 1, file);
+    fread(mem->bootrom, BOOTROM_SZ, 1, file);
     fclose(file);
     return true;
 }
