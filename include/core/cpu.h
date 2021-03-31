@@ -1,73 +1,74 @@
 #pragma once
 #include "bus.h"
 
-typedef struct registers {
-    union {
-        struct {
-            uint8_t f, a;
-        };
-        uint16_t af;
-    };
-        
-    union {
-        struct {
-            uint8_t c, b;
-        };
-        uint16_t bc;
-    };
-
-    union {
-        struct {
-            uint8_t e, d;
-        };
-        uint16_t de;
-    };
-
-    union {
-        struct {
-            uint8_t l, h;
-        };
-        uint16_t hl;
-    };
-    
-    uint16_t sp, pc;
-} regs_t;
-
-typedef struct _cpu_t {
-    FILE* log;
-    bus_t* bus;
-    regs_t regs;
-    bool halt;
+class Cpu {
+public:
+    Cpu(bool skip);
+    void step();
+    void reset();
+    Bus bus;
+    bool halt = false;
+    int total_cycles = 0;
+    void handle_timers();
     bool skip;
-    bool ime;
-    bool ei;
-    int total_cycles;
-    int cycles;
-    int tima_cycles;
-    int div_cycles;
-} cpu_t;
+private:
+    struct registers {
+        union {
+            struct {
+                byte f, a;
+            };
+            half af;
+        };
+            
+        union {
+            struct {
+                byte c, b;
+            };
+            half bc;
+        };
 
-void init_cpu(cpu_t* cpu, bool skip);
+        union {
+            struct {
+                byte e, d;
+            };
+            half de;
+        };
 
-void step_cpu(cpu_t* cpu);
-void reset_cpu(cpu_t* cpu);
-void handle_timers(cpu_t* cpu);
+        union {
+            struct {
+                byte l, h;
+            };
+            half hl;
+        };
+        
+        half sp = 0, pc = 0;
+    } regs;
 
-void update_f(uint8_t* f, bool z, bool n, bool h, bool c);
-bool cond(uint8_t* f, uint8_t opcode);
+    void update_f(bool z, bool n, bool h, bool c);
+    bool cond(byte opcode);
 
-uint16_t read_r16(regs_t regs, int group, uint8_t bits);
-void write_r16(regs_t* regs, int group, uint8_t bits, uint16_t val);
+    template <int group>
+    half read_r16(byte bits);
+    template <int group>
+    void write_r16(byte bits, half val);
 
-uint8_t read_r8(cpu_t cpu, uint8_t bits);
-void write_r8(cpu_t* cpu, uint8_t bits, uint8_t value);
+    byte read_r8(byte bits);
+    void write_r8(byte bits, byte value);
 
-void execute(cpu_t* cpu, uint8_t opcode);
-void push(bus_t* bus, uint16_t* sp, uint16_t val);
-uint16_t pop(bus_t* bus,uint16_t* sp);
-void handle_interrupts(cpu_t* cpu);
+    void execute(byte opcode);
+    void push(half val);
+    half pop();
+    FILE* log;
+    void handle_interrupts();
+    int cycles = 0;
+    int tima_cycles = 0;
+    int div_cycles = 0;
 
-static const int opcycles[256] = {
+    bool ime = false;
+    bool ei = false;
+};
+
+inline int opcycles[256] = {
   //0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
     4,  12, 8,  8,  4,  4,  8,  4,  20, 8,  8,  8,  4,  4,  8,  4, //0
 	4,  12, 8,  8,  4,  4,  8,  4,  12, 8,  8,  8,  4,  4,  8,  4, //1
@@ -87,7 +88,7 @@ static const int opcycles[256] = {
     12, 12, 8,  4,  0,  16, 8,  16, 12, 8,  16, 4,  0,  0,  8, 16  //F
 };
 
-static const int cbopcycles[256] = {
+inline int cbopcycles[256] = {
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8, //0
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8, //1
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8, //2

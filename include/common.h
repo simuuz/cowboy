@@ -1,29 +1,31 @@
 #pragma once
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <iostream>
+#include <fstream>
+#include <filesystem>
 
-static bool bit8(uint8_t num, uint8_t pos) {
+using byte = uint8_t;
+using half = uint16_t;
+using word = uint32_t;
+using sbyte = int8_t;
+using shalf = int16_t;
+using sword = int32_t;
+
+template <typename T>
+static constexpr bool bit(T num, byte pos) {
     return (num >> pos) & 1;
 }
 
-static bool bit16(uint16_t num, uint8_t pos) {
+template <typename T, byte pos>
+static constexpr bool bit(T num) {
     return (num >> pos) & 1;
 }
 
-static bool bit32(uint32_t num, uint8_t pos) {
-    return (num >> pos) & 1;
-}
-
-static void setbit8(uint8_t* num, uint8_t pos, bool val) {
+template <typename T>
+void setbit(T& num, uint8_t pos, bool val) {
     *num ^= (-(!!val) ^ *num) & (1 << pos);
 }
 
-static void setbit16(uint16_t* num, uint8_t pos, bool val) {
-    *num ^= (-(!!val) ^ *num) & (1 << pos);
-}
-
-static void setbit32(uint32_t* num, uint8_t pos, bool val) {
-    *num ^= (-(!!val) ^ *num) & (1 << pos);
+template <typename T, byte pos>
+void setbit(T& num, bool val) {
+    num ^= (-(!!val) ^ num) & (1 << pos);
 }
