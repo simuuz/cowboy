@@ -2,6 +2,11 @@
 
 Bus::Bus(bool skip) : mem(skip), ppu(skip) {  }
 
+void Bus::reset() {
+    ppu.reset();
+    mem.reset();
+}
+
 byte Bus::read_byte(half addr) {
     if(addr >= 0x8000 && addr <= 0x9fff)
         return ppu.vram[addr & 0x1fff];

@@ -54,8 +54,8 @@ void Cpu::step() {
                   regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc, 
                   bus.read_byte(regs.pc), bus.read_byte(regs.pc + 1), bus.read_byte(regs.pc + 2), bus.read_byte(regs.pc + 3));
 
-    if(regs.pc == 0x100)
-        exit(1);
+    //if(regs.pc == 0x100)
+    //    exit(1);
 
     if(!halt) {
         byte opcode = bus.next_byte(regs.pc, regs.pc);

@@ -10,7 +10,7 @@ using clk = std::chrono::high_resolution_clock;
 int main(int argc, char* argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_Window* window = SDL_CreateWindow("Cowboy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 3, 144 * 3, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow("natsukashii", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 3, 144 * 3, SDL_WINDOW_SHOWN);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
     
     mINI::INIFile file("config.ini");
@@ -92,8 +92,8 @@ int main(int argc, char* argv[]) {
         float frametime = std::chrono::duration<float, std::milli>(clk::now() - start).count();
         char fps_frametime[32];
         snprintf(fps_frametime, 32, " | %.2f fps | %.2f ms", 1000 / frametime, frametime);
-        SDL_SetWindowTitle(window, (emu.cpu.bus.mem.rom_opened) ? ("Cowboy" + std::string(" - \"") + rom.stem().string() + "\"" + fps_frametime).c_str()
-                                                        : ("Cowboy" + std::string(" - Nothing playing") + fps_frametime).c_str());
+        SDL_SetWindowTitle(window, (emu.cpu.bus.mem.rom_opened) ? ("natsukashii" + std::string(" - \"") + rom.stem().string() + "\"" + fps_frametime).c_str()
+                                                        : ("natsukashii" + std::string(" - Nothing playing") + fps_frametime).c_str());
 
         SDL_Delay(1);
     }

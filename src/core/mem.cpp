@@ -93,7 +93,7 @@ byte Mem::read(half addr) {
         if (io.bootrom == 0) {
             return bootrom[addr];
         } else {
-            if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
+            if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {        //TODO: make own MBC class and handle them like that
                 if (mbc1.mode) {
                     if (ROM_SIZE < ROM_1mb) {
                         zero_bank = 0;

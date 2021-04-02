@@ -2,6 +2,7 @@
 
 void Emu::reset() {
     cpu.reset();
+    cpu.bus.reset();
 }
 
 void Emu::run() {
