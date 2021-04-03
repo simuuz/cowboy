@@ -13,6 +13,6 @@ public:
     void load_rom(std::string filename);
     void load_bootrom(std::string filename);
     void reset();
-    Ppu ppu;
     Mem mem;
+    Ppu ppu;
 };

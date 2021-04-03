@@ -21,8 +21,8 @@ static constexpr bool bit(T num) {
 }
 
 template <typename T>
-void setbit(T& num, uint8_t pos, bool val) {
-    *num ^= (-(!!val) ^ *num) & (1 << pos);
+void setbit(T& num, byte pos, bool val) {
+    num ^= (-(!!val) ^ num) & (1 << pos);
 }
 
 template <typename T, byte pos>

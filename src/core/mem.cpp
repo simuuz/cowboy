@@ -92,77 +92,78 @@ byte Mem::read(half addr) {
         case 0 ... 0xff:
         if (io.bootrom == 0) {
             return bootrom[addr];
-        } else {
-            if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {        //TODO: make own MBC class and handle them like that
-                if (mbc1.mode) {
-                    if (ROM_SIZE < ROM_1mb) {
-                        zero_bank = 0;
-                    } else if (ROM_SIZE == ROM_1mb) {
-                        setbit<byte, 5>(zero_bank, mbc1.ram_bank & 1);
-                    } else if (ROM_SIZE == ROM_2mb) {
-                        setbit<byte, 5>(zero_bank, mbc1.ram_bank & 1);
-                        setbit<byte, 6>(zero_bank, mbc1.ram_bank >> 1);
-                    }
-                    return rom[0x4000 * zero_bank + addr];
-                } else {
-                    return rom[addr];
-                }
-            } else if (MBC == MBC5 || MBC == MBC5_BATTERY || MBC == MBC5_RAM ||
-                       MBC == MBC5_RUMBLE || MBC == MBC5_RUMBLE_BATTERY ||
-                       MBC == MBC5_RUMBLE_RAM) {
-                return rom[addr];
-            }
-        }
-        break;
-        case 0x100 ... 0x3fff:
-        if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
+        } else {                        //TODO: make own MBC class and handle them like that
             if (mbc1.mode) {
-                if (ROM_SIZE < ROM_1mb) {
+                switch(ROM_SIZE) {
+                    case ROM_32kb ... ROM_512kb:
                     zero_bank = 0;
-                } else if (ROM_SIZE == ROM_1mb) {
+                    break;
+                    case ROM_1mb:
                     setbit<byte, 5>(zero_bank, mbc1.ram_bank & 1);
-                } else if (ROM_SIZE == ROM_2mb) {
+                    break;
+                    case ROM_2mb:
                     setbit<byte, 5>(zero_bank, mbc1.ram_bank & 1);
                     setbit<byte, 6>(zero_bank, mbc1.ram_bank >> 1);
+                    break;
                 }
                 return rom[0x4000 * zero_bank + addr];
             } else {
                 return rom[addr];
             }
-        } else if (MBC == MBC5 || MBC == MBC5_BATTERY || MBC == MBC5_RAM ||
-                   MBC == MBC5_RUMBLE || MBC == MBC5_RUMBLE_BATTERY ||
-                   MBC == MBC5_RUMBLE_RAM) {
+        }
+        break;
+        case 0x100 ... 0x3fff:
+        if (mbc1.mode) {
+            switch(ROM_SIZE) {
+                case ROM_32kb ... ROM_512kb:
+                zero_bank = 0;
+                break;
+                case ROM_1mb:
+                setbit<byte, 5>(zero_bank, mbc1.ram_bank & 1);
+                break;
+                case ROM_2mb:
+                setbit<byte, 5>(zero_bank, mbc1.ram_bank & 1);
+                setbit<byte, 6>(zero_bank, mbc1.ram_bank >> 1);
+                break;
+            }
+            return rom[0x4000 * zero_bank + addr];
+        } else {
             return rom[addr];
         }
         break;
         case 0x4000 ... 0x7fff:
-        if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
-            if (ROM_SIZE < ROM_1mb) {
-                high_bank = mbc1.rom_bank & MBC_BITMASK_LUT[ROM_SIZE];
-            } else if (ROM_SIZE == ROM_1mb) {
-                high_bank = mbc1.rom_bank & MBC_BITMASK_LUT[ROM_SIZE];
-                setbit<byte, 5>(high_bank, mbc1.ram_bank & 1);
-            } else if (ROM_SIZE == ROM_2mb) {
-                high_bank = mbc1.rom_bank & MBC_BITMASK_LUT[ROM_SIZE];
-                setbit<byte, 5>(high_bank, mbc1.ram_bank & 1);
-                setbit<byte, 6>(high_bank, (mbc1.ram_bank >> 1) & 1);
-            }
-            return rom[0x4000 * high_bank + (addr - 0x4000)];
-        } else if (MBC == MBC5 || MBC == MBC5_BATTERY || MBC == MBC5_RAM ||
-                   MBC == MBC5_RUMBLE || MBC == MBC5_RUMBLE_BATTERY ||
-                   MBC == MBC5_RUMBLE_RAM) {
-            return rom[0x4000 * mbc5.rom_bank + (addr - 0x4000)];
+        switch(ROM_SIZE) {
+            case ROM_32kb:
+            high_bank = 1;
+            break;
+            case ROM_64kb ... ROM_512kb:
+            high_bank = mbc1.rom_bank & MBC_BITMASK_LUT[ROM_SIZE];
+            break;
+            case ROM_1mb:
+            high_bank = mbc1.rom_bank & MBC_BITMASK_LUT[ROM_SIZE];
+            setbit<byte, 5>(high_bank, mbc1.ram_bank & 1);
+            break;
+            case ROM_2mb:
+            high_bank = mbc1.rom_bank & MBC_BITMASK_LUT[ROM_SIZE];
+            setbit<byte, 5>(high_bank, mbc1.ram_bank & 1);
+            setbit<byte, 6>(high_bank, mbc1.ram_bank >> 1);
+            break;
         }
+        return rom[0x4000 * high_bank + (addr - 0x4000)];
         break;
         case 0xa000 ... 0xbfff:
-        if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
-            return (extram_enable) ? extram[addr & 0x1fff] : 0xff;
-        } else if (MBC == MBC5 || MBC == MBC5_BATTERY || MBC == MBC5_RAM ||
-                   MBC == MBC5_RUMBLE || MBC == MBC5_RUMBLE_BATTERY ||
-                   MBC == MBC5_RUMBLE_RAM) {
-            return (extram_enable) ? extram[0x2000 * mbc5.ram_bank + (addr - 0xa000)] : 0xff;
+        if (extram_enable) {
+            if (RAM_SIZE == RAM_2kb || RAM_SIZE == RAM_8kb) {
+                return extram[(addr - 0xa000) % RAM_SIZE];
+            } else if (RAM_SIZE == RAM_32kb) {
+                if (mbc1.mode)
+                    return extram[0x2000 * mbc1.ram_bank + (addr - 0xa000)];
+                else
+                    return extram[addr - 0xa000];
+            }
+        } else {
+            return 0xff;
         }
-        return 0xff;
         case 0xc000 ... 0xdfff:
         return wram[addr & 0x1fff];
         case 0xe000 ... 0xfdff:
@@ -185,48 +186,24 @@ void Mem::write(half addr, byte val) {
         break;
         case 0x2000 ... 0x3fff: {
             byte mask = val & MBC_BITMASK_LUT[ROM_SIZE];
-            if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
-                mbc1.rom_bank = (mask == 0) ? 1 : mask & 0x1f;
-            } else if (MBC == MBC5 || MBC == MBC5_BATTERY || MBC == MBC5_RAM ||
-                       MBC == MBC5_RUMBLE || MBC == MBC5_RUMBLE_BATTERY ||
-                       MBC == MBC5_RUMBLE_RAM) {
-                if (addr <= 0x2fff) {
-                    mbc5.rom_bank = val;
-                } else if (addr >= 0x3000 && addr <= 0x3fff) {
-                    byte temp = mbc5.rom_bank;
-                    setbit<byte, 8>(temp, val & 1);
-                    mbc5.rom_bank = temp;
-                }
-            }
+            mbc1.rom_bank = (mask == 0) ? 1 : mask;
         }
         break;
         case 0x4000 ... 0x5fff:
-        if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
-            mbc1.ram_bank = val & 3;
-        } else if (MBC == MBC5 || MBC == MBC5_BATTERY || MBC == MBC5_RAM ||
-                   MBC == MBC5_RUMBLE || MBC == MBC5_RUMBLE_BATTERY ||
-                   MBC == MBC5_RUMBLE_RAM) {
-            mbc5.ram_bank = val & 0xf;
-        }
+        mbc1.ram_bank = val & 3;
         break;
         case 0x6000 ... 0x7fff:
         mbc1.mode = val & 1;
         break;
         case 0xa000 ... 0xbfff:
         if (extram_enable) {
-            if (MBC == MBC1 || MBC == MBC1_BATTERY || MBC == MBC1_RAM) {
-                if (RAM_SIZE == RAM_2kb || RAM_SIZE == RAM_8kb) {
-                    extram[(addr - 0xa000) % RAM_SIZE] = val;
-                } else if (RAM_SIZE == RAM_32kb) {
-                    if (mbc1.mode)
-                        extram[0x2000 * mbc1.ram_bank + (addr - 0xa000)] = val;
-                    else
-                        extram[addr - 0xa000] = val;
-                }
-            } else if (MBC == MBC5 || MBC == MBC5_BATTERY || MBC == MBC5_RAM ||
-                       MBC == MBC5_RUMBLE || MBC == MBC5_RUMBLE_BATTERY ||
-                       MBC == MBC5_RUMBLE_RAM) {
-                extram[0x2000 * mbc5.ram_bank + (addr - 0xa000)] = val;
+            if (RAM_SIZE == RAM_2kb || RAM_SIZE == RAM_8kb) {
+                extram[(addr - 0xa000) % RAM_SIZE] = val;
+            } else if (RAM_SIZE == RAM_32kb) {
+                if (mbc1.mode)
+                    extram[0x2000 * mbc1.ram_bank + (addr - 0xa000)] = val;
+                else
+                    extram[addr - 0xa000] = val;
             }
         }
         break;
@@ -270,7 +247,10 @@ byte Mem::read_io(half addr) {
 void Mem::write_io(half addr, byte val) {
     switch(addr & 0xff) {
         //case 0x00: handle_joypad(val); break;
-        case 0x01: printf("%c", val); break;
+        case 0x01: 
+        printf("%c", val);
+        fflush(stdout);
+        break;
         case 0x02: break;
         case 0x04: io.div = 0; break;
         case 0x05: io.tima = val; break;

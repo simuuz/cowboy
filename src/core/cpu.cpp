@@ -1,6 +1,6 @@
 #include "cpu.h"
 
-Cpu::Cpu(bool skip) : skip(skip), bus(skip) {
+Cpu::Cpu(bool skip) : bus(skip), skip(skip) {
     log = fopen("log.txt", "w");
     halt = false;
     ime = false;
@@ -50,12 +50,9 @@ void Cpu::reset() {
 void Cpu::step() {
     handle_interrupts();
 
-    fprintf(log, "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X REGS.SP: %04X PC: 00:%04X (%02X %02X %02X %02X)\n",
+    fprintf(log, "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X SP: %04X PC: 00:%04X (%02X %02X %02X %02X)\n",
                   regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc, 
                   bus.read_byte(regs.pc), bus.read_byte(regs.pc + 1), bus.read_byte(regs.pc + 2), bus.read_byte(regs.pc + 3));
-
-    //if(regs.pc == 0x100)
-    //    exit(1);
 
     if(!halt) {
         byte opcode = bus.next_byte(regs.pc, regs.pc);

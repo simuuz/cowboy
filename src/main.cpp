@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     mINI::INIFile file("config.ini");
     mINI::INIStructure ini;
     file.read(ini);
-    bool skip = ini["emulator"]["skip_bootrom"] == "true";
+    bool skip = ini["emulator"]["skip"] == "true";
 
     Emu emu(skip);
 

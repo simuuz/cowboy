@@ -50,8 +50,8 @@ constexpr char* RAMs[6] = {
     " 64 KiB"
 };
 
-constexpr byte MBC_BITMASK_LUT[9] = {
-    0, 3, 7, 0xF, 0x1F, 0x1F, 0x1F, 0, 0
+constexpr byte MBC_BITMASK_LUT[7] = {
+    0, 3, 7, 0xF, 0x1F, 0x1F, 0x1F
 };
 
 struct mbc1_t {
