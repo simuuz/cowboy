@@ -3,35 +3,80 @@
 
 constexpr int VRAM_SZ = 0x2000;
 constexpr int OAM_SZ = 0xa0;
+constexpr int WIDTH = 160;
+constexpr int HEIGHT = 144;
+constexpr int FBSIZE = WIDTH * HEIGHT * 3;
 
-class Ppu {
+struct Sprite
+{
+  shalf x, y;
+  byte tileNum;
+  bool priority, xflip, yflip, palNum;
+
+  Sprite(shalf x, shalf y, byte tileNum, byte attr) : tileNum(tileNum)
+  {
+    this->y = y - 16;
+    this->x = x - 8;
+    priority = bit<byte, 7>(attr);
+    yflip = bit<byte, 6>(attr);
+    xflip = bit<byte, 5>(attr);
+    palNum = bit<byte, 4>(attr);
+  }
+};
+
+class Ppu
+{
 public:
-    Ppu(bool skip);
-    void step(int cycles);
-    void reset();
+  Ppu(bool skip);
+  void reset();
+  void step(int cycles);
+  bool render = false;
 
-    byte pixels[160*144*3]{};
-    byte background[256*256*3]{};
-    byte window[256*256*3]{};
-    byte vram[VRAM_SZ]{};
-    byte oam[OAM_SZ]{};
-    friend class Bus;
+  byte pixels[FBSIZE]{};
+  byte vram[VRAM_SZ]{};
+  byte oam[OAM_SZ]{};
+  friend class Bus;
+
 private:
-    struct IO {
-        byte bgp = 0, scy = 0, scx = 0, lcdc = 0;
-        byte wx = 0, wy = 0, obp0 = 0, obp1 = 0;
-        byte lyc = 0, ly = 0, stat = 0;
-    } io;
-    
-    bool skip = false;
-    void write_io(Mem& mem, half addr, byte val);
-    byte read_io(half addr);
+  enum Mode
+  {
+    HBlank,
+    VBlank,
+    OAM,
+    LCDTransfer
+  } mode;
 
-    void do_background();
-    const byte palette[12] = {
-        0x9f, 0xf4, 0xe5,
-        0x00, 0xb9, 0xbe,
-        0x00, 0x5f, 0x8c,
-        0x00, 0x2b, 0x59
-    };
+  struct IO
+  {
+    byte bgp = 0, scy = 0, scx = 0, lcdc = 0;
+    byte wx = 0, wy = 0, obp0 = 0, obp1 = 0;
+    byte lyc = 0, ly = 0, stat = 0;
+  } io;
+
+  bool statIRQ = false;
+  bool vblankIRQ = false;
+  word fbIndex = 0;
+  bool disabled = false;
+
+  int curr_cycles = 0;
+
+  const byte palette[12] = {
+    0xe0, 0xf8, 0xd0,
+    0x88, 0xc0, 0x70,
+    0x34, 0x68, 0x56,
+    0x08, 0x18, 0x20
+  };
+
+  bool skip = false;
+  void write_io(Mem& mem, half addr, byte val);
+  byte read_io(half addr);
+  template <typename T>
+  void write_vram(half addr, T val);
+  template <typename T>
+  T read_vram(half addr);
+  void change_mode(Mode m);
+  bool can_we_has_sprite(bool priority);
+  void renderOBJs();
+  void renderBGs();
+  void scanline();
 };
