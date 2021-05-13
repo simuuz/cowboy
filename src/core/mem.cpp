@@ -160,7 +160,7 @@ byte Mem::read_io(half addr)
   switch (addr & 0xff)
   {
   case 0x00:
-    return 0xff;
+    return get_joypad();
   case 0x04:
     return io.div;
   case 0x05:
@@ -180,7 +180,8 @@ byte Mem::read_io(half addr)
   case 0x50:
     return io.bootrom;
   default:
-    printf("IO READ: Unsupported IO %02x\n", addr & 0xff);
+    printf("IO READ: Unsupported IO %04X\n", addr);
+    exit(1);
   }
 }
 
@@ -188,9 +189,10 @@ void Mem::write_io(half addr, byte val)
 {
   switch (addr & 0xff)
   {
-  // case 0x00: handle_joypad(val); break;
+  case 0x00:
+    handle_joypad(val);
+    break;
   case 0x01:
-    printf("%c", val);
     break;
   case 0x02:
     break;
@@ -216,7 +218,76 @@ void Mem::write_io(half addr, byte val)
   case 0x50:
     io.bootrom = val;
     break;
+  case 0x7f:
+    break;
   default:
     printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);
+    exit(1);
   }
+}
+
+byte Mem::get_joypad()
+{
+  byte num = 0xff;
+  setbit<byte, 5>(num, !button);
+  setbit<byte, 4>(num, !button);
+
+  switch(evt.type)
+  {
+  case SDL_KEYDOWN:
+    switch(evt.key.keysym.sym)
+    {
+    case SDLK_RETURN:
+      if(button)
+      {
+        setbit<byte, 3>(num, 0);
+      }
+      break;      
+    case SDLK_d:
+      if(button)
+      {
+        setbit<byte, 2>(num, 0);
+      }
+      break;
+    case SDLK_a:
+      if(button)
+      {
+        setbit<byte, 1>(num, 0);
+      }
+      break;      
+    case SDLK_s:
+      if(button)
+      {
+        setbit<byte, 0>(num, 0);
+      }
+      break;
+    case SDLK_DOWN:
+      if(dpad)
+      {
+        setbit<byte, 3>(num, 0);
+      }
+      break;      
+    case SDLK_UP:
+      if(dpad)
+      {
+        setbit<byte, 2>(num, 0);
+      }
+      break;
+    case SDLK_LEFT:
+      if(dpad)
+      {
+        setbit<byte, 1>(num, 0);
+      }
+      break;      
+    case SDLK_RIGHT:
+      if(dpad)
+      {
+        setbit<byte, 0>(num, 0);
+      }
+      break;
+    }
+    break;
+  }
+
+  return num;
 }

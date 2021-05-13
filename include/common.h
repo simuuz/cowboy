@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <SDL2/SDL.h>
 
 using byte = uint8_t;
 using half = uint16_t;

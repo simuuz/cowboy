@@ -1,7 +1,5 @@
 build-linux/
 .vscode/
 roms/
-imgui.ini
 *.txt
 vgcore.*
-DMG_ROM.bin

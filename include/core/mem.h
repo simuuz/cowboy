@@ -28,16 +28,19 @@ public:
 
   void writeROM(half addr, byte val)
   {
-    printf("Wrote to ROM, addr: %08X\n", addr);
-    exit(1);
+    printf("Tried to write to ROM, addr: %04X val: %02X\n", addr, val);
+    //exit(1);
   }
 
   byte readERAM(half addr)
   {
+    printf("Read ERAM not available, addr: %04X", addr);
     return 0xff;
   }
   
-  void writeERAM(half addr, byte val) {  }
+  void writeERAM(half addr, byte val) { 
+    printf("Write ERAM not available, addr: %04X val: %02X\n", addr, val);
+  }
 private:
   std::vector<byte> rom;
 };
@@ -69,12 +72,14 @@ public:
         switch (romSize)
         {
         case 0 ... 4:
-          return rom[addr];
+          zeroBank = 0;
+          break;
         case 5:
-          setbit<byte, 5>(zeroBank, ramBank & 1);
+          setbit<byte, 5>(zeroBank, ramBank.raw & 1);
           break;
         case 6:
-          setbit<byte, 5>(zeroBank, ramBank >> 1);
+          setbit<byte, 5>(zeroBank, ramBank.raw & 1);
+          setbit<byte, 6>(zeroBank, ramBank.raw >> 1);
           break;
         }
         return rom[0x4000 * zeroBank + addr];
@@ -85,19 +90,15 @@ public:
       }
       break;
     case 0x4000 ... 0x7fff:
+      highBank = romBank.raw & bitmasks[romSize];
       switch(romSize)
       {
-        case 0 ... 4:
-          highBank = romBank & bitmasks[romSize];
-          break;
         case 5:
-          highBank = romBank & bitmasks[romSize];
-          setbit<byte, 5>(highBank, ramBank & 1);
+          setbit<byte, 5>(highBank, ramBank.raw & 1);
           break;
         case 6:
-          highBank = romBank & bitmasks[romSize];
-          setbit<byte, 5>(highBank, ramBank & 1);
-          setbit<byte, 6>(highBank, ramBank >> 1);
+          setbit<byte, 5>(highBank, ramBank.raw & 1);
+          setbit<byte, 6>(highBank, ramBank.raw >> 1);
           break;
       }
       return rom[0x4000 * highBank + (addr - 0x4000)];
@@ -111,13 +112,13 @@ public:
     {
       if(ramSize == 0x01 || ramSize == 0x02)
       {
-        return ram[(addr - 0xa000) % (RAM_SIZES[ramSize])];
+        return ram[(addr - 0xa000) % RAM_SIZES[ramSize]];
       }
       else if (ramSize == 0x03)
       {
         if(mode)
         {
-          return ram[0x2000 * ramBank + (addr - 0xa000)];
+          return ram[0x2000 * ramBank.raw + (addr - 0xa000)];
         }
         else
         {
@@ -125,8 +126,10 @@ public:
         }
       }
     }
-
-    return 0xff;
+    else
+    {
+      return 0xff;
+    }
   }
 
   void writeROM(half addr, byte val)
@@ -137,11 +140,11 @@ public:
       ramEnable = ((val & 0xf) == 0xa);
       break;
     case 0x2000 ... 0x3fff:
-      romBank = val & bitmasks[romSize];
-      romBank = (val == 0) ? 1 : romBank;
+      romBank.raw = val & bitmasks[romSize];
+      romBank.raw = (romBank.raw == 0) ? 1 : romBank.raw;
       break;
     case 0x4000 ... 0x5fff:
-      ramBank = val & 3;
+      ramBank.raw = val & 3;
       break;
     case 0x6000 ... 0x7fff:
       mode = val & 1;
@@ -155,13 +158,13 @@ public:
     {
       if(ramSize == 0x01 || ramSize == 0x02)
       {
-        ram[(addr - 0xa000) % (RAM_SIZES[ramSize])] = val;
+        ram[(addr - 0xa000) % RAM_SIZES[ramSize]] = val;
       }
       else if (ramSize == 0x03)
       {
         if(mode)
         {
-          ram[0x2000 * ramBank + (addr - 0xa000)] = val;
+          ram[0x2000 * ramBank.raw + (addr - 0xa000)] = val;
         }
         else
         {
@@ -171,8 +174,13 @@ public:
     }
   }
 private:
-  byte romBank = 0;
-  byte ramBank = 0;
+  struct {
+    unsigned raw:5;
+  } romBank;
+
+  struct {
+    unsigned raw:2;
+  } ramBank;
   bool mode = false;
   bool ramEnable = false;
   byte romSize = 0;
@@ -263,6 +271,8 @@ public:
   MBC5()
   { 
     std::fill(ram.begin(), ram.end(), 0);
+    romBank.raw = 0;
+    ramBank.raw = 0;
   }
 
   void loadROM(std::vector<byte>& rom)
@@ -277,9 +287,7 @@ public:
     case 0 ... 0x3fff:
       return rom[addr];
     case 0x4000 ... 0x7fff:
-      return rom[addr * (romBank.raw & 0x100) + (addr - 0x4000)];
-    default:
-      break;
+      return rom[0x4000 * romBank.raw + (addr - 0x4000)];
     }
   }
 
@@ -442,22 +450,38 @@ public:
   struct IO
   {
     byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
-    void handle_joypad(byte val);
   } io;
+
+  void update_event(SDL_Event& evt)
+  {
+    this->evt = evt;
+  }
+
   friend class Ppu;
   bool rom_opened = false;
 
 private:
+  SDL_Event evt;
   Cart cart;
-  Cart createCart(std::vector<byte>& rom);
+  
   void write_io(half addr, byte val);
   byte read_io(half addr);
-  byte getIF();
+  
   byte bootrom[BOOTROM_SZ];
   byte extram[EXTRAM_SZ];
   byte wram[WRAM_SZ];
   byte eram[ERAM_SZ];
   byte hram[HRAM_SZ];
-  byte MBC = 0;
   std::vector<byte> rom;
+  
+  bool dpad = false;
+  bool button = false;
+
+  void handle_joypad(byte val)
+  {
+    button = !bit<byte, 5>(val);
+    dpad = !bit<byte, 4>(val);
+  }
+
+  byte get_joypad();
 };

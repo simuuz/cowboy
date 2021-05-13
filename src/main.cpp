@@ -1,4 +1,3 @@
-#include <SDL2/SDL.h>
 #include <chrono>
 #include <filesystem>
 #include "ini.h"
@@ -7,8 +6,8 @@
 
 using clk = std::chrono::high_resolution_clock;
 
-constexpr int DELAY = 16;
-constexpr int CYCLES_PER_FRAME = 4194300 / DELAY;
+constexpr int DELAY = 1;
+constexpr int CYCLES_PER_FRAME = 4194300 / (1000 / DELAY);
 
 int main(int argc, char* argv[])
 {
@@ -34,72 +33,64 @@ int main(int argc, char* argv[])
 
   while (!quit)
   {
-    while (SDL_PollEvent(&event))
+    SDL_PollEvent(&event);
+    cpu.bus.mem.update_event(event);
+    switch (event.type)
     {
-      switch (event.type)
-      {
-      case SDL_QUIT:
+    case SDL_QUIT:
+      quit = true;
+      break;
+    case SDL_WINDOWEVENT:
+      if (event.window.event == SDL_WINDOWEVENT_CLOSE &&
+          event.window.windowID == SDL_GetWindowID(window))
         quit = true;
-        break;
-      case SDL_WINDOWEVENT:
-        if (event.window.event == SDL_WINDOWEVENT_CLOSE &&
-            event.window.windowID == SDL_GetWindowID(window))
-          quit = true;
-        break;
-      case SDL_KEYDOWN:
-        switch (event.key.keysym.sym)
+      break;
+    case SDL_KEYDOWN:
+      switch (event.key.keysym.sym)
+      {
+      case SDLK_BACKSPACE:
+      {
+        cpu.reset();
+        cpu.bus.reset();
+        std::string bootrom = ini["emulator"]["bootrom"];
+        if (bootrom.empty())
         {
-        case SDLK_p:
-          if (pause && cpu.bus.mem.rom_opened)
-          {
-            cpu.step();
-            cpu.bus.ppu.step(cpu.cycles);
-          }
-          break;
-        case SDLK_BACKSPACE:
+          bootrom =
+              tinyfd_openFileDialog("This is a one-time thing. You need to select a bootrom file "
+                                    "and I'll remember it for you.",
+                                    (std::filesystem::current_path().string() + "/").c_str(), 0,
+                                    nullptr, "Valid GameBoy bootrom", 0);
+          ini["emulator"]["bootrom"] = bootrom;
+          file.write(ini);
+        }
+
+        cpu.bus.mem.load_bootrom(bootrom);
+        char const* filter = "*.gb";
+        const char* rom_charstr = tinyfd_openFileDialog(
+            "Select a GameBoy rom", (std::filesystem::current_path().string() + "/").c_str(), 1,
+            &filter, "Valid GameBoy rom", 0);
+
+        if (rom_charstr != nullptr)
         {
-          cpu.reset();
-          cpu.bus.reset();
-          std::string bootrom = ini["emulator"]["bootrom"];
-          if (bootrom.empty())
-          {
-            bootrom =
-                tinyfd_openFileDialog("This is a one-time thing. You need to select a bootrom file "
-                                      "and I'll remember it for you.",
-                                      (std::filesystem::current_path().string() + "/").c_str(), 0,
-                                      nullptr, "Valid GameBoy bootrom", 0);
-            ini["emulator"]["bootrom"] = bootrom;
-            file.write(ini);
-          }
-
-          cpu.bus.mem.load_bootrom(bootrom);
-          char const* filter = "*.gb";
-          const char* rom_charstr = tinyfd_openFileDialog(
-              "Select a GameBoy rom", (std::filesystem::current_path().string() + "/").c_str(), 1,
-              &filter, "Valid GameBoy rom", 0);
-
-          if (rom_charstr != nullptr)
-          {
-            rom = rom_charstr;
-            cpu.bus.mem.load_rom(rom.string());
-          }
+          rom = rom_charstr;
+          cpu.bus.mem.load_rom(rom.string());
         }
+      }
+      break;
+      case SDLK_ESCAPE:
+        cpu.reset();
+        cpu.bus.reset();
+        rom.clear();
         break;
-        case SDLK_ESCAPE:
-          cpu.reset();
-          cpu.bus.reset();
-          rom.clear();
-          break;
-        case SDLK_RETURN:
-          pause = !pause;
-          break;
-        case SDLK_RSHIFT:
-          cpu.reset();
-          cpu.bus.reset();
-          if (!rom.empty())
-            cpu.bus.mem.load_rom(rom.string());
-          break;
-        }
+      case SDLK_p:
+        pause = !pause;
+        break;
+      case SDLK_RSHIFT:
+        cpu.reset();
+        cpu.bus.reset();
+        if (!rom.empty())
+          cpu.bus.mem.load_rom(rom.string());
+        break;
       }
     }
 

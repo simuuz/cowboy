@@ -290,7 +290,7 @@ T Ppu::read_vram(half addr)
 void Ppu::scanline()
 {
   renderBGs();
-  //renderOBJs();
+  renderOBJs();
 }
 
 void Ppu::renderBGs()
@@ -356,5 +356,55 @@ void Ppu::renderBGs()
 
     x++;
     fbIndex += 3;
+  }
+}
+
+void Ppu::renderOBJs() {
+  if(!bit<byte, 1>(io.lcdc))
+  {
+    return;
+  }
+
+  byte screen_y = io.ly;
+
+  std::vector<Sprite> sprites;
+  byte sprite_size = bit<byte, 2>(io.lcdc) ? 16 : 8;
+  for(int i = 0; i < 0xa0 && sprites.size() < 10; i += 4)
+  {
+    shalf sprite_startY = (shalf)oam[i] - 16;
+    shalf sprite_endY = sprite_startY + sprite_size;
+    if(sprite_startY <= screen_y && screen_y < sprite_endY)
+    {
+      sprites.push_back(Sprite(oam[i],oam[i+1],oam[i+2],oam[i+3]));
+    }
+  }
+
+  for(auto sprite : sprites)
+  {
+    if(sprite.x >= 0 && sprite.x <= 160)
+    {
+      int tile_y = (sprite.yflip) ? 7 - (screen_y - sprite.y) : ((screen_y - sprite.y) & 7);
+      byte pal = (sprite.palNum) ? io.obp1 : io.obp0;
+      fbIndex = ((word)io.ly * 160 * 3 + (word)sprite.x * 4);
+      for(int i = 0; i < 8; i++)
+      {
+        half tileLine = read_vram<half>(0x8000 + ((half)sprite.tileNum << 4) + ((half)tile_y << 1));
+        int tile_x = sprite.xflip ? 7 - i + io.scx : i + io.scx;
+        byte hi = (tileLine >> 8);
+        byte lo = (tileLine & 0xff);
+
+        byte colorID = (bit<byte>(hi, 7 - tile_x) << 1) | bit<byte>(lo, 7 - tile_x);
+        byte color = (io.bgp >> (colorID << 1)) & 3;
+
+        if(can_we_has_sprite(sprite.priority) && sprite.x + i <= 160 && colorID != 0)
+        {
+          pixels[fbIndex] = palette[color * 3];
+          pixels[fbIndex + 1] = palette[color * 3 + 1];
+          pixels[fbIndex + 2] = palette[color * 3 + 2];
+        }
+
+        fbIndex += 3;
+      }
+    }
   }
 }
