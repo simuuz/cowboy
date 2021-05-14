@@ -4,7 +4,7 @@
 class Cpu
 {
 public:
-  Cpu(bool skip);
+  Cpu(bool skip, std::string path1, std::string path2);
   void step();
   void reset();
   Bus bus;

@@ -1,8 +1,8 @@
 #include "cpu.h"
 
-Cpu::Cpu(bool skip) : bus(skip), skip(skip)
+Cpu::Cpu(bool skip, std::string path1, std::string path2) : bus(skip, path1, path2), skip(skip)
 {
-  //log = fopen("log.txt", "w");
+  // log = fopen("log.txt", "w");
   halt = false;
   ime = false;
   total_cycles = 0;
@@ -59,7 +59,7 @@ void Cpu::step()
 {
   handle_interrupts();
 
-  //fprintf(log,
+  // fprintf(log,
   //        "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X SP: %04X PC: 00:%04X "
   //        "(%02X %02X %02X %02X)\n",
   //        regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc,
@@ -84,7 +84,8 @@ void Cpu::execute(byte opcode)
 {
   switch (opcode)
   {
-  case 0: case 0x10:
+  case 0:
+  case 0x10:
     break;  // NOP
   case 0x01:
   case 0x11:

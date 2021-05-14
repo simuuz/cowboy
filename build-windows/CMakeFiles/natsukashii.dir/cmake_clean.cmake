@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QGifPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QGifPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QICNSPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QICNSPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QICOPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QICOPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QJpegPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QJpegPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QTgaPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QTgaPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QTiffPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QTiffPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWbmpPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWbmpPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWebpPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWebpPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWindowsIntegrationPlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWindowsIntegrationPlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Widgets/Qt5Widgets_QWindowsVistaStylePlugin_Import.cpp.obj"
+  "CMakeFiles/natsukashii.dir/C_/msys64/mingw64/qt5-static/lib/cmake/Qt5Widgets/Qt5Widgets_QWindowsVistaStylePlugin_Import.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/dependencies/tinyfiledialogs/tinyfiledialogs.c.obj"
+  "CMakeFiles/natsukashii.dir/dependencies/tinyfiledialogs/tinyfiledialogs.c.obj.d"
+  "CMakeFiles/natsukashii.dir/src/core/bus.cpp.obj"
+  "CMakeFiles/natsukashii.dir/src/core/bus.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/src/core/cpu.cpp.obj"
+  "CMakeFiles/natsukashii.dir/src/core/cpu.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/src/core/mem.cpp.obj"
+  "CMakeFiles/natsukashii.dir/src/core/mem.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/src/core/ppu.cpp.obj"
+  "CMakeFiles/natsukashii.dir/src/core/ppu.cpp.obj.d"
+  "CMakeFiles/natsukashii.dir/src/main.cpp.obj"
+  "CMakeFiles/natsukashii.dir/src/main.cpp.obj.d"
+  "libnatsukashii.dll.a"
+  "natsukashii.exe"
+  "natsukashii.exe.manifest"
+  "natsukashii.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C CXX)
+  include(CMakeFiles/natsukashii.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

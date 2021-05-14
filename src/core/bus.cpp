@@ -1,6 +1,8 @@
 #include "bus.h"
 
-Bus::Bus(bool skip) : mem(skip), ppu(skip) { }
+Bus::Bus(bool skip, std::string path1, std::string path2) : mem(skip, path1, path2), ppu(skip)
+{
+}
 
 void Bus::reset()
 {

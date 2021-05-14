@@ -4,7 +4,7 @@
 class Bus
 {
 public:
-  Bus(bool skip);
+  Bus(bool skip, std::string path1, std::string path2);
   byte read_byte(half addr);
   byte next_byte(half addr, half& pc);
   void write_byte(half addr, byte val);

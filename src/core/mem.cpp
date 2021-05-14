@@ -1,7 +1,7 @@
 #include "mem.h"
 #include <memory.h>
 
-Mem::Mem(bool skip) : skip(skip)
+Mem::Mem(bool skip, std::string path1, std::string path2) : skip(skip)
 {
   rom_opened = false;
   if (skip)
@@ -28,6 +28,8 @@ Mem::Mem(bool skip) : skip(skip)
   memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);
   memset(hram, 0, HRAM_SZ);
+  load_rom(path1);
+  load_bootrom(path2);
 }
 
 void Mem::reset()
@@ -232,55 +234,55 @@ byte Mem::get_joypad()
   setbit<byte, 5>(num, !button);
   setbit<byte, 4>(num, !button);
 
-  switch(evt.type)
+  switch (evt.type)
   {
   case SDL_KEYDOWN:
-    switch(evt.key.keysym.sym)
+    switch (evt.key.keysym.sym)
     {
     case SDLK_RETURN:
-      if(button)
+      if (button)
       {
         setbit<byte, 3>(num, 0);
       }
-      break;      
+      break;
     case SDLK_d:
-      if(button)
+      if (button)
       {
         setbit<byte, 2>(num, 0);
       }
       break;
     case SDLK_a:
-      if(button)
+      if (button)
       {
         setbit<byte, 1>(num, 0);
       }
-      break;      
+      break;
     case SDLK_s:
-      if(button)
+      if (button)
       {
         setbit<byte, 0>(num, 0);
       }
       break;
     case SDLK_DOWN:
-      if(dpad)
+      if (dpad)
       {
         setbit<byte, 3>(num, 0);
       }
-      break;      
+      break;
     case SDLK_UP:
-      if(dpad)
+      if (dpad)
       {
         setbit<byte, 2>(num, 0);
       }
       break;
     case SDLK_LEFT:
-      if(dpad)
+      if (dpad)
       {
         setbit<byte, 1>(num, 0);
       }
-      break;      
+      break;
     case SDLK_RIGHT:
-      if(dpad)
+      if (dpad)
       {
         setbit<byte, 0>(num, 0);
       }

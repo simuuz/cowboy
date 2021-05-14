@@ -16,20 +16,14 @@ class NoMBC
 public:
   NoMBC() {}
 
-  void loadROM(std::vector<byte>& rom)
-  {
-    this->rom = rom;
-  }
+  void loadROM(std::vector<byte>& rom) { this->rom = rom; }
 
-  byte readROM(half addr)
-  {
-    return rom[addr];
-  }
+  byte readROM(half addr) { return rom[addr]; }
 
   void writeROM(half addr, byte val)
   {
     printf("Tried to write to ROM, addr: %04X val: %02X\n", addr, val);
-    //exit(1);
+    // exit(1);
   }
 
   byte readERAM(half addr)
@@ -37,10 +31,12 @@ public:
     printf("Read ERAM not available, addr: %04X", addr);
     return 0xff;
   }
-  
-  void writeERAM(half addr, byte val) { 
+
+  void writeERAM(half addr, byte val)
+  {
     printf("Write ERAM not available, addr: %04X val: %02X\n", addr, val);
   }
+
 private:
   std::vector<byte> rom;
 };
@@ -48,10 +44,7 @@ private:
 class MBC1
 {
 public:
-  MBC1()
-  {
-    std::fill(ram.begin(), ram.end(), 0);
-  }
+  MBC1() { std::fill(ram.begin(), ram.end(), 0); }
 
   void loadROM(std::vector<byte>& rom)
   {
@@ -64,10 +57,10 @@ public:
   {
     byte zeroBank = 0;
     byte highBank = 0;
-    switch(addr)
+    switch (addr)
     {
     case 0 ... 0x3fff:
-      if(mode)
+      if (mode)
       {
         switch (romSize)
         {
@@ -91,32 +84,32 @@ public:
       break;
     case 0x4000 ... 0x7fff:
       highBank = romBank.raw & bitmasks[romSize];
-      switch(romSize)
+      switch (romSize)
       {
-        case 5:
-          setbit<byte, 5>(highBank, ramBank.raw & 1);
-          break;
-        case 6:
-          setbit<byte, 5>(highBank, ramBank.raw & 1);
-          setbit<byte, 6>(highBank, ramBank.raw >> 1);
-          break;
+      case 5:
+        setbit<byte, 5>(highBank, ramBank.raw & 1);
+        break;
+      case 6:
+        setbit<byte, 5>(highBank, ramBank.raw & 1);
+        setbit<byte, 6>(highBank, ramBank.raw >> 1);
+        break;
       }
       return rom[0x4000 * highBank + (addr - 0x4000)];
       break;
     }
   }
-  
+
   byte readERAM(half addr)
   {
-    if(ramEnable)
+    if (ramEnable)
     {
-      if(ramSize == 0x01 || ramSize == 0x02)
+      if (ramSize == 0x01 || ramSize == 0x02)
       {
         return ram[(addr - 0xa000) % RAM_SIZES[ramSize]];
       }
       else if (ramSize == 0x03)
       {
-        if(mode)
+        if (mode)
         {
           return ram[0x2000 * ramBank.raw + (addr - 0xa000)];
         }
@@ -134,7 +127,7 @@ public:
 
   void writeROM(half addr, byte val)
   {
-    switch(addr)
+    switch (addr)
     {
     case 0 ... 0x1fff:
       ramEnable = ((val & 0xf) == 0xa);
@@ -154,15 +147,15 @@ public:
 
   void writeERAM(half addr, byte val)
   {
-    if(ramEnable)
+    if (ramEnable)
     {
-      if(ramSize == 0x01 || ramSize == 0x02)
+      if (ramSize == 0x01 || ramSize == 0x02)
       {
         ram[(addr - 0xa000) % RAM_SIZES[ramSize]] = val;
       }
       else if (ramSize == 0x03)
       {
-        if(mode)
+        if (mode)
         {
           ram[0x2000 * ramBank.raw + (addr - 0xa000)] = val;
         }
@@ -173,25 +166,24 @@ public:
       }
     }
   }
+
 private:
-  struct {
-    unsigned raw:5;
+  struct
+  {
+    unsigned raw : 5;
   } romBank;
 
-  struct {
-    unsigned raw:2;
+  struct
+  {
+    unsigned raw : 2;
   } ramBank;
   bool mode = false;
   bool ramEnable = false;
   byte romSize = 0;
   byte ramSize = 0;
-  const half bitmasks[7] = {
-    0x1, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x1f
-  };
+  const half bitmasks[7] = {0x1, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x1f};
 
-  const word RAM_SIZES[6] = {
-    0, 2 * 1024, 8 * 1024, 32 * 1024, 128 * 1024, 64 * 1024
-  };
+  const word RAM_SIZES[6] = {0, 2 * 1024, 8 * 1024, 32 * 1024, 128 * 1024, 64 * 1024};
 
   std::array<byte, ERAM_SZ> ram;
   std::vector<byte> rom;
@@ -200,19 +192,13 @@ private:
 class MBC3
 {
 public:
-  MBC3()
-  {
-    std::fill(ram.begin(), ram.end(), 0);
-  }
+  MBC3() { std::fill(ram.begin(), ram.end(), 0); }
 
-  void loadROM(std::vector<byte>& rom)
-  {
-    this->rom = rom;
-  }
+  void loadROM(std::vector<byte>& rom) { this->rom = rom; }
 
   byte readROM(half addr)
   {
-    switch(addr)
+    switch (addr)
     {
     case 0 ... 0x3fff:
       return rom[addr];
@@ -223,7 +209,7 @@ public:
 
   byte readERAM(half addr)
   {
-    if(!ramEnable)
+    if (!ramEnable)
     {
       return 0xff;
     }
@@ -233,7 +219,7 @@ public:
 
   void writeROM(half addr, byte val)
   {
-    switch(addr)
+    switch (addr)
     {
     case 0 ... 0x1fff:
       ramEnable = ((val & 0xf) == 0x0a);
@@ -242,7 +228,7 @@ public:
       romBank = val;
       break;
     case 0x4000 ... 0x5fff:
-      if(val < 4)
+      if (val < 4)
       {
         ramBank = val;
       }
@@ -252,11 +238,12 @@ public:
 
   void writeERAM(half addr, byte val)
   {
-    if(ramEnable)
+    if (ramEnable)
     {
       ram[0x2000 * ramBank + (addr - 0xA000)] = val;
     }
   }
+
 private:
   byte ramBank = 0;
   byte romBank = 0;
@@ -269,16 +256,13 @@ class MBC5
 {
 public:
   MBC5()
-  { 
+  {
     std::fill(ram.begin(), ram.end(), 0);
     romBank.raw = 0;
     ramBank.raw = 0;
   }
 
-  void loadROM(std::vector<byte>& rom)
-  {
-    this->rom = rom;
-  }
+  void loadROM(std::vector<byte>& rom) { this->rom = rom; }
 
   byte readROM(half addr)
   {
@@ -293,7 +277,7 @@ public:
 
   byte readERAM(half addr)
   {
-    if(ramEnable)
+    if (ramEnable)
     {
       return ram[0x2000 * ramBank.raw + (addr - 0xa000)];
     }
@@ -303,7 +287,7 @@ public:
 
   void writeROM(half addr, byte val)
   {
-    switch(addr)
+    switch (addr)
     {
     case 0 ... 0x1fff:
       ramEnable = ((val & 0xf) == 0x0a);
@@ -322,22 +306,26 @@ public:
 
   void writeERAM(half addr, byte val)
   {
-    if(addr < 0xc000)
+    if (addr < 0xc000)
     {
       ram[0x2000 * ramBank.raw + (addr - 0xa000)] = val;
     }
   }
+
 private:
-  union {
-    struct {
-      unsigned low:8;
-      unsigned high:1;
+  union
+  {
+    struct
+    {
+      unsigned low : 8;
+      unsigned high : 1;
     };
-    unsigned raw:9;
+    unsigned raw : 9;
   } romBank;
 
-  struct {
-    unsigned raw:4;
+  struct
+  {
+    unsigned raw : 4;
   } ramBank;
   std::array<byte, ERAM_SZ> ram;
   std::vector<byte> rom;
@@ -347,7 +335,7 @@ private:
 class Cart
 {
 public:
-  Cart() { }
+  Cart() {}
 
   void loadROM(std::vector<byte>& rom)
   {
@@ -361,7 +349,7 @@ public:
 
   byte readROM(half addr)
   {
-    switch(romType)
+    switch (romType)
     {
     case 0:
       return mbc0.readROM(addr);
@@ -376,7 +364,7 @@ public:
 
   byte readERAM(half addr)
   {
-    switch(romType)
+    switch (romType)
     {
     case 0:
       return mbc0.readERAM(addr);
@@ -391,7 +379,7 @@ public:
 
   void writeROM(half addr, byte val)
   {
-    switch(romType)
+    switch (romType)
     {
     case 0:
       mbc0.writeROM(addr, val);
@@ -407,9 +395,10 @@ public:
       break;
     }
   }
-  
-  void writeERAM(half addr, byte val) {
-    switch(romType)
+
+  void writeERAM(half addr, byte val)
+  {
+    switch (romType)
     {
     case 0:
       mbc0.writeERAM(addr, val);
@@ -437,7 +426,7 @@ private:
 class Mem
 {
 public:
-  Mem(bool skip);
+  Mem(bool skip, std::string path1, std::string path2);
   void load_rom(std::string filename);
   bool load_bootrom(std::string filename);
   void reset();
@@ -452,10 +441,7 @@ public:
     byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
   } io;
 
-  void update_event(SDL_Event& evt)
-  {
-    this->evt = evt;
-  }
+  void update_event(SDL_Event& evt) { this->evt = evt; }
 
   friend class Ppu;
   bool rom_opened = false;
@@ -463,17 +449,17 @@ public:
 private:
   SDL_Event evt;
   Cart cart;
-  
+
   void write_io(half addr, byte val);
   byte read_io(half addr);
-  
+
   byte bootrom[BOOTROM_SZ];
   byte extram[EXTRAM_SZ];
   byte wram[WRAM_SZ];
   byte eram[ERAM_SZ];
   byte hram[HRAM_SZ];
   std::vector<byte> rom;
-  
+
   bool dpad = false;
   bool button = false;
 
