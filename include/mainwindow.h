@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QMainWindow>
 #include "core.h"
-#include "ini.h"
+#include "../dependencies/mINI/src/mini/ini.h"
 
 class MainWindow : public QMainWindow
 {
