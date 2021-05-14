@@ -20,7 +20,7 @@ set(SOURCES
 include_directories(
   include/
   include/core/
-  dependencies/mINI/src/mini/
+  include/external/
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wpedantic")
