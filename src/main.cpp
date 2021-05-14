@@ -5,11 +5,9 @@
 int main(int argc, char* argv[])
 {
   QApplication app{argc, argv};
-
-  QCoreApplication::setOrganizationName("natsukashii");
+  QCoreApplication::setOrganizationName("Simone Coco");
 
   MainWindow window{app};
-
   window.show();
 
   return app.exec();

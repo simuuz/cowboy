@@ -15,4 +15,5 @@ private:
   QAction* reset;
   QAction* pause;
   QAction* stop;
+  QImage* screen;
 };
