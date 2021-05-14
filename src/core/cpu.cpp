@@ -1,6 +1,8 @@
 #include "cpu.h"
 
-Cpu::Cpu(bool skip, std::string path1, std::string path2) : bus(skip, path1, path2), skip(skip)
+namespace natsukashii::core
+{
+Cpu::Cpu(bool skip, Bus& bus) : bus(bus), skip(skip)
 {
   // log = fopen("log.txt", "w");
   halt = false;
@@ -1051,3 +1053,4 @@ void Cpu::handle_timers()
     bus.mem.io.div++;
   }
 }
+}  // namespace natsukashii::core

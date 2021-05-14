@@ -1,7 +1,11 @@
 #include "bus.h"
 
-Bus::Bus(bool skip, std::string path1, std::string path2) : mem(skip, path1, path2), ppu(skip)
+namespace natsukashii::core
 {
+Bus::Bus(Mem& mem, bool skip, std::string path1, std::string path2) : mem(mem), ppu(skip)
+{
+  this->mem.load_rom(path1);
+  this->mem.load_bootrom(path2);
 }
 
 void Bus::reset()
@@ -101,3 +105,5 @@ void Bus::write_half(half addr, half val)
   mem.write(addr + 1, val >> 8);
   mem.write(addr, val & 0xff);
 }
+
+}  // namespace natsukashii::core

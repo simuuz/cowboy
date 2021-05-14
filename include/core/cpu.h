@@ -1,10 +1,12 @@
 #pragma once
 #include "bus.h"
 
+namespace natsukashii::core
+{
 class Cpu
 {
 public:
-  Cpu(bool skip, std::string path1, std::string path2);
+  Cpu(bool skip, Bus& bus);
   void step();
   void reset();
   Bus bus;
@@ -78,8 +80,8 @@ private:
   bool ime = false;
   bool ei = false;
 };
-
-inline int opcycles[256] = {
+}  // namespace natsukashii::core
+static const int opcycles[256] = {
     // 0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
     4,  12, 8,  8,  4,  4,  8,  4,  20, 8,  8,  8, 4,  4,  8, 4,   // 0
     4,  12, 8,  8,  4,  4,  8,  4,  12, 8,  8,  8, 4,  4,  8, 4,   // 1
@@ -99,7 +101,7 @@ inline int opcycles[256] = {
     12, 12, 8,  4,  0,  16, 8,  16, 12, 8,  16, 4, 0,  0,  8, 16   // F
 };
 
-inline int cbopcycles[256] = {
+static const int cbopcycles[256] = {
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 0
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 1
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 2

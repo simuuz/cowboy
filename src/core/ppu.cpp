@@ -1,6 +1,8 @@
 #include "ppu.h"
 #include <memory.h>
 
+namespace natsukashii::core
+{
 Ppu::Ppu(bool skip) : skip(skip)
 {
   memset(pixels, 0, FBSIZE);
@@ -73,34 +75,34 @@ void Ppu::reset()
 
 void Ppu::step(int cycles)
 {
-  if(disabled)
+  if (disabled)
   {
     return;
   }
 
   curr_cycles += cycles;
-  switch(mode)
+  switch (mode)
   {
   case OAM:
-    if(curr_cycles >= 80)
+    if (curr_cycles >= 80)
     {
       curr_cycles -= 80;
       change_mode(LCDTransfer);
     }
-    break;  
+    break;
   case LCDTransfer:
-    if(curr_cycles >= 172)
+    if (curr_cycles >= 172)
     {
       curr_cycles -= 172;
       change_mode(HBlank);
     }
     break;
   case HBlank:
-    if(curr_cycles >= 204)
+    if (curr_cycles >= 204)
     {
       curr_cycles -= 204;
       io.ly++;
-      if(io.ly == 0x90)
+      if (io.ly == 0x90)
       {
         change_mode(VBlank);
       }
@@ -110,19 +112,19 @@ void Ppu::step(int cycles)
       }
       bool lyc_comp = io.lyc == io.ly;
       setbit<byte, 2>(io.stat, lyc_comp);
-      if(lyc_comp && bit<byte, 6>(io.stat))
+      if (lyc_comp && bit<byte, 6>(io.stat))
       {
         statIRQ = true;
       }
     }
     break;
   case VBlank:
-    if(curr_cycles >= 456)
+    if (curr_cycles >= 456)
     {
       curr_cycles -= 456;
       io.ly++;
-      
-      if(io.ly == 154)
+
+      if (io.ly == 154)
       {
         change_mode(OAM);
         io.ly = 0;
@@ -130,7 +132,7 @@ void Ppu::step(int cycles)
 
       bool lyc_comp = io.lyc == io.ly;
       setbit<byte, 2>(io.stat, lyc_comp);
-      if(lyc_comp && bit<byte, 6>(io.stat))
+      if (lyc_comp && bit<byte, 6>(io.stat))
       {
         statIRQ = true;
       }
@@ -151,7 +153,7 @@ void Ppu::change_mode(Mode m)
     scanline();
     mode = HBlank;
     io.stat = io.stat & 0xfc;
-    if(bit<byte, 3>(io.stat))
+    if (bit<byte, 3>(io.stat))
     {
       statIRQ = true;
     }
@@ -159,7 +161,7 @@ void Ppu::change_mode(Mode m)
   case OAM:
     mode = OAM;
     io.stat = (io.stat & 0xfc) | 2;
-    if(bit<byte, 5>(io.stat))
+    if (bit<byte, 5>(io.stat))
     {
       statIRQ = true;
     }
@@ -169,7 +171,7 @@ void Ppu::change_mode(Mode m)
     mode = VBlank;
     vblankIRQ = true;
     io.stat = (io.stat & 0xfc) | 1;
-    if(bit<byte, 4>(io.stat))
+    if (bit<byte, 4>(io.stat))
     {
       statIRQ = true;
     }
@@ -212,13 +214,13 @@ void Ppu::write_io(Mem& mem, half addr, byte val)
   {
   case 0x40:
     io.lcdc = val;
-    if(!bit<byte, 7>(val))
+    if (!bit<byte, 7>(val))
     {
       io.stat = io.stat & 0xfc;
       disabled = true;
       io.ly = 0;
-    } 
-    else if(disabled)
+    }
+    else if (disabled)
     {
       disabled = false;
       change_mode(OAM);
@@ -265,7 +267,7 @@ void Ppu::write_io(Mem& mem, half addr, byte val)
 
 bool Ppu::can_we_has_sprite(bool priority)
 {
-  if(!priority)
+  if (!priority)
   {
     return true;
   }
@@ -308,18 +310,19 @@ void Ppu::renderBGs()
   half tiledata = bit<byte, 4>(io.lcdc) ? 0x8000 : 0x8800;
   half wintilemap = bit<byte, 6>(io.lcdc) ? 0x9c00 : 0x9800;
 
-  while(x < 160)
+  while (x < 160)
   {
     half tileLine = 0;
     byte tile_x = 0;
-    if(renderWindow && wx <= x && bit<byte, 0>(io.lcdc))
+    if (renderWindow && wx <= x && bit<byte, 0>(io.lcdc))
     {
       y = io.ly - io.wy;
       auto tmpx = x - wx;
       tile_x = tmpx & 7;
       word tile_y = y & 7;
-      byte tile_index = read_vram<byte>(wintilemap + ((((half)y >> 3) << 5) & 0x3FF) + (((half)tmpx >> 3)));
-      if(tiledata == 0x8000)
+      byte tile_index =
+          read_vram<byte>(wintilemap + ((((half)y >> 3) << 5) & 0x3FF) + (((half)tmpx >> 3)));
+      if (tiledata == 0x8000)
       {
         tileLine = read_vram<half>(tiledata + ((half)tile_index << 4) + ((half)tile_y << 1));
       }
@@ -328,14 +331,14 @@ void Ppu::renderBGs()
         tileLine = read_vram<half>(0x9000 + ((shalf)tile_index) * 16 + ((half)tile_y << 1));
       }
     }
-    else if(bit<byte, 0>(io.lcdc))
+    else if (bit<byte, 0>(io.lcdc))
     {
       y = io.ly + io.scy;
       word tile_y = y & 7;
       byte p = (x + io.scx);
       tile_x = p & 7;
       byte tile_index = read_vram<byte>(bgtilemap + (((y >> 3) << 5) & 0x3FF) + ((p >> 3) & 31));
-      if(tiledata == 0x8000)
+      if (tiledata == 0x8000)
       {
         tileLine = read_vram<half>(tiledata + ((half)tile_index << 4) + ((half)tile_y << 1));
       }
@@ -359,8 +362,9 @@ void Ppu::renderBGs()
   }
 }
 
-void Ppu::renderOBJs() {
-  if(!bit<byte, 1>(io.lcdc))
+void Ppu::renderOBJs()
+{
+  if (!bit<byte, 1>(io.lcdc))
   {
     return;
   }
@@ -369,24 +373,24 @@ void Ppu::renderOBJs() {
 
   std::vector<Sprite> sprites;
   byte sprite_size = bit<byte, 2>(io.lcdc) ? 16 : 8;
-  for(int i = 0; i < 0xa0 && sprites.size() < 10; i += 4)
+  for (int i = 0; i < 0xa0 && sprites.size() < 10; i += 4)
   {
     shalf sprite_startY = (shalf)oam[i] - 16;
     shalf sprite_endY = sprite_startY + sprite_size;
-    if(sprite_startY <= screen_y && screen_y < sprite_endY)
+    if (sprite_startY <= screen_y && screen_y < sprite_endY)
     {
-      sprites.push_back(Sprite(oam[i],oam[i+1],oam[i+2],oam[i+3]));
+      sprites.push_back(Sprite(oam[i], oam[i + 1], oam[i + 2], oam[i + 3]));
     }
   }
 
-  for(auto sprite : sprites)
+  for (auto sprite : sprites)
   {
-    if(sprite.x >= 0 && sprite.x <= 160)
+    if (sprite.x >= 0 && sprite.x <= 160)
     {
       int tile_y = (sprite.yflip) ? 7 - (screen_y - sprite.y) : ((screen_y - sprite.y) & 7);
       byte pal = (sprite.palNum) ? io.obp1 : io.obp0;
       fbIndex = ((word)io.ly * 160 * 3 + (word)sprite.x * 4);
-      for(int i = 0; i < 8; i++)
+      for (int i = 0; i < 8; i++)
       {
         half tileLine = read_vram<half>(0x8000 + ((half)sprite.tileNum << 4) + ((half)tile_y << 1));
         int tile_x = sprite.xflip ? 7 - i + io.scx : i + io.scx;
@@ -396,7 +400,7 @@ void Ppu::renderOBJs() {
         byte colorID = (bit<byte>(hi, 7 - tile_x) << 1) | bit<byte>(lo, 7 - tile_x);
         byte color = (io.bgp >> (colorID << 1)) & 3;
 
-        if(can_we_has_sprite(sprite.priority) && sprite.x + i <= 160 && colorID != 0)
+        if (can_we_has_sprite(sprite.priority) && sprite.x + i <= 160 && colorID != 0)
         {
           pixels[fbIndex] = palette[color * 3];
           pixels[fbIndex + 1] = palette[color * 3 + 1];
@@ -408,3 +412,4 @@ void Ppu::renderOBJs() {
     }
   }
 }
+}  // namespace natsukashii::core

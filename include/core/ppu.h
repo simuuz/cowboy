@@ -7,6 +7,8 @@ constexpr int WIDTH = 160;
 constexpr int HEIGHT = 144;
 constexpr int FBSIZE = WIDTH * HEIGHT * 3;
 
+namespace natsukashii::core
+{
 struct Sprite
 {
   shalf x, y;
@@ -60,12 +62,7 @@ private:
 
   int curr_cycles = 0;
 
-  const byte palette[12] = {
-    0xe0, 0xf8, 0xd0,
-    0x88, 0xc0, 0x70,
-    0x34, 0x68, 0x56,
-    0x08, 0x18, 0x20
-  };
+  const byte palette[12] = {0xe0, 0xf8, 0xd0, 0x88, 0xc0, 0x70, 0x34, 0x68, 0x56, 0x08, 0x18, 0x20};
 
   bool skip = false;
   void write_io(Mem& mem, half addr, byte val);
@@ -80,3 +77,4 @@ private:
   void renderBGs();
   void scanline();
 };
+}  // namespace natsukashii::core

@@ -1,7 +1,7 @@
 #pragma once
 #include <QApplication>
 #include <QMainWindow>
-#include "cpu.h"
+#include "core.h"
 #include "ini.h"
 
 class MainWindow : public QMainWindow
@@ -11,7 +11,7 @@ public:
 
 private:
   void OnOpenFile();
-  std::unique_ptr<Cpu> core;
+  std::unique_ptr<natsukashii::core::Core> core;
   QAction* reset;
   QAction* pause;
   QAction* stop;

@@ -3,11 +3,9 @@
 #include <QMenu>
 #include <QMenuBar>
 
-constexpr int CYCLES_PER_FRAME = 4194300 / (1000 / DELAY);
-
 MainWindow::MainWindow(QApplication& app) : QMainWindow(nullptr)
 {
-  setWindowTitle("shibumi");
+  setWindowTitle("natsukashii");
   resize(800, 600);
 
   auto menu = new QMenuBar{this};
@@ -25,11 +23,11 @@ MainWindow::MainWindow(QApplication& app) : QMainWindow(nullptr)
 
 void MainWindow::OnOpenFile()
 {
-  QFileDialog file_dialog{this};
-  file_dialog.setAcceptMode(QFileDialog::AcceptOpen);
-  file_dialog.setFileMode(QFileDialog::ExistingFile);
-  file_dialog.setNameFilter("GameBoy ROM (*.gb)");
-  if (file_dialog.exec())
+  QFileDialog file_dialog_rom{this};
+  file_dialog_rom.setAcceptMode(QFileDialog::AcceptOpen);
+  file_dialog_rom.setFileMode(QFileDialog::ExistingFile);
+  file_dialog_rom.setNameFilter("GameBoy ROM (*.gb)");
+  if (file_dialog_rom.exec())
   {
     mINI::INIFile file{"config.ini"};
     mINI::INIStructure ini;
@@ -38,20 +36,17 @@ void MainWindow::OnOpenFile()
     std::string bootrom = ini["emulator"]["bootrom"];
     if (bootrom.empty())
     {
-      bootrom = file_dialog.selectedFiles().at(0).toStdString();
+      QFileDialog file_dialog_bootrom{this};
+      file_dialog_bootrom.setAcceptMode(QFileDialog::AcceptOpen);
+      file_dialog_bootrom.setFileMode(QFileDialog::ExistingFile);
+      bootrom = file_dialog_bootrom.selectedFiles().at(0).toStdString();
       ini["emulator"]["bootrom"] = bootrom;
       file.write(ini);
     }
 
-    core = std::make_unique<Cpu>(skip, file_dialog.selectedFiles().at(0).toStdString(), bootrom);
+    core = std::make_unique<natsukashii::core::Core>(
+        skip, file_dialog_rom.selectedFiles().at(0).toStdString(), bootrom);
 
-    while (core->total_cycles < CYCLES_PER_FRAME)
-    {
-      core->Run();
-      core->bus.ppu.step(core->cycles);
-      core->handle_timers();
-    }
-
-    core->total_cycles -= CYCLES_PER_FRAME;
+    core->Run();
   }
 }

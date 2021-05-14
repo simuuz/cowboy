@@ -1,29 +1,34 @@
 cmake_minimum_required(VERSION 3.7.0)
-
 project(natsukashii)
 
+if(CMAKE_VERSION VERSION_LESS "3.7.0")
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
-set(CORE src/core/)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(include/
-	include/core/
-	dependencies/mINI/src/mini/)
-
-set(SRC
+set(SOURCES
+  src/core/mem.cpp
+  src/core/cpu.cpp
+  src/core/bus.cpp
+  src/core/ppu.cpp
+  src/core.cpp
   src/main.cpp
-  src/mainwindow.cpp
-  ${CORE}cpu.cpp
-  ${CORE}mem.cpp
-  ${CORE}bus.cpp
-  ${CORE}ppu.cpp)
+  src/mainwindow.cpp)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -Wpedantic -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -Wpedantic -O0 -g")
+include_directories(
+  include/
+  include/core/
+  dependencies/mINI/src/mini/
+)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wpedantic")
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
 add_executable(natsukashii
-	${SRC}
+  ${SOURCES}
 )
 
-target_link_libraries(natsukashii mingw32 Qt5::Core Qt5::Gui Qt5::Widgets)
+target_link_libraries(natsukashii Qt5::Core Qt5::Gui Qt5::Widgets)

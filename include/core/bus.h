@@ -1,10 +1,11 @@
 #pragma once
 #include "ppu.h"
 
-class Bus
+namespace natsukashii::core
 {
-public:
-  Bus(bool skip, std::string path1, std::string path2);
+struct Bus
+{
+  Bus(Mem& mem, bool skip, std::string path1, std::string path2);
   byte read_byte(half addr);
   byte next_byte(half addr, half& pc);
   void write_byte(half addr, byte val);
@@ -17,3 +18,5 @@ public:
   Mem mem;
   Ppu ppu;
 };
+
+}  // namespace natsukashii::core

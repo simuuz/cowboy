@@ -11,6 +11,8 @@ constexpr int WRAM_SZ = 0x2000;
 constexpr int HRAM_SZ = 0x7f;
 constexpr int ROM_SZ_MIN = 0x8000;
 
+namespace natsukashii::core
+{
 class NoMBC
 {
 public:
@@ -426,7 +428,7 @@ private:
 class Mem
 {
 public:
-  Mem(bool skip, std::string path1, std::string path2);
+  Mem(bool skip);
   void load_rom(std::string filename);
   bool load_bootrom(std::string filename);
   void reset();
@@ -441,13 +443,10 @@ public:
     byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
   } io;
 
-  void update_event(SDL_Event& evt) { this->evt = evt; }
-
   friend class Ppu;
   bool rom_opened = false;
 
 private:
-  SDL_Event evt;
   Cart cart;
 
   void write_io(half addr, byte val);
@@ -471,3 +470,4 @@ private:
 
   byte get_joypad();
 };
+}  // namespace natsukashii::core
