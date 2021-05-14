@@ -18,11 +18,11 @@ jobs:
       - name: Build natsukashii
         run: |
           mkdir build
-          cd build
           cmake \
             -G "Unix Makefiles" \
-            -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" ..
-          make -j
+            -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" .. \
+            -B build
+          make -j -C build
           
       - name: Collect files
         run: |
@@ -50,9 +50,8 @@ jobs:
       - name: Build natsukashii
         run: | 
           mkdir build
-          cd build
-          cmake ..
-          make -j
+          cmake -B build
+          make -j -C build
           
       - name: Collect files
         run: |
