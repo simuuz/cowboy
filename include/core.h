@@ -7,6 +7,7 @@ struct Core
 {
   Core(bool skip, std::string path1, std::string path2);
   void Run();
+  void Reset();
   Mem mem;
   Bus bus;
   Cpu cpu;

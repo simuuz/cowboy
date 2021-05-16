@@ -4,9 +4,11 @@
 
 int main(int argc, char* argv[])
 {
-  QApplication app{argc, argv};
   QCoreApplication::setOrganizationName("Simone Coco");
+  QCoreApplication::setApplicationName("natsukashii");
+  QCoreApplication::setOrganizationDomain("https://github.com/CocoSimone/natsukashii");
 
+  QApplication app{argc, argv};
   MainWindow window{app};
   window.show();
 

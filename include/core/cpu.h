@@ -7,13 +7,13 @@ class Cpu
 {
 public:
   Cpu(bool skip, Bus& bus);
-  void step();
-  void reset();
+  void Step();
+  void Reset();
   Bus bus;
   bool halt = false;
   int total_cycles = 0;
   int cycles = 0;
-  void handle_timers();
+  void HandleTimers();
   bool skip;
 
 private:
@@ -58,22 +58,22 @@ private:
     half sp = 0, pc = 0;
   } regs;
 
-  void update_f(bool z, bool n, bool h, bool c);
-  bool cond(byte opcode);
+  void UpdateF(bool z, bool n, bool h, bool c);
+  bool Cond(byte opcode);
 
   template <int group>
-  half read_r16(byte bits);
+  half ReadR16(byte bits);
   template <int group>
-  void write_r16(byte bits, half val);
+  void WriteR16(byte bits, half val);
 
-  byte read_r8(byte bits);
-  void write_r8(byte bits, byte value);
+  byte ReadR8(byte bits);
+  void WriteR8(byte bits, byte value);
 
-  void execute(byte opcode);
-  void push(half val);
-  half pop();
+  void Execute(byte opcode);
+  void Push(half val);
+  half Pop();
   FILE* log;
-  void handle_interrupts();
+  void HandleInterrupts();
   int tima_cycles = 0;
   int div_cycles = 0;
 
@@ -81,6 +81,7 @@ private:
   bool ei = false;
 };
 }  // namespace natsukashii::core
+
 static const int opcycles[256] = {
     // 0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
     4,  12, 8,  8,  4,  4,  8,  4,  20, 8,  8,  8, 4,  4,  8, 4,   // 0

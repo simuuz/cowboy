@@ -32,7 +32,7 @@ Mem::Mem(bool skip) : skip(skip)
   memset(hram, 0, HRAM_SZ);
 }
 
-void Mem::reset()
+void Mem::Reset()
 {
   rom_opened = false;
   if (skip)
@@ -60,7 +60,7 @@ void Mem::reset()
   memset(hram, 0, HRAM_SZ);
 }
 
-void Mem::load_rom(std::string path)
+void Mem::LoadROM(std::string path)
 {
   std::ifstream file{path, std::ios::binary};
   file.unsetf(std::ios::skipws);
@@ -75,10 +75,10 @@ void Mem::load_rom(std::string path)
   file.close();
 
   rom_opened = true;
-  cart.loadROM(rom);
+  cart.LoadROM(rom);
 }
 
-bool Mem::load_bootrom(std::string path)
+bool Mem::LoadBootrom(std::string path)
 {
   std::ifstream file{path, std::ios::binary};
   file.unsetf(std::ios::skipws);
@@ -94,7 +94,7 @@ bool Mem::load_bootrom(std::string path)
   return true;
 }
 
-byte Mem::read(half addr)
+byte Mem::Read(half addr)
 {
   switch (addr)
   {
@@ -105,13 +105,13 @@ byte Mem::read(half addr)
     }
     else
     {
-      return cart.readROM(addr);
+      return cart.ReadROM(addr);
     }
     break;
   case 0x100 ... 0x7fff:
-    return cart.readROM(addr);
+    return cart.ReadROM(addr);
   case 0xa000 ... 0xbfff:
-    return cart.readERAM(addr);
+    return cart.ReadERAM(addr);
   case 0xc000 ... 0xdfff:
     return wram[addr & 0x1fff];
   case 0xe000 ... 0xfdff:
@@ -119,7 +119,7 @@ byte Mem::read(half addr)
   case 0xfea0 ... 0xfeff:
     return 0xff;
   case 0xff00 ... 0xff7f:
-    return read_io(addr);
+    return ReadIO(addr);
   case 0xff80 ... 0xfffe:
     return hram[addr & 0x7f];
   case 0xffff:
@@ -127,15 +127,15 @@ byte Mem::read(half addr)
   }
 }
 
-void Mem::write(half addr, byte val)
+void Mem::Write(half addr, byte val)
 {
   switch (addr)
   {
   case 0 ... 0x7fff:
-    cart.writeROM(addr, val);
+    cart.WriteROM(addr, val);
     break;
   case 0xa000 ... 0xbfff:
-    cart.writeERAM(addr, val);
+    cart.WriteERAM(addr, val);
     break;
   case 0xc000 ... 0xdfff:
     wram[addr & 0x1fff] = val;
@@ -146,7 +146,7 @@ void Mem::write(half addr, byte val)
   case 0xfea0 ... 0xfeff:
     break;
   case 0xff00 ... 0xff7f:
-    write_io(addr, val);
+    WriteIO(addr, val);
     break;
   case 0xff80 ... 0xfffe:
     hram[addr & 0x7f] = val;
@@ -157,7 +157,7 @@ void Mem::write(half addr, byte val)
   }
 }
 
-byte Mem::read_io(half addr)
+byte Mem::ReadIO(half addr)
 {
   switch (addr & 0xff)
   {
@@ -187,13 +187,14 @@ byte Mem::read_io(half addr)
   }
 }
 
-void Mem::write_io(half addr, byte val)
+void Mem::WriteIO(half addr, byte val)
 {
   switch (addr & 0xff)
   {
   case 0x00:
     break;
   case 0x01:
+    printf("%c", val);
     break;
   case 0x02:
     break;

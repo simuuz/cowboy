@@ -18,23 +18,23 @@ class NoMBC
 public:
   NoMBC() {}
 
-  void loadROM(std::vector<byte>& rom) { this->rom = rom; }
+  void LoadROM(std::vector<byte>& rom) { this->rom = rom; }
 
-  byte readROM(half addr) { return rom[addr]; }
+  byte ReadROM(half addr) { return rom[addr]; }
 
-  void writeROM(half addr, byte val)
+  void WriteROM(half addr, byte val)
   {
     printf("Tried to write to ROM, addr: %04X val: %02X\n", addr, val);
     // exit(1);
   }
 
-  byte readERAM(half addr)
+  byte ReadERAM(half addr)
   {
     printf("Read ERAM not available, addr: %04X", addr);
     return 0xff;
   }
 
-  void writeERAM(half addr, byte val)
+  void WriteERAM(half addr, byte val)
   {
     printf("Write ERAM not available, addr: %04X val: %02X\n", addr, val);
   }
@@ -48,14 +48,14 @@ class MBC1
 public:
   MBC1() { std::fill(ram.begin(), ram.end(), 0); }
 
-  void loadROM(std::vector<byte>& rom)
+  void LoadROM(std::vector<byte>& rom)
   {
     this->rom = rom;
     romSize = rom[0x148];
     ramSize = rom[0x149];
   }
 
-  byte readROM(half addr)
+  byte ReadROM(half addr)
   {
     byte zeroBank = 0;
     byte highBank = 0;
@@ -101,7 +101,7 @@ public:
     }
   }
 
-  byte readERAM(half addr)
+  byte ReadERAM(half addr)
   {
     if (ramEnable)
     {
@@ -127,7 +127,7 @@ public:
     }
   }
 
-  void writeROM(half addr, byte val)
+  void WriteROM(half addr, byte val)
   {
     switch (addr)
     {
@@ -147,7 +147,7 @@ public:
     }
   }
 
-  void writeERAM(half addr, byte val)
+  void WriteERAM(half addr, byte val)
   {
     if (ramEnable)
     {
@@ -196,9 +196,9 @@ class MBC3
 public:
   MBC3() { std::fill(ram.begin(), ram.end(), 0); }
 
-  void loadROM(std::vector<byte>& rom) { this->rom = rom; }
+  void LoadROM(std::vector<byte>& rom) { this->rom = rom; }
 
-  byte readROM(half addr)
+  byte ReadROM(half addr)
   {
     switch (addr)
     {
@@ -209,7 +209,7 @@ public:
     }
   }
 
-  byte readERAM(half addr)
+  byte ReadERAM(half addr)
   {
     if (!ramEnable)
     {
@@ -219,7 +219,7 @@ public:
     return ram[0x2000 * ramBank + (addr - 0xa000)];
   }
 
-  void writeROM(half addr, byte val)
+  void WriteROM(half addr, byte val)
   {
     switch (addr)
     {
@@ -238,7 +238,7 @@ public:
     }
   }
 
-  void writeERAM(half addr, byte val)
+  void WriteERAM(half addr, byte val)
   {
     if (ramEnable)
     {
@@ -264,9 +264,9 @@ public:
     ramBank.raw = 0;
   }
 
-  void loadROM(std::vector<byte>& rom) { this->rom = rom; }
+  void LoadROM(std::vector<byte>& rom) { this->rom = rom; }
 
-  byte readROM(half addr)
+  byte ReadROM(half addr)
   {
     switch (addr)
     {
@@ -277,7 +277,7 @@ public:
     }
   }
 
-  byte readERAM(half addr)
+  byte ReadERAM(half addr)
   {
     if (ramEnable)
     {
@@ -287,7 +287,7 @@ public:
     return 0xff;
   }
 
-  void writeROM(half addr, byte val)
+  void WriteROM(half addr, byte val)
   {
     switch (addr)
     {
@@ -306,7 +306,7 @@ public:
     }
   }
 
-  void writeERAM(half addr, byte val)
+  void WriteERAM(half addr, byte val)
   {
     if (addr < 0xc000)
     {
@@ -339,80 +339,80 @@ class Cart
 public:
   Cart() {}
 
-  void loadROM(std::vector<byte>& rom)
+  void LoadROM(std::vector<byte>& rom)
   {
     romType = rom[0x147];
     printf("%s\n", mbcs[romType].c_str());
-    mbc0.loadROM(rom);
-    mbc1.loadROM(rom);
-    mbc3.loadROM(rom);
-    mbc5.loadROM(rom);
+    mbc0.LoadROM(rom);
+    mbc1.LoadROM(rom);
+    mbc3.LoadROM(rom);
+    mbc5.LoadROM(rom);
   }
 
-  byte readROM(half addr)
+  byte ReadROM(half addr)
   {
     switch (romType)
     {
     case 0:
-      return mbc0.readROM(addr);
+      return mbc0.ReadROM(addr);
     case 1 ... 3:
-      return mbc1.readROM(addr);
+      return mbc1.ReadROM(addr);
     case 0xf ... 0x13:
-      return mbc3.readROM(addr);
+      return mbc3.ReadROM(addr);
     case 0x19 ... 0x1e:
-      return mbc5.readROM(addr);
+      return mbc5.ReadROM(addr);
     }
   }
 
-  byte readERAM(half addr)
+  byte ReadERAM(half addr)
   {
     switch (romType)
     {
     case 0:
-      return mbc0.readERAM(addr);
+      return mbc0.ReadERAM(addr);
     case 1 ... 3:
-      return mbc1.readERAM(addr);
+      return mbc1.ReadERAM(addr);
     case 0xf ... 0x13:
-      return mbc3.readERAM(addr);
+      return mbc3.ReadERAM(addr);
     case 0x19 ... 0x1e:
-      return mbc5.readERAM(addr);
+      return mbc5.ReadERAM(addr);
     }
   }
 
-  void writeROM(half addr, byte val)
+  void WriteROM(half addr, byte val)
   {
     switch (romType)
     {
     case 0:
-      mbc0.writeROM(addr, val);
+      mbc0.WriteROM(addr, val);
       break;
     case 1 ... 3:
-      mbc1.writeROM(addr, val);
+      mbc1.WriteROM(addr, val);
       break;
     case 0xf ... 0x13:
-      mbc3.writeROM(addr, val);
+      mbc3.WriteROM(addr, val);
       break;
     case 0x19 ... 0x1e:
-      mbc5.writeROM(addr, val);
+      mbc5.WriteROM(addr, val);
       break;
     }
   }
 
-  void writeERAM(half addr, byte val)
+  void WriteERAM(half addr, byte val)
   {
     switch (romType)
     {
     case 0:
-      mbc0.writeERAM(addr, val);
+      mbc0.WriteERAM(addr, val);
       break;
     case 1 ... 3:
-      mbc1.writeERAM(addr, val);
+      mbc1.WriteERAM(addr, val);
       break;
     case 0xf ... 0x13:
-      mbc3.writeERAM(addr, val);
+      mbc3.WriteERAM(addr, val);
       break;
     case 0x19 ... 0x1e:
-      mbc5.writeERAM(addr, val);
+      mbc5.WriteERAM(addr, val);
       break;
     }
   }
@@ -429,11 +429,11 @@ class Mem
 {
 public:
   Mem(bool skip);
-  void load_rom(std::string filename);
-  bool load_bootrom(std::string filename);
-  void reset();
-  byte read(half addr);
-  void write(half addr, byte val);
+  void LoadROM(std::string filename);
+  bool LoadBootrom(std::string filename);
+  void Reset();
+  byte Read(half addr);
+  void Write(half addr, byte val);
 
   byte ie = 0;
   bool skip;
@@ -449,8 +449,8 @@ public:
 private:
   Cart cart;
 
-  void write_io(half addr, byte val);
-  byte read_io(half addr);
+  void WriteIO(half addr, byte val);
+  byte ReadIO(half addr);
 
   byte bootrom[BOOTROM_SZ];
   byte extram[EXTRAM_SZ];
@@ -462,12 +462,12 @@ private:
   bool dpad = false;
   bool button = false;
 
-  void handle_joypad(byte val)
+  void HandleJoypad(byte val)
   {
     button = !bit<byte, 5>(val);
     dpad = !bit<byte, 4>(val);
   }
 
-  byte get_joypad();
+  byte GetJoypad();
 };
 }  // namespace natsukashii::core

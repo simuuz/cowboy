@@ -30,8 +30,8 @@ class Ppu
 {
 public:
   Ppu(bool skip);
-  void reset();
-  void step(int cycles);
+  void Reset();
+  void Step(int cycles);
   bool render = false;
 
   byte pixels[FBSIZE]{};
@@ -65,16 +65,16 @@ private:
   const byte palette[12] = {0xe0, 0xf8, 0xd0, 0x88, 0xc0, 0x70, 0x34, 0x68, 0x56, 0x08, 0x18, 0x20};
 
   bool skip = false;
-  void write_io(Mem& mem, half addr, byte val);
-  byte read_io(half addr);
+  void WriteIO(Mem& mem, half addr, byte val);
+  byte ReadIO(half addr);
   template <typename T>
-  void write_vram(half addr, T val);
+  void WriteVRAM(half addr, T val);
   template <typename T>
-  T read_vram(half addr);
-  void change_mode(Mode m);
-  bool can_we_has_sprite(bool priority);
-  void renderOBJs();
-  void renderBGs();
-  void scanline();
+  T ReadVRAM(half addr);
+  void ChangeMode(Mode m);
+  bool CanSprites(bool priority);
+  void RenderOBJs();
+  void RenderBGs();
+  void Scanline();
 };
 }  // namespace natsukashii::core

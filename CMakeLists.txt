@@ -15,6 +15,7 @@ set(SOURCES
   src/core/ppu.cpp
   src/core.cpp
   src/main.cpp
+  src/renderwidget.cpp
   src/mainwindow.cpp)
 
 include_directories(

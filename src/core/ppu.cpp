@@ -38,7 +38,7 @@ Ppu::Ppu(bool skip) : skip(skip)
   }
 }
 
-void Ppu::reset()
+void Ppu::Reset()
 {
   memset(pixels, 0, FBSIZE);
   memset(vram, 0, VRAM_SZ);
@@ -73,7 +73,7 @@ void Ppu::reset()
   }
 }
 
-void Ppu::step(int cycles)
+void Ppu::Step(int cycles)
 {
   if (disabled)
   {
@@ -87,14 +87,14 @@ void Ppu::step(int cycles)
     if (curr_cycles >= 80)
     {
       curr_cycles -= 80;
-      change_mode(LCDTransfer);
+      ChangeMode(LCDTransfer);
     }
     break;
   case LCDTransfer:
     if (curr_cycles >= 172)
     {
       curr_cycles -= 172;
-      change_mode(HBlank);
+      ChangeMode(HBlank);
     }
     break;
   case HBlank:
@@ -104,11 +104,11 @@ void Ppu::step(int cycles)
       io.ly++;
       if (io.ly == 0x90)
       {
-        change_mode(VBlank);
+        ChangeMode(VBlank);
       }
       else
       {
-        change_mode(OAM);
+        ChangeMode(OAM);
       }
       bool lyc_comp = io.lyc == io.ly;
       setbit<byte, 2>(io.stat, lyc_comp);
@@ -126,7 +126,7 @@ void Ppu::step(int cycles)
 
       if (io.ly == 154)
       {
-        change_mode(OAM);
+        ChangeMode(OAM);
         io.ly = 0;
       }
 
@@ -141,7 +141,7 @@ void Ppu::step(int cycles)
   }
 }
 
-void Ppu::change_mode(Mode m)
+void Ppu::ChangeMode(Mode m)
 {
   switch (m)
   {
@@ -150,7 +150,7 @@ void Ppu::change_mode(Mode m)
     io.stat = (io.stat & 0xfc) | 3;
     break;
   case HBlank:
-    scanline();
+    Scanline();
     mode = HBlank;
     io.stat = io.stat & 0xfc;
     if (bit<byte, 3>(io.stat))
@@ -179,7 +179,7 @@ void Ppu::change_mode(Mode m)
   }
 }
 
-byte Ppu::read_io(half addr)
+byte Ppu::ReadIO(half addr)
 {
   switch (addr & 0xff)
   {
@@ -208,7 +208,7 @@ byte Ppu::read_io(half addr)
   }
 }
 
-void Ppu::write_io(Mem& mem, half addr, byte val)
+void Ppu::WriteIO(Mem& mem, half addr, byte val)
 {
   switch (addr & 0xff)
   {
@@ -223,7 +223,7 @@ void Ppu::write_io(Mem& mem, half addr, byte val)
     else if (disabled)
     {
       disabled = false;
-      change_mode(OAM);
+      ChangeMode(OAM);
     }
     break;
   case 0x41:
@@ -243,7 +243,7 @@ void Ppu::write_io(Mem& mem, half addr, byte val)
     half start = val << 8;
     for (byte i = 0; i < 0xa0; i++)
     {
-      oam[i] = mem.read(start + i);
+      oam[i] = mem.Read(start + i);
     }
   }
   break;
@@ -265,7 +265,7 @@ void Ppu::write_io(Mem& mem, half addr, byte val)
   }
 }
 
-bool Ppu::can_we_has_sprite(bool priority)
+bool Ppu::CanSprites(bool priority)
 {
   if (!priority)
   {
@@ -278,24 +278,24 @@ bool Ppu::can_we_has_sprite(bool priority)
 }
 
 template <typename T>
-void Ppu::write_vram(half addr, T val)
+void Ppu::WriteVRAM(half addr, T val)
 {
   *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram))[addr & 0x1fff]) = val;
 }
 
 template <typename T>
-T Ppu::read_vram(half addr)
+T Ppu::ReadVRAM(half addr)
 {
   return *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram))[addr & 0x1fff]);
 }
 
-void Ppu::scanline()
+void Ppu::Scanline()
 {
-  renderBGs();
-  renderOBJs();
+  RenderBGs();
+  //RenderOBJs();
 }
 
-void Ppu::renderBGs()
+void Ppu::RenderBGs()
 {
   fbIndex = ((word)io.ly * WIDTH * 3);
 
@@ -320,15 +320,14 @@ void Ppu::renderBGs()
       auto tmpx = x - wx;
       tile_x = tmpx & 7;
       word tile_y = y & 7;
-      byte tile_index =
-          read_vram<byte>(wintilemap + ((((half)y >> 3) << 5) & 0x3FF) + (((half)tmpx >> 3)));
+      byte tile_index = vram[wintilemap + ((((half)y >> 3) << 5) & 0x3FF) + (((half)tmpx >> 3))];
       if (tiledata == 0x8000)
       {
-        tileLine = read_vram<half>(tiledata + ((half)tile_index << 4) + ((half)tile_y << 1));
+        tileLine = ReadVRAM<half>(tiledata + ((half)tile_index << 4) + ((half)tile_y << 1));
       }
       else
       {
-        tileLine = read_vram<half>(0x9000 + ((shalf)tile_index) * 16 + ((half)tile_y << 1));
+        tileLine = ReadVRAM<half>(0x9000 + ((shalf)tile_index) * 16 + ((half)tile_y << 1));
       }
     }
     else if (bit<byte, 0>(io.lcdc))
@@ -337,14 +336,14 @@ void Ppu::renderBGs()
       word tile_y = y & 7;
       byte p = (x + io.scx);
       tile_x = p & 7;
-      byte tile_index = read_vram<byte>(bgtilemap + (((y >> 3) << 5) & 0x3FF) + ((p >> 3) & 31));
+      byte tile_index = vram[bgtilemap + (((y >> 3) << 5) & 0x3FF) + ((p >> 3) & 31)];
       if (tiledata == 0x8000)
       {
-        tileLine = read_vram<half>(tiledata + ((half)tile_index << 4) + ((half)tile_y << 1));
+        tileLine = ReadVRAM<half>(tiledata + ((half)tile_index << 4) + ((half)tile_y << 1));
       }
       else
       {
-        tileLine = read_vram<half>(0x9000 + ((shalf)tile_index) * 16 + ((half)tile_y << 1));
+        tileLine = ReadVRAM<half>(0x9000 + ((shalf)tile_index) * 16 + ((half)tile_y << 1));
       }
     }
 
@@ -362,7 +361,7 @@ void Ppu::renderBGs()
   }
 }
 
-void Ppu::renderOBJs()
+void Ppu::RenderOBJs()
 {
   if (!bit<byte, 1>(io.lcdc))
   {
@@ -388,11 +387,11 @@ void Ppu::renderOBJs()
     if (sprite.x >= 0 && sprite.x <= 160)
     {
       int tile_y = (sprite.yflip) ? 7 - (screen_y - sprite.y) : ((screen_y - sprite.y) & 7);
-      byte pal = (sprite.palNum) ? io.obp1 : io.obp0;
+
       fbIndex = ((word)io.ly * 160 * 3 + (word)sprite.x * 4);
       for (int i = 0; i < 8; i++)
       {
-        half tileLine = read_vram<half>(0x8000 + ((half)sprite.tileNum << 4) + ((half)tile_y << 1));
+        half tileLine = ReadVRAM<half>(0x8000 + ((half)sprite.tileNum << 4) + ((half)tile_y << 1));
         int tile_x = sprite.xflip ? 7 - i + io.scx : i + io.scx;
         byte hi = (tileLine >> 8);
         byte lo = (tileLine & 0xff);
@@ -400,7 +399,7 @@ void Ppu::renderOBJs()
         byte colorID = (bit<byte>(hi, 7 - tile_x) << 1) | bit<byte>(lo, 7 - tile_x);
         byte color = (io.bgp >> (colorID << 1)) & 3;
 
-        if (can_we_has_sprite(sprite.priority) && sprite.x + i <= 160 && colorID != 0)
+        if (CanSprites(sprite.priority) && sprite.x + i <= 160 && colorID != 0)
         {
           pixels[fbIndex] = palette[color * 3];
           pixels[fbIndex + 1] = palette[color * 3 + 1];

@@ -6,12 +6,14 @@
 
 MainWindow::MainWindow(QApplication& app) : QMainWindow(nullptr)
 {
+  auto menu = new QMenuBar{this};
   setWindowTitle("natsukashii");
   resize(800, 600);
 
-  screen = new QImage(core->bus.ppu.pixels, 160, 144, 160, QImage::Format_RGB888);
+  renderer = new RenderWidget;
 
-  auto menu = new QMenuBar{this};
+  setCentralWidget(renderer);
+
   auto file_menu = menu->addMenu(tr("File"));
 
   auto open = file_menu->addAction(tr("Open"));
@@ -47,5 +49,6 @@ void MainWindow::OnOpenFile()
         skip, file_dialog_rom.selectedFiles().at(0).toStdString(), "bootrom.bin");
 
     core->Run();
+    renderer->DrawFrame(core->cpu.bus.ppu.pixels, 160, 144, 800, 600);
   }
 }

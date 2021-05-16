@@ -10,12 +10,18 @@ void Core::Run()
 {
   while(cpu.total_cycles < CYCLES_PER_FRAME)  // TODO: This is not proper cycling
   {
-    cpu.step();
-    bus.ppu.step(cpu.cycles);
-    cpu.handle_timers();
+    cpu.Step();
+    cpu.bus.ppu.Step(cpu.cycles);
+    cpu.HandleTimers();
   }
 
   cpu.total_cycles -= CYCLES_PER_FRAME;
+}
+
+void Core::Reset()
+{
+  bus.Reset();
+  cpu.Reset();
 }
 
 }  // namespace natsukashii::core

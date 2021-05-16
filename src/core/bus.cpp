@@ -4,29 +4,29 @@ namespace natsukashii::core
 {
 Bus::Bus(Mem& mem, bool skip, std::string path1, std::string path2) : mem(mem), ppu(skip)
 {
-  this->mem.load_rom(path1);
-  this->mem.load_bootrom(path2);
+  this->mem.LoadROM(path1);
+  this->mem.LoadBootrom(path2);
 }
 
-void Bus::reset()
+void Bus::Reset()
 {
-  ppu.reset();
-  mem.reset();
+  ppu.Reset();
+  mem.Reset();
 }
 
-byte Bus::read_byte(half addr)
+byte Bus::ReadByte(half addr)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
     return ppu.vram[addr & 0x1fff];
   else if (addr >= 0xfe00 && addr <= 0xfe9f)
     return ppu.oam[addr & 0x9f];
   else if (addr >= 0xff40 && addr <= 0xff4b)
-    return ppu.read_io(addr);
+    return ppu.ReadIO(addr);
 
-  return mem.read(addr);
+  return mem.Read(addr);
 }
 
-byte Bus::next_byte(half addr, half& pc)
+byte Bus::NextByte(half addr, half& pc)
 {
   pc++;
   if (addr >= 0x8000 && addr <= 0x9fff)
@@ -34,22 +34,22 @@ byte Bus::next_byte(half addr, half& pc)
   else if (addr >= 0xfe00 && addr <= 0xfe9f)
     return ppu.oam[addr & 0x9f];
   else if (addr >= 0xff40 && addr <= 0xff4b)
-    return ppu.read_io(addr);
+    return ppu.ReadIO(addr);
 
-  return mem.read(addr);
+  return mem.Read(addr);
 }
 
-half Bus::read_half(half addr)
+half Bus::ReadHalf(half addr)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
     return (ppu.vram[(addr & 0x1fff) + 1] << 8) | ppu.vram[addr & 0x1fff];
   else if (addr >= 0xfe00 && addr <= 0xfe9f)
     return (ppu.oam[(addr & 0x9f) + 1] << 8) | ppu.oam[addr & 0x9f];
 
-  return (mem.read(addr + 1) << 8) | mem.read(addr);
+  return (mem.Read(addr + 1) << 8) | mem.Read(addr);
 }
 
-half Bus::next_half(half addr, half& pc)
+half Bus::NextHalf(half addr, half& pc)
 {
   pc += 2;
   if (addr >= 0x8000 && addr <= 0x9fff)
@@ -57,10 +57,10 @@ half Bus::next_half(half addr, half& pc)
   else if (addr >= 0xfe00 && addr <= 0xfe9f)
     return (ppu.oam[(addr & 0x9f) + 1] << 8) | ppu.oam[addr & 0x9f];
 
-  return (mem.read(addr + 1) << 8) | mem.read(addr);
+  return (mem.Read(addr + 1) << 8) | mem.Read(addr);
 }
 
-void Bus::write_byte(half addr, byte val)
+void Bus::WriteByte(half addr, byte val)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
   {
@@ -74,14 +74,14 @@ void Bus::write_byte(half addr, byte val)
   }
   else if (addr >= 0xff40 && addr <= 0xff4b)
   {
-    ppu.write_io(mem, addr, val);
+    ppu.WriteIO(mem, addr, val);
     return;
   }
 
-  mem.write(addr, val);
+  mem.Write(addr, val);
 }
 
-void Bus::write_half(half addr, half val)
+void Bus::WriteHalf(half addr, half val)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
   {
@@ -97,13 +97,13 @@ void Bus::write_half(half addr, half val)
   }
   else if (addr >= 0xff40 && addr <= 0xff4b)
   {
-    ppu.write_io(mem, addr + 1, val >> 8);
-    ppu.write_io(mem, addr, val & 0xff);
+    ppu.WriteIO(mem, addr + 1, val >> 8);
+    ppu.WriteIO(mem, addr, val & 0xff);
     return;
   }
 
-  mem.write(addr + 1, val >> 8);
-  mem.write(addr, val & 0xff);
+  mem.Write(addr + 1, val >> 8);
+  mem.Write(addr, val & 0xff);
 }
 
 }  // namespace natsukashii::core
