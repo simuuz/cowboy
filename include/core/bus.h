@@ -3,8 +3,9 @@
 
 namespace natsukashii::core
 {
-struct Bus
+class Bus
 {
+public:
   Bus(Mem& mem, bool skip, std::string path1, std::string path2);
   byte ReadByte(half addr);
   byte NextByte(half addr, half& pc);

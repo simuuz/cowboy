@@ -3,6 +3,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QImage>
+#include <unistd.h>
 
 MainWindow::MainWindow(QApplication& app) : QMainWindow(nullptr)
 {
@@ -21,7 +22,7 @@ MainWindow::MainWindow(QApplication& app) : QMainWindow(nullptr)
   auto exit = file_menu->addAction(tr("Exit"));
 
   connect(open, &QAction::triggered, this, &MainWindow::OnOpenFile);
-  connect(exit, &QAction::triggered, &QApplication::quit);
+  connect(exit, &QAction::triggered, this, &MainWindow::Quit);
   setMenuBar(menu);
   app.installEventFilter(this);
 }
@@ -48,7 +49,23 @@ void MainWindow::OnOpenFile()
     core = std::make_unique<natsukashii::core::Core>(
         skip, file_dialog_rom.selectedFiles().at(0).toStdString(), "bootrom.bin");
 
-    core->Run();
-    renderer->DrawFrame(core->cpu.bus.ppu.pixels, 160, 144, 800, 600);
+    while(core->run)
+    {
+      core->Run();
+      renderer->DrawFrame(core->cpu.bus.ppu.pixels, 160, 144, 800, 600);
+      QApplication::processEvents();
+    }
   }
+}
+
+void MainWindow::Quit()
+{
+  core->Stop();
+  exit(0);
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+  core->Stop();
+  event->accept();
 }

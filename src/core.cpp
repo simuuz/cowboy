@@ -18,6 +18,18 @@ void Core::Run()
   cpu.total_cycles -= CYCLES_PER_FRAME;
 }
 
+void Core::Pause()
+{
+  run = false;
+}
+
+void Core::Stop()
+{
+  run = false;
+  bus.Reset();
+  cpu.Reset();
+}
+
 void Core::Reset()
 {
   bus.Reset();

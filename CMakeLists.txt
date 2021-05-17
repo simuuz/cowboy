@@ -24,7 +24,7 @@ include_directories(
   include/external/
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 

@@ -75,7 +75,17 @@ void Mem::LoadROM(std::string path)
   file.close();
 
   rom_opened = true;
-  cart.LoadROM(rom);
+  switch(rom[0x147])
+  {
+  case 0:
+    mapper = std::make_unique<ROMOnly>(rom);
+    break;
+  default:
+    printf("Unsupported cartridge type: %s\n", mbcs[rom[0x147]].c_str());
+    exit(1);
+  }
+
+  cart = mapper.get();
 }
 
 bool Mem::LoadBootrom(std::string path)
@@ -105,13 +115,11 @@ byte Mem::Read(half addr)
     }
     else
     {
-      return cart.ReadROM(addr);
+      return cart->Read(addr);
     }
     break;
-  case 0x100 ... 0x7fff:
-    return cart.ReadROM(addr);
-  case 0xa000 ... 0xbfff:
-    return cart.ReadERAM(addr);
+  case 0x100 ... 0xbfff:
+    return cart->Read(addr);
   case 0xc000 ... 0xdfff:
     return wram[addr & 0x1fff];
   case 0xe000 ... 0xfdff:
@@ -131,11 +139,8 @@ void Mem::Write(half addr, byte val)
 {
   switch (addr)
   {
-  case 0 ... 0x7fff:
-    cart.WriteROM(addr, val);
-    break;
-  case 0xa000 ... 0xbfff:
-    cart.WriteERAM(addr, val);
+  case 0 ... 0xbfff:
+    cart->Write(addr, val);
     break;
   case 0xc000 ... 0xdfff:
     wram[addr & 0x1fff] = val;

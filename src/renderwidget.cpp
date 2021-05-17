@@ -5,7 +5,7 @@
 RenderWidget::RenderWidget(QWidget* parent) : QWidget(parent)
 {
     QPalette palette;
-    palette.setColor(QPalette::Window, Qt::black);
+    palette.setColor(QPalette::Window, Qt::white);
     setPalette(palette);
     setAutoFillBackground(true);
 }
@@ -17,7 +17,7 @@ void RenderWidget::DrawFrame(byte* buffer, int w, int h, int sw, int sh)
         return;
     }
 
-    image = QImage(buffer, w, h, QImage::Format_RGB888).scaled(sw, sh, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    image = QImage(buffer, w, h, QImage::Format_RGB888).scaled(sw, sh, Qt::KeepAspectRatio, Qt::FastTransformation);
     update();
 }
 

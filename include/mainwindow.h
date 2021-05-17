@@ -10,7 +10,9 @@ class MainWindow : public QMainWindow
 public:
   MainWindow(QApplication& app);
 private:
+  void closeEvent(QCloseEvent* event);
   void OnOpenFile();
+  void Quit();
   std::unique_ptr<natsukashii::core::Core> core;
 
   QAction* reset;
