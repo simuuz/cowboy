@@ -13,54 +13,82 @@ constexpr int ROM_SZ_MIN = 0x8000;
 
 namespace natsukashii::core
 {
-class Cartridge
+class Cart
 {
 public:
-  virtual ~Cartridge() = default;
-  virtual byte Read(half addr) = 0;
-  virtual void Write(half addr, byte val) = 0;
-
-  word GetRAMSize(byte index)
-  {
-    word sizes[6] = { 0, 2048, 8192, 32768, 131072, 65536 };
-    return sizes[index];
-  }
-
-  word GetROMSize(byte index)
-  {
-    return (32 * 1024) << (word)index;
-  }
+  virtual byte Read(half addr);
+  virtual void Write(half addr, byte val);
 };
 
-class ROMOnly : public Cartridge
+class NoMBC : public Cart
 {
 public:
-  ROMOnly(std::vector<byte>& rom) : rom(rom) {}
-
-  byte Read(half addr) override
-  {
-    switch(addr)
-    {
-      case 0 ... 0x7FFF:
-      return rom[addr];
-      case 0xa000 ... 0xbfff:
-      return 0xff;
-    }
-  }
-
-  void Write(half addr, byte val) override
-  {
-    switch(addr)
-    {
-      case 0 ... 0x7FFF:
-      printf("Tried to write to ROM, addr: %04X, val: %02X\n", addr, val);
-      exit(1);
-      case 0xa000 ... 0xbfff:
-      break;
-    }
-  }
+  NoMBC(std::vector<byte>& rom);
+  byte Read(half addr);
+  void Write(half addr, byte val);
 private:
   std::vector<byte> rom;
+};
+
+class MBC1 : public Cart
+{
+public:
+  MBC1(std::vector<byte>& rom);
+  byte Read(half addr);
+  void Write(half addr, byte val);
+
+private:
+  byte romBank = 1;
+  byte ramBank = 1;
+  byte romSize;
+  byte ramSize;
+  bool mode = false;
+  bool ramEnable = false;
+  static constexpr half bitmasks[7] = {0x1, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x1f};
+  static constexpr word RAM_SIZES[6] = {0, 2 * 1024, 8 * 1024, 32 * 1024, 128 * 1024, 64 * 1024};
+  std::array<byte, ERAM_SZ> ram;
+  std::vector<byte> rom;
+};
+
+class MBC2 : public Cart
+{
+public:
+  MBC2(std::vector<byte>& rom);
+  byte Read(half addr);
+  void Write(half addr, byte val);
+private:
+  byte romBank = 1;
+  bool ramEnable = false;
+  std::array<byte, ERAM_SZ> ram;
+  std::vector<byte> rom;
+};
+
+class MBC3 : public Cart
+{
+public:
+  MBC3(std::vector<byte>& rom);
+  byte Read(half addr);
+  void Write(half addr, byte val);
+private:
+  byte ramBank = 0;
+  byte romBank = 0;
+  std::array<byte, ERAM_SZ> ram;
+  std::vector<byte> rom;
+  bool ramEnable = false;
+};
+
+class MBC5 : public Cart
+{
+public:
+  MBC5(std::vector<byte>& rom);
+  byte Read(half addr);
+  void Write(half addr, byte val);
+private:
+  half romBank = 1;
+  byte ramBank = 1;
+  std::array<byte, ERAM_SZ> ram;
+  std::vector<byte> rom;
+  bool ramEnable = false;
 };
 
 class Mem
@@ -85,8 +113,7 @@ public:
   bool rom_opened = false;
 
 private:
-  std::unique_ptr<Cartridge> mapper;
-  Cartridge* cart;
+  Cart* cart = nullptr;
 
   void WriteIO(half addr, byte val);
   byte ReadIO(half addr);

@@ -1,5 +1,6 @@
 #pragma once
 #include "mem.h"
+#include "renderwidget.h"
 
 constexpr int VRAM_SZ = 0x2000;
 constexpr int OAM_SZ = 0xa0;
@@ -29,25 +30,27 @@ struct Sprite
 class Ppu
 {
 public:
-  Ppu(bool skip);
+  Ppu(bool skip, RenderWidget* renderer);
   void Reset();
   void Step(int cycles);
-  bool render = false;
 
-  byte pixels[FBSIZE]{};
-  byte vram[VRAM_SZ]{};
-  byte oam[OAM_SZ]{};
+  std::array<byte, FBSIZE>pixels;
+  std::array<byte, VRAM_SZ> vram;
+  std::array<byte, OAM_SZ> oam;
   friend class Bus;
-
 private:
+  bool skip = false;
+  RenderWidget* renderer;
   enum Mode
   {
     HBlank,
     VBlank,
     OAM,
     LCDTransfer
-  } mode;
+  };
 
+  Mode mode = OAM;
+  
   struct IO
   {
     byte bgp = 0, scy = 0, scx = 0, lcdc = 0;
@@ -58,13 +61,12 @@ private:
   bool statIRQ = false;
   bool vblankIRQ = false;
   word fbIndex = 0;
-  bool disabled = false;
+  bool disabled = true;
 
   int curr_cycles = 0;
 
   const byte palette[12] = {0xe0, 0xf8, 0xd0, 0x88, 0xc0, 0x70, 0x34, 0x68, 0x56, 0x08, 0x18, 0x20};
 
-  bool skip = false;
   void WriteIO(Mem& mem, half addr, byte val);
   byte ReadIO(half addr);
   template <typename T>
@@ -76,5 +78,6 @@ private:
   void RenderOBJs();
   void RenderBGs();
   void Scanline();
+  void CompareLYC();
 };
 }  // namespace natsukashii::core

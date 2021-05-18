@@ -5,7 +5,7 @@
 RenderWidget::RenderWidget(QWidget* parent) : QWidget(parent)
 {
     QPalette palette;
-    palette.setColor(QPalette::Window, Qt::white);
+    palette.setColor(QPalette::Window, Qt::black);
     setPalette(palette);
     setAutoFillBackground(true);
 }
@@ -31,7 +31,7 @@ void RenderWidget::paintEvent(QPaintEvent* event)
 
     QImage image = this->image.scaled(widget_size.width(), widget_size.height(),
                                       maintain_aspect_ratio ? Qt::KeepAspectRatio : Qt::IgnoreAspectRatio,
-                                      Qt::SmoothTransformation);
+                                      Qt::FastTransformation);
 
     QRect src_rect{image.rect()};
 

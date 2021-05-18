@@ -10,13 +10,12 @@ class MainWindow : public QMainWindow
 public:
   MainWindow(QApplication& app);
 private:
-  void closeEvent(QCloseEvent* event);
   void OnOpenFile();
-  void Quit();
+  void closeEvent(QCloseEvent* event);
   std::unique_ptr<natsukashii::core::Core> core;
-
-  QAction* reset;
-  QAction* pause;
-  QAction* stop;
+  void Reset();
+  void Pause();
+  void Stop();
+  bool running = false;
   RenderWidget* renderer;
 };

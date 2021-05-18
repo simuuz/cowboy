@@ -3,7 +3,6 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QImage>
-#include <unistd.h>
 
 MainWindow::MainWindow(QApplication& app) : QMainWindow(nullptr)
 {
@@ -22,13 +21,29 @@ MainWindow::MainWindow(QApplication& app) : QMainWindow(nullptr)
   auto exit = file_menu->addAction(tr("Exit"));
 
   connect(open, &QAction::triggered, this, &MainWindow::OnOpenFile);
-  connect(exit, &QAction::triggered, this, &MainWindow::Quit);
+  connect(exit, &QAction::triggered, &QApplication::quit);
+
+  auto emulation_menu = menu->addMenu(tr("Emulator"));
+
+  auto pause = emulation_menu->addAction(tr("Pause"));
+  auto reset = emulation_menu->addAction(tr("Reset"));
+  auto stop = emulation_menu->addAction(tr("Stop"));
+
+  connect(pause, &QAction::triggered, this, &MainWindow::Pause);
+  connect(reset, &QAction::triggered, this, &MainWindow::Reset);
+  connect(stop, &QAction::triggered, this, &MainWindow::Stop);
   setMenuBar(menu);
   app.installEventFilter(this);
 }
 
 void MainWindow::OnOpenFile()
 {
+  if(running)
+  {
+    running = false;
+    core.reset();
+  }
+
   QFileDialog file_dialog_rom{this};
   file_dialog_rom.setAcceptMode(QFileDialog::AcceptOpen);
   file_dialog_rom.setFileMode(QFileDialog::ExistingFile);
@@ -46,26 +61,40 @@ void MainWindow::OnOpenFile()
 
   if (file_dialog_rom.exec())
   {
+    running = true;
     core = std::make_unique<natsukashii::core::Core>(
-        skip, file_dialog_rom.selectedFiles().at(0).toStdString(), "bootrom.bin");
+        skip, file_dialog_rom.selectedFiles().at(0).toStdString(), "bootrom.bin", renderer);
 
-    while(core->run)
+    while(running)
     {
       core->Run();
-      renderer->DrawFrame(core->cpu.bus.ppu.pixels, 160, 144, 800, 600);
       QApplication::processEvents();
     }
   }
 }
 
-void MainWindow::Quit()
+void MainWindow::Stop()
 {
-  core->Stop();
-  exit(0);
+  if(!running)
+    return;
+  running = false;
+  core->Reset();
+}
+
+void MainWindow::Reset()
+{
+  if(!running)
+    return;
+  core->Reset();
+}
+
+void MainWindow::Pause()
+{
+  running = false;
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-  core->Stop();
+  Stop();
   event->accept();
 }

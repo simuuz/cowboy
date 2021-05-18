@@ -4,7 +4,7 @@ constexpr int CYCLES_PER_FRAME = 4194300 / 60;
 
 namespace natsukashii::core
 {
-Core::Core(bool skip, std::string path1, std::string path2) : mem(skip), bus(mem, skip, path1, path2), cpu(skip, bus) { }
+Core::Core(bool skip, std::string path1, std::string path2, RenderWidget* renderer) : mem(skip), bus(mem, skip, path1, path2, renderer), cpu(skip, bus) { }
 
 void Core::Run()
 {
@@ -16,18 +16,6 @@ void Core::Run()
   }
 
   cpu.total_cycles -= CYCLES_PER_FRAME;
-}
-
-void Core::Pause()
-{
-  run = false;
-}
-
-void Core::Stop()
-{
-  run = false;
-  bus.Reset();
-  cpu.Reset();
 }
 
 void Core::Reset()

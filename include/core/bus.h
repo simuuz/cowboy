@@ -3,10 +3,9 @@
 
 namespace natsukashii::core
 {
-class Bus
+struct Bus
 {
-public:
-  Bus(Mem& mem, bool skip, std::string path1, std::string path2);
+  Bus(Mem& mem, bool skip, std::string path1, std::string path2, RenderWidget* renderer);
   byte ReadByte(half addr);
   byte NextByte(half addr, half& pc);
   void WriteByte(half addr, byte val);

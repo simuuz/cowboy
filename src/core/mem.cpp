@@ -62,6 +62,7 @@ void Mem::Reset()
 
 void Mem::LoadROM(std::string path)
 {
+  rom.clear();
   std::ifstream file{path, std::ios::binary};
   file.unsetf(std::ios::skipws);
 
@@ -75,17 +76,25 @@ void Mem::LoadROM(std::string path)
   file.close();
 
   rom_opened = true;
+  printf("%s\n", mbcs[rom[0x147]].c_str());
   switch(rom[0x147])
   {
   case 0:
-    mapper = std::make_unique<ROMOnly>(rom);
+    cart = new NoMBC(rom);
     break;
-  default:
-    printf("Unsupported cartridge type: %s\n", mbcs[rom[0x147]].c_str());
-    exit(1);
+  case 1 ... 3:
+    cart = new MBC1(rom);
+    break;
+  case 5: case 6:
+    cart = new MBC2(rom);
+    break;
+  case 0xF ... 0x13:
+    cart = new MBC3(rom);
+    break;
+  case 0x19 ... 0x1E:
+    cart = new MBC5(rom);
+    break;
   }
-
-  cart = mapper.get();
 }
 
 bool Mem::LoadBootrom(std::string path)
@@ -118,7 +127,9 @@ byte Mem::Read(half addr)
       return cart->Read(addr);
     }
     break;
-  case 0x100 ... 0xbfff:
+  case 0x100 ... 0x7fff:
+    return cart->Read(addr);
+  case 0xa000 ... 0xbfff:
     return cart->Read(addr);
   case 0xc000 ... 0xdfff:
     return wram[addr & 0x1fff];
@@ -139,7 +150,10 @@ void Mem::Write(half addr, byte val)
 {
   switch (addr)
   {
-  case 0 ... 0xbfff:
+  case 0 ... 0x7fff:
+    cart->Write(addr, val);
+    break;
+  case 0xa000 ... 0xbfff:
     cart->Write(addr, val);
     break;
   case 0xc000 ... 0xdfff:

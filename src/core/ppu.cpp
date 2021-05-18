@@ -3,73 +3,71 @@
 
 namespace natsukashii::core
 {
-Ppu::Ppu(bool skip) : skip(skip)
+Ppu::Ppu(bool skip, RenderWidget* renderer) : skip(skip), renderer(renderer)
 {
-  memset(pixels, 0, FBSIZE);
-  memset(vram, 0, VRAM_SZ);
-  memset(oam, 0, OAM_SZ);
-  mode = OAM;
+  std::fill(pixels.begin(), pixels.end(), 0);
+  std::fill(vram.begin(), vram.end(), 0);
+  std::fill(oam.begin(), oam.end(), 0);
+
+  io.scx = 0;
+  io.scy = 0;
+  io.lyc = 0;
+  io.wx = 0;
+  io.wy = 0;
+  io.ly = 0;
 
   if (skip)
   {
     io.lcdc = 0x91;
-    io.scx = 0;
-    io.scy = 0;
-    io.lyc = 0;
     io.bgp = 0xfc;
     io.obp0 = 0xff;
     io.obp1 = 0xff;
-    io.wx = 0;
-    io.wy = 0;
-    io.ly = 0;
   }
   else
   {
     io.lcdc = 0;
-    io.scx = 0;
-    io.scy = 0;
-    io.lyc = 0;
     io.bgp = 0;
     io.obp0 = 0;
     io.obp1 = 0;
-    io.wx = 0;
-    io.wy = 0;
-    io.ly = 0;
   }
 }
 
 void Ppu::Reset()
 {
-  memset(pixels, 0, FBSIZE);
-  memset(vram, 0, VRAM_SZ);
-  memset(oam, 0, OAM_SZ);
-  mode = OAM;
+  std::fill(pixels.begin(), pixels.end(), 0);
+  std::fill(vram.begin(), vram.end(), 0);
+  std::fill(oam.begin(), oam.end(), 0);
+
+  io.scx = 0;
+  io.scy = 0;
+  io.lyc = 0;
+  io.wx = 0;
+  io.wy = 0;
+  io.ly = 0;
 
   if (skip)
   {
     io.lcdc = 0x91;
-    io.scx = 0;
-    io.scy = 0;
-    io.lyc = 0;
     io.bgp = 0xfc;
     io.obp0 = 0xff;
     io.obp1 = 0xff;
-    io.wx = 0;
-    io.wy = 0;
-    io.ly = 0;
   }
   else
   {
     io.lcdc = 0;
-    io.scx = 0;
-    io.scy = 0;
-    io.lyc = 0;
     io.bgp = 0;
     io.obp0 = 0;
     io.obp1 = 0;
-    io.wx = 0;
-    io.wy = 0;
-    io.ly = 0;
+  }
+}
+
+void Ppu::CompareLYC()
+{
+  bool lyc_comp = io.lyc == io.ly;
+  setbit<byte, 2>(io.stat, lyc_comp);
+  if (lyc_comp && bit<byte, 6>(io.stat))
+  {
+    statIRQ = true;
   }
 }
 
@@ -81,6 +79,7 @@ void Ppu::Step(int cycles)
   }
 
   curr_cycles += cycles;
+
   switch (mode)
   {
   case OAM:
@@ -110,12 +109,8 @@ void Ppu::Step(int cycles)
       {
         ChangeMode(OAM);
       }
-      bool lyc_comp = io.lyc == io.ly;
-      setbit<byte, 2>(io.stat, lyc_comp);
-      if (lyc_comp && bit<byte, 6>(io.stat))
-      {
-        statIRQ = true;
-      }
+
+      CompareLYC();
     }
     break;
   case VBlank:
@@ -130,12 +125,7 @@ void Ppu::Step(int cycles)
         io.ly = 0;
       }
 
-      bool lyc_comp = io.lyc == io.ly;
-      setbit<byte, 2>(io.stat, lyc_comp);
-      if (lyc_comp && bit<byte, 6>(io.stat))
-      {
-        statIRQ = true;
-      }
+      CompareLYC();
     }
     break;
   }
@@ -143,15 +133,14 @@ void Ppu::Step(int cycles)
 
 void Ppu::ChangeMode(Mode m)
 {
+  mode = m;
   switch (m)
   {
   case LCDTransfer:
-    mode = LCDTransfer;
     io.stat = (io.stat & 0xfc) | 3;
     break;
   case HBlank:
     Scanline();
-    mode = HBlank;
     io.stat = io.stat & 0xfc;
     if (bit<byte, 3>(io.stat))
     {
@@ -159,7 +148,6 @@ void Ppu::ChangeMode(Mode m)
     }
     break;
   case OAM:
-    mode = OAM;
     io.stat = (io.stat & 0xfc) | 2;
     if (bit<byte, 5>(io.stat))
     {
@@ -167,8 +155,7 @@ void Ppu::ChangeMode(Mode m)
     }
     break;
   case VBlank:
-    render = true;
-    mode = VBlank;
+    renderer->DrawFrame(pixels.data(), 160, 144, 800, 600);
     vblankIRQ = true;
     io.stat = (io.stat & 0xfc) | 1;
     if (bit<byte, 4>(io.stat))
@@ -216,7 +203,7 @@ void Ppu::WriteIO(Mem& mem, half addr, byte val)
     io.lcdc = val;
     if (!bit<byte, 7>(val))
     {
-      io.stat = io.stat & 0xfc;
+      io.stat &= 0xfc;
       disabled = true;
       io.ly = 0;
     }
@@ -240,7 +227,7 @@ void Ppu::WriteIO(Mem& mem, half addr, byte val)
     break;
   case 0x46:  // OAM DMA very simple implementation
   {
-    half start = val << 8;
+    half start = (half)val << 8;
     for (byte i = 0; i < 0xa0; i++)
     {
       oam[i] = mem.Read(start + i);
@@ -280,13 +267,13 @@ bool Ppu::CanSprites(bool priority)
 template <typename T>
 void Ppu::WriteVRAM(half addr, T val)
 {
-  *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram))[addr & 0x1fff]) = val;
+  *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]) = val;
 }
 
 template <typename T>
 T Ppu::ReadVRAM(half addr)
 {
-  return *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram))[addr & 0x1fff]);
+  return *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]);
 }
 
 void Ppu::Scanline()
@@ -299,10 +286,10 @@ void Ppu::RenderBGs()
 {
   fbIndex = ((word)io.ly * WIDTH * 3);
 
-  byte x = 0;
+  auto x = 0;
   auto y = (half)io.ly + (half)io.scy;
 
-  auto wx = (shalf)io.wx - 7;
+  auto wx = (shalf)io.wx - (half)7;
   auto wy = io.wy;
 
   bool renderWindow = (wy <= io.ly && bit<byte, 5>(io.lcdc));
@@ -313,13 +300,13 @@ void Ppu::RenderBGs()
   while (x < 160)
   {
     half tileLine = 0;
-    byte tile_x = 0;
+    auto tile_x = 0;
     if (renderWindow && wx <= x && bit<byte, 0>(io.lcdc))
     {
       y = io.ly - io.wy;
       auto tmpx = x - wx;
       tile_x = tmpx & 7;
-      word tile_y = y & 7;
+      auto tile_y = y & 7;
       byte tile_index = vram[wintilemap + ((((half)y >> 3) << 5) & 0x3FF) + (((half)tmpx >> 3))];
       if (tiledata == 0x8000)
       {
@@ -327,14 +314,14 @@ void Ppu::RenderBGs()
       }
       else
       {
-        tileLine = ReadVRAM<half>(0x9000 + ((shalf)tile_index) * 16 + ((half)tile_y << 1));
+        tileLine = ReadVRAM<half>(0x9000 + (shalf((sbyte)tile_index)) * 16 + ((half)tile_y << 1));
       }
     }
     else if (bit<byte, 0>(io.lcdc))
     {
-      y = io.ly + io.scy;
-      word tile_y = y & 7;
-      byte p = (x + io.scx);
+      y = (half)io.ly + (half)io.scy;
+      auto tile_y = y & 7;
+      auto p = (x + io.scx);
       tile_x = p & 7;
       byte tile_index = vram[bgtilemap + (((y >> 3) << 5) & 0x3FF) + ((p >> 3) & 31)];
       if (tiledata == 0x8000)
@@ -343,7 +330,7 @@ void Ppu::RenderBGs()
       }
       else
       {
-        tileLine = ReadVRAM<half>(0x9000 + ((shalf)tile_index) * 16 + ((half)tile_y << 1));
+        tileLine = ReadVRAM<half>(0x9000 + (shalf((sbyte)tile_index)) * 16 + ((half)tile_y << 1));
       }
     }
 
@@ -353,8 +340,8 @@ void Ppu::RenderBGs()
     byte colorID = (bit<byte>(high, 7 - tile_x) << 1) | bit<byte>(low, 7 - tile_x);
     byte color = (io.bgp >> (colorID << 1)) & 3;
     pixels[fbIndex] = palette[color * 3];
-    pixels[fbIndex + 1] = palette[color * 3 + 1];
-    pixels[fbIndex + 2] = palette[color * 3 + 2];
+    pixels[fbIndex + 1] = palette[(color * 3) + 1];
+    pixels[fbIndex + 2] = palette[(color * 3) + 2];
 
     x++;
     fbIndex += 3;
