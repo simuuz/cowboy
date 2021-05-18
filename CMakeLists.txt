@@ -8,6 +8,13 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(MBCS
+  src/core/mbc/nombc.cpp
+  src/core/mbc/mbc1.cpp
+  src/core/mbc/mbc2.cpp
+  src/core/mbc/mbc3.cpp
+  src/core/mbc/mbc5.cpp)
+
 set(SOURCES
   src/core/mem.cpp
   src/core/cpu.cpp
