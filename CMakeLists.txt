@@ -16,6 +16,7 @@ set(MBCS
   src/core/mbc/mbc5.cpp)
 
 set(SOURCES
+  ${MBCS}
   src/core/mem.cpp
   src/core/cpu.cpp
   src/core/bus.cpp
