@@ -16,8 +16,8 @@ namespace natsukashii::core
 class Cart
 {
 public:
-  virtual byte Read(half addr);
-  virtual void Write(half addr, byte val);
+  virtual byte Read(half addr) { return 0xff; }
+  virtual void Write(half addr, byte val) { }
 };
 
 class NoMBC : public Cart
