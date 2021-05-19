@@ -23,7 +23,7 @@ set(SOURCES
   src/core/ppu.cpp
   src/core.cpp
   src/main.cpp
-  src/renderwidget.cpp
+  src/renderer.cpp
   src/mainwindow.cpp)
 
 include_directories(
@@ -34,10 +34,10 @@ include_directories(
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
-find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
+find_package(ImGui-SFML REQUIRED)
 
 add_executable(natsukashii
   ${SOURCES}
 )
 
-target_link_libraries(natsukashii Qt5::Core Qt5::Gui Qt5::Widgets)
+target_link_libraries(natsukashii PRIVATE ImGui-SFML::ImGui-SFML)

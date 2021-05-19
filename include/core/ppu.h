@@ -1,6 +1,6 @@
 #pragma once
 #include "mem.h"
-#include "renderwidget.h"
+#include "renderer.h"
 
 constexpr int VRAM_SZ = 0x2000;
 constexpr int OAM_SZ = 0xa0;
@@ -30,7 +30,7 @@ struct Sprite
 class Ppu
 {
 public:
-  Ppu(bool skip, RenderWidget* renderer);
+  Ppu(bool skip, Renderer* renderer);
   void Reset();
   void Step(int cycles);
 
@@ -40,7 +40,7 @@ public:
   friend class Bus;
 private:
   bool skip = false;
-  RenderWidget* renderer;
+  Renderer* renderer;
   enum Mode
   {
     HBlank,
