@@ -30,7 +30,7 @@ struct Sprite
 class Ppu
 {
 public:
-  Ppu(bool skip, Renderer* renderer);
+  Ppu(bool skip);
   void Reset();
   void Step(int cycles);
 
@@ -38,9 +38,9 @@ public:
   std::array<byte, VRAM_SZ> vram;
   std::array<byte, OAM_SZ> oam;
   friend class Bus;
+  bool render = false;
 private:
   bool skip = false;
-  Renderer* renderer;
   enum Mode
   {
     HBlank,

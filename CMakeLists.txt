@@ -8,6 +8,16 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(UNIX)
+  set(NFD
+    include/external/nativefiledialog-extended/src/nfd_gtk.cpp)
+endif(UNIX)
+
+if(WIN32)
+  set(NFD
+    include/external/nativefiledialog-extended/src/nfd_win.cpp)
+endif(WIN32)
+
 set(MBCS
   src/core/mbc/nombc.cpp
   src/core/mbc/mbc1.cpp
@@ -17,6 +27,7 @@ set(MBCS
 
 set(SOURCES
   ${MBCS}
+  ${NFD}
   src/core/mem.cpp
   src/core/cpu.cpp
   src/core/bus.cpp
@@ -30,6 +41,8 @@ include_directories(
   include/
   include/core/
   include/external/
+  include/external/imgui/
+  include/external/nativefiledialog-extended/src/include/
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")

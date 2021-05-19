@@ -96,7 +96,7 @@ class Mem
 public:
   Mem(bool skip);
   void LoadROM(std::string filename);
-  bool LoadBootrom(std::string filename);
+  bool LoadBootROM(std::string filename);
   void Reset();
   byte Read(half addr);
   void Write(half addr, byte val);

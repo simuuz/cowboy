@@ -3,7 +3,7 @@
 
 namespace natsukashii::core
 {
-Ppu::Ppu(bool skip, RenderWidget* renderer) : skip(skip), renderer(renderer)
+Ppu::Ppu(bool skip) : skip(skip)
 {
   std::fill(pixels.begin(), pixels.end(), 0);
   std::fill(vram.begin(), vram.end(), 0);
@@ -155,7 +155,7 @@ void Ppu::ChangeMode(Mode m)
     }
     break;
   case VBlank:
-    renderer->DrawFrame(pixels.data(), 160, 144, 800, 600);
+    render = true;
     vblankIRQ = true;
     io.stat = (io.stat & 0xfc) | 1;
     if (bit<byte, 4>(io.stat))

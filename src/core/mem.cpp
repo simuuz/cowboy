@@ -97,7 +97,7 @@ void Mem::LoadROM(std::string path)
   }
 }
 
-bool Mem::LoadBootrom(std::string path)
+bool Mem::LoadBootROM(std::string path)
 {
   std::ifstream file{path, std::ios::binary};
   file.unsetf(std::ios::skipws);

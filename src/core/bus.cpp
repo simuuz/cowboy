@@ -2,10 +2,19 @@
 
 namespace natsukashii::core
 {
-Bus::Bus(Mem& mem, bool skip, std::string path1, std::string path2, RenderWidget* renderer) : mem(mem), ppu(skip, renderer)
+Bus::Bus(Mem& mem, bool skip, std::string bootrom_path) : mem(mem), ppu(skip)
 {
-  this->mem.LoadROM(path1);
-  this->mem.LoadBootrom(path2);
+  this->mem.LoadBootROM(bootrom_path);
+}
+
+void Bus::LoadROM(std::string path)
+{
+  this->mem.LoadROM(path);
+}
+
+void Bus::LoadBootROM(std::string path)
+{
+  this->mem.LoadBootROM(path);
 }
 
 void Bus::Reset()
