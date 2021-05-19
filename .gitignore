@@ -4,3 +4,4 @@ build-windows/
 roms/
 *.txt
 vgcore.*
+imgui.ini
