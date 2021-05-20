@@ -20,7 +20,7 @@ jobs:
           cd include/external/imgui-sfml/
           cmake -DIMGUI_DIR=../imgui/
           cmake --build . --target install
-          cd ../../../
+          cd ../../
       
       - name: Build natsukashii
         run: |
@@ -56,7 +56,7 @@ jobs:
           cd include/external/imgui-sfml/
           cmake -DIMGUI_DIR=../imgui/
           cmake --build . --target install
-          cd ../../../
+          cd ../../
       
       - name: Build natsukashii
         run: | 
