@@ -4,7 +4,7 @@ constexpr int CYCLES_PER_FRAME = 4194300 / 60;
 
 namespace natsukashii::core
 {
-Core::Core(bool skip, std::string bootrom_path) : mem(skip), bus(mem, skip, bootrom_path), cpu(skip, bus) { }
+Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(skip, &bus) { }
 
 void Core::Run()
 {
@@ -13,7 +13,7 @@ void Core::Run()
     while(cpu.total_cycles < CYCLES_PER_FRAME)  // TODO: This is not proper cycling
     {
       cpu.Step();
-      cpu.bus.ppu.Step(cpu.cycles);
+      bus.ppu.Step(cpu.cycles);
       cpu.HandleTimers();
     }
 
@@ -23,13 +23,13 @@ void Core::Run()
 
 void Core::LoadROM(std::string path)
 {
+  cpu.Reset();
   bus.LoadROM(path);
   canrun = bus.romopened;
 }
 
 void Core::Reset()
 {
-  bus.Reset();
   cpu.Reset();
 }
 
@@ -40,7 +40,6 @@ void Core::Pause()
 
 void Core::Stop()
 {
-  bus.Reset();
   cpu.Reset();
   canrun = false;
 }

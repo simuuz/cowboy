@@ -6,10 +6,10 @@ namespace natsukashii::core
 class Cpu
 {
 public:
-  Cpu(bool skip, Bus& bus);
+  Cpu(bool skip, Bus* bus);
   void Step();
   void Reset();
-  Bus bus;
+  Bus* bus;
   bool halt = false;
   int total_cycles = 0;
   int cycles = 0;

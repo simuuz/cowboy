@@ -3,27 +3,18 @@
 
 namespace natsukashii::core
 {
-Mem::Mem(bool skip) : skip(skip)
+Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
 {
+  LoadBootROM(bootrom_path);
   rom_opened = false;
-  if (skip)
-  {
-    io.bootrom = 1;
-    io.tac = 0;
-    io.tima = 0;
-    io.tma = 0;
-    io.intf = 0;
-    io.div = 0;
-  }
-  else
-  {
-    io.bootrom = 0;
-    io.tac = 0;
-    io.tima = 0;
-    io.tma = 0;
-    io.intf = 0;
-    io.div = 0;
-  }
+  
+  io.tac = 0;
+  io.tima = 0;
+  io.tma = 0;
+  io.intf = 0;
+  io.div = 0;
+
+  io.bootrom = (skip) ? 1 : 0;
 
   memset(bootrom, 0, BOOTROM_SZ);
   memset(extram, 0, EXTRAM_SZ);
@@ -61,8 +52,11 @@ void Mem::Reset()
 }
 
 void Mem::LoadROM(std::string path)
-{
-  rom.clear();
+{  
+  if(cart != nullptr)
+  {
+    cart = nullptr;
+  }
   std::ifstream file{path, std::ios::binary};
   file.unsetf(std::ios::skipws);
 
@@ -80,7 +74,7 @@ void Mem::LoadROM(std::string path)
   switch(rom[0x147])
   {
   case 0:
-    cart = std::make_unique<NoMBC>(rom);
+    cart = new NoMBC(rom);
     break;
   case 1 ... 3:
     cart = new MBC1(rom);

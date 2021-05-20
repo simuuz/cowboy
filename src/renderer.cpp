@@ -15,8 +15,10 @@ Renderer::Renderer()
 
 void Renderer::DrawFrame(sf::RenderWindow& window, byte* buffer, int w, int h)
 {
-  texture.update(buffer, w, h, 0, 0);
-  window.clear();
+  ScaleImage(w, h);
+  texture.update(buffer, 160, 144, 0, 0);
+  final_image.setTexture(texture);
+  final_image.setPosition(0, 19);
   window.draw(final_image);
   ImGui::SFML::Render(window);
   window.display();

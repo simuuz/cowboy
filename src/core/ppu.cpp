@@ -260,7 +260,7 @@ bool Ppu::CanSprites(bool priority)
   }
   else
   {
-    return pixels[fbIndex] == 0xe0 && pixels[fbIndex] == 0xf8 && pixels[fbIndex] == 0xd0;
+    return pixels[fbIndex] == 0xe0 && pixels[fbIndex + 1] == 0xf8 && pixels[fbIndex + 2] == 0xd0;
   }
 }
 
@@ -342,9 +342,10 @@ void Ppu::RenderBGs()
     pixels[fbIndex] = palette[color * 3];
     pixels[fbIndex + 1] = palette[(color * 3) + 1];
     pixels[fbIndex + 2] = palette[(color * 3) + 2];
+    pixels[fbIndex + 3] = 0xff;
 
     x++;
-    fbIndex += 3;
+    fbIndex += 4;
   }
 }
 
@@ -391,9 +392,10 @@ void Ppu::RenderOBJs()
           pixels[fbIndex] = palette[color * 3];
           pixels[fbIndex + 1] = palette[color * 3 + 1];
           pixels[fbIndex + 2] = palette[color * 3 + 2];
+          pixels[fbIndex + 3] = 0xff;
         }
 
-        fbIndex += 3;
+        fbIndex += 4;
       }
     }
   }

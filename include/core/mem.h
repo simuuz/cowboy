@@ -18,6 +18,7 @@ class Cart
 public:
   virtual byte Read(half addr) { return 0xff; }
   virtual void Write(half addr, byte val) { }
+  virtual void Clear() { }
 };
 
 class NoMBC : public Cart
@@ -36,7 +37,6 @@ public:
   MBC1(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-
 private:
   byte romBank = 1;
   byte ramBank = 1;
@@ -94,9 +94,8 @@ private:
 class Mem
 {
 public:
-  Mem(bool skip);
+  Mem(bool skip, std::string bootrom_path);
   void LoadROM(std::string filename);
-  bool LoadBootROM(std::string filename);
   void Reset();
   byte Read(half addr);
   void Write(half addr, byte val);
@@ -113,7 +112,8 @@ public:
   bool rom_opened = false;
 
 private:
-  std::unique_ptr<Cart> cart;
+  Cart* cart = nullptr;
+  bool LoadBootROM(std::string filename);
 
   void WriteIO(half addr, byte val);
   byte ReadIO(half addr);

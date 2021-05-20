@@ -6,7 +6,7 @@ constexpr int VRAM_SZ = 0x2000;
 constexpr int OAM_SZ = 0xa0;
 constexpr int WIDTH = 160;
 constexpr int HEIGHT = 144;
-constexpr int FBSIZE = WIDTH * HEIGHT * 3;
+constexpr int FBSIZE = WIDTH * HEIGHT * 4;
 
 namespace natsukashii::core
 {

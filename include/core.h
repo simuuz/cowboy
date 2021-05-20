@@ -11,7 +11,6 @@ struct Core
   void Pause();
   void Stop();
   void LoadROM(std::string path);
-  Mem mem;
   Bus bus;
   Cpu cpu;
 private:

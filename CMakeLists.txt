@@ -35,7 +35,7 @@ include_directories(
   include/external/nativefiledialog-extended/src/include/
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 find_package(ImGui-SFML REQUIRED)
 

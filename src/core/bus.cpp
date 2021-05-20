@@ -2,20 +2,14 @@
 
 namespace natsukashii::core
 {
-Bus::Bus(Mem& mem, bool skip, std::string bootrom_path) : mem(mem), ppu(skip)
+Bus::Bus(bool skip, std::string bootrom_path) : mem(skip, bootrom_path), ppu(skip)
 {
-  this->mem.LoadBootROM(bootrom_path);
 }
 
 void Bus::LoadROM(std::string path)
 {
   this->mem.LoadROM(path);
   romopened = mem.rom_opened;
-}
-
-void Bus::LoadBootROM(std::string path)
-{
-  this->mem.LoadBootROM(path);
 }
 
 void Bus::Reset()

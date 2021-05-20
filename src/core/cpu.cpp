@@ -2,7 +2,7 @@
 
 namespace natsukashii::core
 {
-Cpu::Cpu(bool skip, Bus& bus) : bus(bus), skip(skip)
+Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
 {
   // log = fopen("log.txt", "w");
   halt = false;
@@ -34,6 +34,7 @@ Cpu::Cpu(bool skip, Bus& bus) : bus(bus), skip(skip)
 
 void Cpu::Reset()
 {
+  bus->Reset();
   ime = false;
   halt = false;
   cycles = 0;
@@ -67,7 +68,7 @@ void Cpu::Step()
 
   if (!halt)
   {
-    byte opcode = bus.NextByte(regs.pc, regs.pc);
+    byte opcode = bus->NextByte(regs.pc, regs.pc);
     cycles = opcycles[opcode];
     Execute(opcode);
   }
@@ -90,7 +91,7 @@ void Cpu::Execute(byte opcode)
   case 0x11:
   case 0x21:
   case 0x31:  // LD r16, half
-    WriteR16<1>((opcode >> 4) & 3, bus.NextHalf(regs.pc, regs.pc));
+    WriteR16<1>((opcode >> 4) & 3, bus->NextHalf(regs.pc, regs.pc));
     break;
   case 0x40 ... 0x75:
   case 0x77 ... 0x7f:  // LD r8, r8
@@ -104,7 +105,7 @@ void Cpu::Execute(byte opcode)
   case 0x1e:
   case 0x2e:
   case 0x3e:  // LD r8, byte
-    WriteR8((opcode >> 3) & 7, bus.NextByte(regs.pc, regs.pc));
+    WriteR8((opcode >> 3) & 7, bus->NextByte(regs.pc, regs.pc));
     break;
   case 0x04:
   case 0x14:
@@ -206,7 +207,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xee:
   {  // XOR byte
-    regs.a ^= bus.NextByte(regs.pc, regs.pc);
+    regs.a ^= bus->NextByte(regs.pc, regs.pc);
     bool z = (regs.a == 0);
     bool n = false;
     bool h = false;
@@ -215,22 +216,22 @@ void Cpu::Execute(byte opcode)
   }
   break;
   case 0xe0:  // LD (FF00 + byte), A
-    bus.WriteByte(0xff00 + bus.NextByte(regs.pc, regs.pc), regs.a);
+    bus->WriteByte(0xff00 + bus->NextByte(regs.pc, regs.pc), regs.a);
     break;
   case 0xf0:  // LD A, (FF00 + byte)
-    regs.a = bus.ReadByte(0xff00 + bus.NextByte(regs.pc, regs.pc));
+    regs.a = bus->ReadByte(0xff00 + bus->NextByte(regs.pc, regs.pc));
     break;
   case 0xe2:  // LD (FF00 + C), A
-    bus.WriteByte(0xff00 + regs.c, regs.a);
+    bus->WriteByte(0xff00 + regs.c, regs.a);
     break;
   case 0xf2:  // LD A, (FF00 + C)
-    regs.a = bus.ReadByte(0xff00 + regs.c);
+    regs.a = bus->ReadByte(0xff00 + regs.c);
     break;
   case 0x02:
   case 0x12:
   case 0x22:
   case 0x32:  // LD (R16), A
-    bus.WriteByte(ReadR16<2>((opcode >> 4) & 3), regs.a);
+    bus->WriteByte(ReadR16<2>((opcode >> 4) & 3), regs.a);
     if (opcode == 0x22)
       regs.hl++;
     if (opcode == 0x32)
@@ -240,21 +241,21 @@ void Cpu::Execute(byte opcode)
   case 0x1a:
   case 0x2a:
   case 0x3a:  // LD A, (R16)
-    regs.a = bus.ReadByte(ReadR16<2>((opcode >> 4) & 3));
+    regs.a = bus->ReadByte(ReadR16<2>((opcode >> 4) & 3));
     if (opcode == 0x2a)
       regs.hl++;
     if (opcode == 0x3a)
       regs.hl--;
     break;
   case 0x08:  // LD (half), REGS.SP
-    bus.WriteHalf(bus.NextHalf(regs.pc, regs.pc), regs.sp);
+    bus->WriteHalf(bus->NextHalf(regs.pc, regs.pc), regs.sp);
     break;
   case 0xf9:  // LD REGS.SP, HL
     regs.sp = regs.hl;
     break;
   case 0xe8:
   {  // ADD REGS.SP, sbyte
-    byte offset = bus.NextByte(regs.pc, regs.pc);
+    byte offset = bus->NextByte(regs.pc, regs.pc);
     bool z = false;
     bool n = false;
     bool h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
@@ -265,7 +266,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xf8:
   {  // LD HL, REGS.SP+sbyte
-    byte offset = bus.NextByte(regs.pc, regs.pc);
+    byte offset = bus->NextByte(regs.pc, regs.pc);
     bool z = false;
     bool n = false;
     bool h = (regs.sp & 0xf) + (offset & 0xf) > 0xf;
@@ -336,7 +337,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xd6:
   {  // SUB byte
-    byte op2 = bus.NextByte(regs.pc, regs.pc);
+    byte op2 = bus->NextByte(regs.pc, regs.pc);
     byte result = regs.a - op2;
     bool z = (result == 0);
     bool n = true;
@@ -360,7 +361,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xc6:
   {  // ADD byte
-    byte op2 = bus.NextByte(regs.pc, regs.pc);
+    byte op2 = bus->NextByte(regs.pc, regs.pc);
     byte result = regs.a + op2;
     bool z = (result == 0);
     bool n = false;
@@ -385,7 +386,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xce:
   {  // ADC byte
-    byte op2 = bus.NextByte(regs.pc, regs.pc);
+    byte op2 = bus->NextByte(regs.pc, regs.pc);
     bool c = (regs.f >> 4) & 1;
     half result = (half)(regs.a + op2 + c);
     bool z = ((result & 0xff) == 0);
@@ -411,7 +412,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xde:
   {  // SBC byte
-    byte op2 = bus.NextByte(regs.pc, regs.pc);
+    byte op2 = bus->NextByte(regs.pc, regs.pc);
     bool c = (regs.f >> 4) & 1;
     half result = (half)(regs.a - op2 - c);
     bool z = ((result & 0xff) == 0);
@@ -435,7 +436,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xe6:
   {  // AND byte
-    byte op2 = bus.NextByte(regs.pc, regs.pc);
+    byte op2 = bus->NextByte(regs.pc, regs.pc);
     regs.a &= op2;
     bool z = (regs.a == 0);
     bool n = false;
@@ -457,7 +458,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xf6:
   {  // OR byte
-    byte op2 = bus.NextByte(regs.pc, regs.pc);
+    byte op2 = bus->NextByte(regs.pc, regs.pc);
     regs.a |= op2;
     bool z = (regs.a == 0);
     bool n = false;
@@ -479,7 +480,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xfe:
   {  // CP byte
-    byte op2 = bus.NextByte(regs.pc, regs.pc);
+    byte op2 = bus->NextByte(regs.pc, regs.pc);
     byte result = regs.a - op2;
     bool z = (result == 0);
     bool n = true;
@@ -547,7 +548,7 @@ void Cpu::Execute(byte opcode)
   case 0xdc:
   case 0xcd:
   {  // CALL Cond half
-    half addr = bus.NextHalf(regs.pc, regs.pc);
+    half addr = bus->NextHalf(regs.pc, regs.pc);
     if (Cond(opcode))
     {
       Push(regs.pc);
@@ -570,10 +571,10 @@ void Cpu::Execute(byte opcode)
   }
   break;
   case 0xea:  // LD (half), A
-    bus.WriteByte(bus.NextHalf(regs.pc, regs.pc), regs.a);
+    bus->WriteByte(bus->NextHalf(regs.pc, regs.pc), regs.a);
     break;
   case 0xfa:  // LD A, (half)
-    regs.a = bus.ReadByte(bus.NextHalf(regs.pc, regs.pc));
+    regs.a = bus->ReadByte(bus->NextHalf(regs.pc, regs.pc));
     break;
   case 0xc2:
   case 0xd2:
@@ -581,7 +582,7 @@ void Cpu::Execute(byte opcode)
   case 0xda:
   case 0xc3:
   {  // JP Cond half
-    half addr = bus.NextHalf(regs.pc, regs.pc);
+    half addr = bus->NextHalf(regs.pc, regs.pc);
     if (Cond(opcode))
     {
       regs.pc = addr;
@@ -593,14 +594,14 @@ void Cpu::Execute(byte opcode)
     regs.pc = regs.hl;
     break;
   case 0x18:  // JR sbyte
-    regs.pc += (sbyte)bus.NextByte(regs.pc, regs.pc);
+    regs.pc += (sbyte)bus->NextByte(regs.pc, regs.pc);
     break;
   case 0x20:
   case 0x30:
   case 0x28:
   case 0x38:
   {  // JR Cond sbyte
-    sbyte offset = (sbyte)bus.NextByte(regs.pc, regs.pc);
+    sbyte offset = (sbyte)bus->NextByte(regs.pc, regs.pc);
     if (Cond(opcode))
     {
       regs.pc += offset;
@@ -610,7 +611,7 @@ void Cpu::Execute(byte opcode)
   break;
   case 0xcb:
   {
-    byte cbop = bus.NextByte(regs.pc, regs.pc);
+    byte cbop = bus->NextByte(regs.pc, regs.pc);
     cycles = cbopcycles[cbop];
     switch (cbop)
     {
@@ -793,7 +794,7 @@ bool Cpu::Cond(byte opcode)
 
 half Cpu::Pop()
 {
-  half val = bus.ReadHalf(regs.sp);
+  half val = bus->ReadHalf(regs.sp);
   regs.sp += 2;
   return val;
 }
@@ -801,7 +802,7 @@ half Cpu::Pop()
 void Cpu::Push(half val)
 {
   regs.sp -= 2;
-  bus.WriteHalf(regs.sp, val);
+  bus->WriteHalf(regs.sp, val);
 }
 
 byte Cpu::ReadR8(byte bits)
@@ -821,7 +822,7 @@ byte Cpu::ReadR8(byte bits)
   case 5:
     return regs.l;
   case 6:
-    return bus.ReadByte(regs.hl);
+    return bus->ReadByte(regs.hl);
   case 7:
     return regs.a;
   }
@@ -850,7 +851,7 @@ void Cpu::WriteR8(byte bits, byte val)
     regs.l = val;
     break;
   case 6:
-    bus.WriteByte(regs.hl, val);
+    bus->WriteByte(regs.hl, val);
     break;
   case 7:
     regs.a = val;
@@ -970,48 +971,48 @@ void Cpu::WriteR16(byte bits, half value)
 
 void Cpu::HandleInterrupts()
 {
-  byte int_mask = bus.mem.ie & bus.mem.io.intf;
+  byte int_mask = bus->mem.ie & bus->mem.io.intf;
 
   if (int_mask)
   {
     halt = false;
     if (ime)
     {
-      if ((bus.mem.ie & 1) && (bus.mem.io.intf & 1))
+      if ((bus->mem.ie & 1) && (bus->mem.io.intf & 1))
       {
-        bus.mem.io.intf &= ~1;
+        bus->mem.io.intf &= ~1;
         Push(regs.pc);
         regs.pc = 0x40;
         ime = false;
         cycles += 20;
       }
-      else if (bit<byte, 1>(bus.mem.ie) && bit<byte, 1>(bus.mem.io.intf))
+      else if (bit<byte, 1>(bus->mem.ie) && bit<byte, 1>(bus->mem.io.intf))
       {
-        bus.mem.io.intf &= ~2;
+        bus->mem.io.intf &= ~2;
         Push(regs.pc);
         regs.pc = 0x48;
         ime = false;
         cycles += 20;
       }
-      else if (bit<byte, 2>(bus.mem.ie) && bit<byte, 2>(bus.mem.io.intf))
+      else if (bit<byte, 2>(bus->mem.ie) && bit<byte, 2>(bus->mem.io.intf))
       {
-        bus.mem.io.intf &= ~4;
+        bus->mem.io.intf &= ~4;
         Push(regs.pc);
         regs.pc = 0x50;
         ime = false;
         cycles += 20;
       }
-      else if (bit<byte, 3>(bus.mem.ie) && bit<byte, 3>(bus.mem.io.intf))
+      else if (bit<byte, 3>(bus->mem.ie) && bit<byte, 3>(bus->mem.io.intf))
       {
-        bus.mem.io.intf &= ~8;
+        bus->mem.io.intf &= ~8;
         Push(regs.pc);
         regs.pc = 0x58;
         ime = false;
         cycles += 20;
       }
-      else if (bit<byte, 4>(bus.mem.ie) && bit<byte, 4>(bus.mem.io.intf))
+      else if (bit<byte, 4>(bus->mem.ie) && bit<byte, 4>(bus->mem.io.intf))
       {
-        bus.mem.io.intf &= ~16;
+        bus->mem.io.intf &= ~16;
         Push(regs.pc);
         regs.pc = 0x60;
         ime = false;
@@ -1024,21 +1025,21 @@ void Cpu::HandleInterrupts()
 void Cpu::HandleTimers()
 {
   constexpr int tima_vals[4] = {1024, 16, 64, 256};
-  if ((bus.mem.io.tac >> 2) & 1)
+  if ((bus->mem.io.tac >> 2) & 1)
   {
-    int tima_val = tima_vals[bus.mem.io.tac & 3];
+    int tima_val = tima_vals[bus->mem.io.tac & 3];
     tima_cycles += cycles;
     while (tima_cycles >= tima_val)
     {
       tima_cycles -= tima_val;
-      if (bus.mem.io.tima == 0xff)
+      if (bus->mem.io.tima == 0xff)
       {
-        bus.mem.io.tima = bus.mem.io.tma;
-        bus.mem.io.intf |= 0b100;
+        bus->mem.io.tima = bus->mem.io.tma;
+        bus->mem.io.intf |= 0b100;
       }
       else
       {
-        bus.mem.io.tima++;
+        bus->mem.io.tima++;
       }
     }
   }
@@ -1047,7 +1048,7 @@ void Cpu::HandleTimers()
   if (div_cycles >= 256)
   {
     div_cycles -= 256;
-    bus.mem.io.div++;
+    bus->mem.io.div++;
   }
 }
 }  // namespace natsukashii::core
