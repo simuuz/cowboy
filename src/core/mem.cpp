@@ -80,7 +80,7 @@ void Mem::LoadROM(std::string path)
   switch(rom[0x147])
   {
   case 0:
-    cart = new NoMBC(rom);
+    cart = std::make_unique<NoMBC>(rom);
     break;
   case 1 ... 3:
     cart = new MBC1(rom);

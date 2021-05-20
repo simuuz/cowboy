@@ -15,6 +15,7 @@ struct Bus
   void LoadROM(std::string filename);
   void LoadBootROM(std::string filename);
   void Reset();
+  bool romopened = false;
   Mem mem;
   Ppu ppu;
 };

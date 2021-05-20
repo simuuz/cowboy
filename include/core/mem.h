@@ -113,7 +113,7 @@ public:
   bool rom_opened = false;
 
 private:
-  Cart* cart = nullptr;
+  std::unique_ptr<Cart> cart;
 
   void WriteIO(half addr, byte val);
   byte ReadIO(half addr);

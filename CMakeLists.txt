@@ -8,16 +8,6 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(UNIX)
-  set(NFD
-    include/external/nativefiledialog-extended/src/nfd_gtk.cpp)
-endif(UNIX)
-
-if(WIN32)
-  set(NFD
-    include/external/nativefiledialog-extended/src/nfd_win.cpp)
-endif(WIN32)
-
 set(MBCS
   src/core/mbc/nombc.cpp
   src/core/mbc/mbc1.cpp
@@ -49,8 +39,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
 find_package(ImGui-SFML REQUIRED)
 
+add_subdirectory(include/external/nativefiledialog-extended/)
+
 add_executable(natsukashii
   ${SOURCES}
 )
 
+target_link_libraries(natsukashii PRIVATE nfd)
 target_link_libraries(natsukashii PRIVATE ImGui-SFML::ImGui-SFML)

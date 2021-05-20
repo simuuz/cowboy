@@ -57,7 +57,9 @@ void MainWindow::Run()
     core->Run();
     if(core->bus.ppu.render)
     {
-      renderer.DrawFrame(window, core->bus.ppu.pixels.data(), ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
+      renderer.DrawFrame(window, core->bus.ppu.pixels.data(), 800, 619);
+      ImGui::SFML::Render(window);
+      window.display();
     }
     else
     {

@@ -8,22 +8,23 @@ Core::Core(bool skip, std::string bootrom_path) : mem(skip), bus(mem, skip, boot
 
 void Core::Run()
 {
-  while(canrun && cpu.total_cycles < CYCLES_PER_FRAME)  // TODO: This is not proper cycling
+  if(canrun)
   {
-    cpu.Step();
-    cpu.bus.ppu.Step(cpu.cycles);
-    cpu.HandleTimers();
-  }
+    while(cpu.total_cycles < CYCLES_PER_FRAME)  // TODO: This is not proper cycling
+    {
+      cpu.Step();
+      cpu.bus.ppu.Step(cpu.cycles);
+      cpu.HandleTimers();
+    }
 
-  cpu.total_cycles -= CYCLES_PER_FRAME;
+    cpu.total_cycles -= CYCLES_PER_FRAME;
+  }
 }
 
 void Core::LoadROM(std::string path)
 {
-  bus.Reset();
-  cpu.Reset();
   bus.LoadROM(path);
-  canrun = true;
+  canrun = bus.romopened;
 }
 
 void Core::Reset()

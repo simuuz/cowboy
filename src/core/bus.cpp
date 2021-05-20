@@ -10,6 +10,7 @@ Bus::Bus(Mem& mem, bool skip, std::string bootrom_path) : mem(mem), ppu(skip)
 void Bus::LoadROM(std::string path)
 {
   this->mem.LoadROM(path);
+  romopened = mem.rom_opened;
 }
 
 void Bus::LoadBootROM(std::string path)

@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[])
 {
-  natsukashii::frontend::MainWindow window(800, 600, "natsukashii");
+  natsukashii::frontend::MainWindow window(800, 619, "natsukashii");
 
   window.Run();
 
