@@ -1,9 +1,0 @@
-[submodule "include/external/imgui-sfml"]
-	path = include/external/imgui-sfml
-	url = https://github.com/eliasdaler/imgui-sfml
-[submodule "include/external/imgui"]
-	path = include/external/imgui
-	url = https://github.com/ocornut/imgui
-[submodule "include/external/nativefiledialog-extended"]
-	path = include/external/nativefiledialog-extended
-	url = https://github.com/btzy/nativefiledialog-extended
