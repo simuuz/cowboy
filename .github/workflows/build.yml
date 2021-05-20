@@ -18,14 +18,14 @@ jobs:
       - name: Checkout Dear ImGui
         uses: actions/checkout@v2
         with:
-          repository: https://github.com/ocornut/imgui
+          repository: ocornut/imgui
           submodules: recursive
           path: include/external/imgui/
 
       - name: Checkout ImGui-SFML
         uses: actions/checkout@v2
         with:
-          repository: https://github.com/eliasdaler/imgui-sfml
+          repository: eliasdaler/imgui-sfml
           submodules: recursive
           path: include/external/imgui-sfml/
         
