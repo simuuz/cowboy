@@ -17,8 +17,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          cd ../include/external/imgui-sfml/
-          cmake -DIMGUI_DIR=../imgui/
+          cmake include/external/imgui-sfml -DIMGUI_DIR=include/external/imgui/
           cmake --build . --target install
           cd ../../
       
@@ -53,8 +52,7 @@ jobs:
         run: |
           sudo apt-get update -y -qq
           sudo apt-get install libsfml-dev
-          cd ../include/external/imgui-sfml/
-          cmake -DIMGUI_DIR=../imgui/
+          cmake include/external/imgui-sfml -DIMGUI_DIR=include/external/imgui/
           cmake --build . --target install
           cd ../../
       
