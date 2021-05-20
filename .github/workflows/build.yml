@@ -15,10 +15,24 @@ jobs:
         with:
           install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-sfml
       
+      - name: Checkout Dear ImGui
+        uses: actions/checkout@v2
+        with:
+          repository: https://github.com/ocornut/imgui
+          submodules: recursive
+          path: include/external/imgui/
+
+      - name: Checkout ImGui-SFML
+        uses: actions/checkout@v2
+        with:
+          repository: https://github.com/eliasdaler/imgui-sfml
+          submodules: recursive
+          path: include/external/imgui-sfml/
+        
       - name: Install dependencies
         run: |
           ls
-          cmake /home/runner/work/natsukashii/include/external/imgui-sfml/ -DIMGUI_DIR=/home/runner/work/natsukashii/include/external/imgui/
+          cmake include/external/imgui-sfml/ -DIMGUI_DIR=include/external/imgui/
           cmake --build . --target install
       
       - name: Build natsukashii
@@ -47,12 +61,26 @@ jobs:
     
     steps:
       - uses: actions/checkout@master
+
+      - name: Checkout Dear ImGui
+        uses: actions/checkout@v2
+        with:
+          repository: https://github.com/ocornut/imgui
+          submodules: recursive
+          path: include/external/imgui/
+
+      - name: Checkout ImGui-SFML
+        uses: actions/checkout@v2
+        with:
+          repository: https://github.com/eliasdaler/imgui-sfml
+          submodules: recursive
+          path: include/external/imgui-sfml/
       
       - name: Install dependencies
         run: |
           sudo apt-get update -y -qq
           sudo apt-get install libsfml-dev
-          cmake /home/runner/work/natsukashii/include/external/imgui-sfml/ -DIMGUI_DIR=/home/runner/work/natsukashii/include/external/imgui/
+          cmake include/external/imgui-sfml/ -DIMGUI_DIR=include/external/imgui/
           cmake --build . --target install
       
       - name: Build natsukashii
