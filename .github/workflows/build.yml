@@ -13,7 +13,14 @@ jobs:
       
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-qt5-static
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-sfml
+      
+      - name: Install dependencies
+        run: |
+          cd include/external/imgui-sfml/
+          cmake -DIMGUI_DIR=../imgui/
+          cmake --build . --target install
+          cd ../../../
       
       - name: Build natsukashii
         run: |
@@ -42,10 +49,14 @@ jobs:
     steps:
       - uses: actions/checkout@master
       
-      - name: Setup Qt5
+      - name: Install dependencies
         run: |
           sudo apt-get update -y -qq
-          sudo apt-get install qt5-default
+          sudo apt-get install libsfml-dev
+          cd include/external/imgui-sfml/
+          cmake -DIMGUI_DIR=../imgui/
+          cmake --build . --target install
+          cd ../../../
       
       - name: Build natsukashii
         run: | 

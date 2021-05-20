@@ -17,7 +17,6 @@ set(MBCS
 
 set(SOURCES
   ${MBCS}
-  ${NFD}
   src/core/mem.cpp
   src/core/cpu.cpp
   src/core/bus.cpp
@@ -35,7 +34,7 @@ include_directories(
   include/external/nativefiledialog-extended/src/include/
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 find_package(ImGui-SFML REQUIRED)
 
