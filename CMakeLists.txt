@@ -31,6 +31,7 @@ include_directories(
   include/core/
   include/external/
   include/external/imgui/
+  include/external/imgui-sfml/
   include/external/nativefiledialog-extended/src/include/
 )
 
