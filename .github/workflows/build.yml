@@ -53,7 +53,7 @@ jobs:
         run: |
           sudo apt-get update -y -qq
           sudo apt-get install libsfml-dev
-          cd include/external/imgui-sfml/
+          cd ../include/external/imgui-sfml/
           cmake -DIMGUI_DIR=../imgui/
           cmake --build . --target install
           cd ../../
