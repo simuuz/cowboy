@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           ls
-          cmake include/external/imgui-sfml/ -DIMGUI_DIR=include/external/imgui/
+          cmake /home/runner/work/natsukashii/include/external/imgui-sfml/ -DIMGUI_DIR=/home/runner/work/natsukashii/include/external/imgui/
           cmake --build . --target install
       
       - name: Build natsukashii
@@ -52,7 +52,7 @@ jobs:
         run: |
           sudo apt-get update -y -qq
           sudo apt-get install libsfml-dev
-          cmake include/external/imgui-sfml/ -DIMGUI_DIR=include/external/imgui/
+          cmake /home/runner/work/natsukashii/include/external/imgui-sfml/ -DIMGUI_DIR=/home/runner/work/natsukashii/include/external/imgui/
           cmake --build . --target install
       
       - name: Build natsukashii
