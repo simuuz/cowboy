@@ -21,13 +21,6 @@ jobs:
           repository: ocornut/imgui
           submodules: recursive
           path: include/external/imgui/
-
-      - name: Checkout ImGui-SFML
-        uses: actions/checkout@v2
-        with:
-          repository: eliasdaler/imgui-sfml
-          submodules: recursive
-          path: include/external/imgui-sfml/
         
       - name: Install dependencies
         run: |
@@ -68,19 +61,13 @@ jobs:
           repository: ocornut/imgui
           submodules: recursive
           path: include/external/imgui/
-
-      - name: Checkout ImGui-SFML
-        uses: actions/checkout@v2
-        with:
-          repository: eliasdaler/imgui-sfml
-          submodules: recursive
-          path: include/external/imgui-sfml/
       
       - name: Install dependencies
         run: |
           sudo apt-get update -y -qq
           sudo apt-get install libsfml-dev
-          cmake -G "Unix Makefiles" include/external/imgui-sfml/ -DIMGUI_DIR=include/external/imgui/
+          cd include/external/imgui-sfml/
+          cmake . -DIMGUI_DIR=include/external/imgui/
           cmake --build . --target install
       
       - name: Build natsukashii
