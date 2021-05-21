@@ -6,8 +6,8 @@ namespace natsukashii::core
 Ppu::Ppu(bool skip) : skip(skip)
 {
   pixels = new byte[FBSIZE]{ 0 };
-  std::fill(vram.begin(), vram.end(), 0);
-  std::fill(oam.begin(), oam.end(), 0);
+  vram.fill(0);
+  oam.fill(Sprite(0, 0, 0, 0));
 
   io.scx = 0;
   io.scy = 0;
@@ -35,8 +35,8 @@ Ppu::Ppu(bool skip) : skip(skip)
 void Ppu::Reset()
 {
   memset(pixels, 0, FBSIZE);
-  std::fill(vram.begin(), vram.end(), 0);
-  std::fill(oam.begin(), oam.end(), 0);
+  vram.fill(0);
+  oam.fill(Sprite(0, 0, 0, 0));
 
   io.scx = 0;
   io.scy = 0;
@@ -76,6 +76,11 @@ void Ppu::Step(int cycles)
   if (disabled)
   {
     return;
+  }
+
+  if(curr_cycles == 0 && io.ly == 0)
+  {
+    mode = OAM;
   }
 
   curr_cycles += cycles;
@@ -138,9 +143,9 @@ void Ppu::ChangeMode(Mode m)
   {
   case LCDTransfer:
     io.stat = (io.stat & 0xfc) | 3;
+    Scanline();
     break;
   case HBlank:
-    Scanline();
     io.stat = io.stat & 0xfc;
     if (bit<byte, 3>(io.stat))
     {
@@ -267,13 +272,44 @@ bool Ppu::CanSprites(bool priority)
 template <typename T>
 void Ppu::WriteVRAM(half addr, T val)
 {
-  *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]) = val;
+  if((io.stat & 3) != 3)
+    *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]) = val;
 }
 
 template <typename T>
 T Ppu::ReadVRAM(half addr)
 {
-  return *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]);
+  if((io.stat & 3) != 3)
+    return *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]);
+
+  return 0xff;
+}
+
+void Ppu::SetColor(byte color)
+{
+  switch(color)
+  {
+  case 0:
+    pixels[fbIndex] = 0xe0;
+    pixels[fbIndex + 1] = 0xf8;
+    pixels[fbIndex + 2] = 0xd0;
+    break;
+  case 1:
+    pixels[fbIndex] = 0x88;
+    pixels[fbIndex + 1] = 0xc0;
+    pixels[fbIndex + 2] = 0x70;
+    break;
+  case 2:
+    pixels[fbIndex] = 0x34;
+    pixels[fbIndex + 1] = 0x68;
+    pixels[fbIndex + 2] = 0x56;
+    break;
+  case 3:
+    pixels[fbIndex] = 8;
+    pixels[fbIndex + 1] = 0x18;
+    pixels[fbIndex + 2] = 0x20;
+    break;
+  }
 }
 
 void Ppu::Scanline()
@@ -284,12 +320,11 @@ void Ppu::Scanline()
 
 void Ppu::RenderBGs()
 {
-  fbIndex = ((word)io.ly * WIDTH * 3);
+  fbIndex = ((word)io.ly * WIDTH * 4);
 
   auto x = 0;
-  auto y = (half)io.ly + (half)io.scy;
 
-  auto wx = (shalf)io.wx - (half)7;
+  auto wx = (shalf)io.wx - 7;
   auto wy = io.wy;
 
   bool renderWindow = (wy <= io.ly && bit<byte, 5>(io.lcdc));
@@ -303,7 +338,7 @@ void Ppu::RenderBGs()
     auto tile_x = 0;
     if (renderWindow && wx <= x && bit<byte, 0>(io.lcdc))
     {
-      y = io.ly - io.wy;
+      auto y = io.ly - io.wy;
       auto tmpx = x - wx;
       tile_x = tmpx & 7;
       auto tile_y = y & 7;
@@ -319,7 +354,7 @@ void Ppu::RenderBGs()
     }
     else if (bit<byte, 0>(io.lcdc))
     {
-      y = (half)io.ly + (half)io.scy;
+      auto y = (half)io.ly + (half)io.scy;
       auto tile_y = y & 7;
       auto p = (x + io.scx);
       tile_x = p & 7;
@@ -330,18 +365,17 @@ void Ppu::RenderBGs()
       }
       else
       {
-        tileLine = ReadVRAM<half>(0x9000 + (shalf((sbyte)tile_index)) * 16 + ((half)tile_y << 1));
+        tileLine = ReadVRAM<half>(0x9000 + shalf((sbyte)tile_index) * 16 + ((half)tile_y << 1));
       }
     }
 
     byte high = (tileLine >> 8);
     byte low = (tileLine & 0xFF);
 
-    byte colorID = (bit<byte>(high, 7 - tile_x) << 1) | bit<byte>(low, 7 - tile_x);
+    byte colorID = ((byte)bit<byte>(high, 7 - tile_x) << 1) | (byte)bit<byte>(low, 7 - tile_x);
     byte color = (io.bgp >> (colorID << 1)) & 3;
-    pixels[fbIndex] = palette[color * 3];
-    pixels[fbIndex + 1] = palette[(color * 3) + 1];
-    pixels[fbIndex + 2] = palette[(color * 3) + 2];
+    
+    SetColor(color);
     pixels[fbIndex + 3] = 0xff;
 
     x++;
@@ -358,15 +392,14 @@ void Ppu::RenderOBJs()
 
   byte screen_y = io.ly;
 
-  std::vector<Sprite> sprites;
   byte sprite_size = bit<byte, 2>(io.lcdc) ? 16 : 8;
-  for (int i = 0; i < 0xa0 && sprites.size() < 10; i += 4)
+  for (int i = 0; i < 0xa0 && sprite_size < 10; i += 4)
   {
     shalf sprite_startY = (shalf)oam[i] - 16;
     shalf sprite_endY = sprite_startY + sprite_size;
     if (sprite_startY <= screen_y && screen_y < sprite_endY)
     {
-      sprites.push_back(Sprite(oam[i], oam[i + 1], oam[i + 2], oam[i + 3]));
+      oam.push_back(Sprite(oam[i], oam[i + 1], oam[i + 2], oam[i + 3]));
     }
   }
 
@@ -375,8 +408,9 @@ void Ppu::RenderOBJs()
     if (sprite.x >= 0 && sprite.x <= 160)
     {
       int tile_y = (sprite.yflip) ? 7 - (screen_y - sprite.y) : ((screen_y - sprite.y) & 7);
+      byte pal = sprite.palNum ? io.obp1 : io.obp0;
 
-      fbIndex = ((word)io.ly * 160 * 3 + (word)sprite.x * 4);
+      fbIndex = ((word)io.ly * 160 * 4 + (word)sprite.x * 4);
       for (int i = 0; i < 8; i++)
       {
         half tileLine = ReadVRAM<half>(0x8000 + ((half)sprite.tileNum << 4) + ((half)tile_y << 1));
@@ -385,13 +419,11 @@ void Ppu::RenderOBJs()
         byte lo = (tileLine & 0xff);
 
         byte colorID = (bit<byte>(hi, 7 - tile_x) << 1) | bit<byte>(lo, 7 - tile_x);
-        byte color = (io.bgp >> (colorID << 1)) & 3;
+        byte color = (pal >> (colorID << 1)) & 3;
 
         if (CanSprites(sprite.priority) && sprite.x + i <= 160 && colorID != 0)
         {
-          pixels[fbIndex] = palette[color * 3];
-          pixels[fbIndex + 1] = palette[color * 3 + 1];
-          pixels[fbIndex + 2] = palette[color * 3 + 2];
+          SetColor(color);
           pixels[fbIndex + 3] = 0xff;
         }
 

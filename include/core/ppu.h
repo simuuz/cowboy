@@ -14,16 +14,46 @@ struct Sprite
 {
   shalf x, y;
   byte tileNum;
+  byte lowerByte;
   bool priority, xflip, yflip, palNum;
 
   Sprite(shalf x, shalf y, byte tileNum, byte attr) : tileNum(tileNum)
   {
     this->y = y - 16;
     this->x = x - 8;
+    lowerByte = 0;
     priority = bit<byte, 7>(attr);
     yflip = bit<byte, 6>(attr);
     xflip = bit<byte, 5>(attr);
     palNum = bit<byte, 4>(attr);
+  }
+
+  byte Read(byte addr)
+  {
+    switch(addr)
+    {
+      case 0: return y;
+      case 1: return x;
+      case 2: return tileNum;
+      case 3: return (priority << 7) | (yflip << 6) | (xflip << 5) | (palNum << 4) | lowerByte;
+    }
+  }
+
+  void Write(byte addr, byte val)
+  {
+    switch(addr)
+    {
+      case 0: y = val; break;
+      case 1: x = val; break;
+      case 2: tileNum = val; break;
+      case 3:
+        priority = val & 0x80 == 0;
+        yflip = val & 0x40;
+        xflip = val & 0x20;
+        palNum = val & 0x10;
+        lowerByte = val & 0xf;
+        break;
+    }
   }
 };
 
@@ -37,7 +67,7 @@ public:
   byte* pixels = nullptr;
 
   std::array<byte, VRAM_SZ> vram;
-  std::array<byte, OAM_SZ> oam;
+  std::array<Sprite, OAM_SZ> oam;
   friend class Bus;
   bool render = false;
 private:
@@ -50,6 +80,7 @@ private:
     LCDTransfer
   };
 
+  void SetColor(byte color);
   Mode mode = OAM;
   
   struct IO
@@ -65,8 +96,6 @@ private:
   bool disabled = true;
 
   int curr_cycles = 0;
-
-  const byte palette[12] = {0xe0, 0xf8, 0xd0, 0x88, 0xc0, 0x70, 0x34, 0x68, 0x56, 0x08, 0x18, 0x20};
 
   void WriteIO(Mem& mem, half addr, byte val);
   byte ReadIO(half addr);

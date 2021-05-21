@@ -15,9 +15,9 @@ Renderer::Renderer()
 
 void Renderer::DrawFrame(sf::RenderWindow& window, byte* buffer, int w, int h)
 {
-  ScaleImage(w, h);
   texture.update(buffer, 160, 144, 0, 0);
   final_image.setTexture(texture);
+  ScaleImage(w, h);
   final_image.setPosition(0, 19);
   window.draw(final_image);
   ImGui::SFML::Render(window);
@@ -33,14 +33,12 @@ void Renderer::ScaleImage(int sw, int sh)
     float curr_asp_ratio = sw / sh;
     if(curr_asp_ratio > asp_ratio_gb)
     {
-      sx = 160 * sh/144;
-      sy = sh;
+      sx = (160 * sh) / 144;
       final_image.setScale(sx / 160, sy / 144);
     }
     else
     {
-      sx = sw;
-      sy = 144 * sw/160;
+      sy = (144 * sw) / 160;
       final_image.setScale(sx / 160, sy / 144);
     }
   }

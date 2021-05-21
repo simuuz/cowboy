@@ -13,9 +13,8 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
   io.intf = 0;
   io.div = 0;
 
-  io.bootrom = (skip) ? 1 : 0;
+  io.bootrom = skip ? 1 : 0;
 
-  memset(bootrom, 0, BOOTROM_SZ);
   LoadBootROM(bootrom_path);
   memset(extram, 0, EXTRAM_SZ);
   memset(eram, 0, ERAM_SZ);
@@ -26,25 +25,15 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
 void Mem::Reset()
 {
   rom_opened = false;
-  if (skip)
-  {
-    io.bootrom = 1;
-    io.tac = 0;
-    io.tima = 0;
-    io.tma = 0;
-    io.intf = 0;
-    io.div = 0;
-  }
-  else
-  {
-    io.bootrom = 0;
-    io.tac = 0;
-    io.tima = 0;
-    io.tma = 0;
-    io.intf = 0;
-    io.div = 0;
-  }
 
+  io.tac = 0;
+  io.tima = 0;
+  io.tma = 0;
+  io.intf = 0;
+  io.div = 0;
+
+  io.bootrom = skip ? 1 : 0;
+  
   memset(extram, 0, EXTRAM_SZ);
   memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);

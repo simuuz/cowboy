@@ -58,7 +58,7 @@ void MainWindow::Run()
     if(core->bus.ppu.render)
     {
       core->bus.ppu.render = false;
-      renderer.DrawFrame(window, core->bus.ppu.pixels.data(), 800, 600);
+      renderer.DrawFrame(window, core->bus.ppu.pixels, 800, 600);
     }
     else
     {
