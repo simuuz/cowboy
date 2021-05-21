@@ -14,8 +14,6 @@ struct Bus
   void WriteHalf(half addr, half val);
   void LoadROM(std::string filename);
   void Reset();
-  byte ReadOAM(byte addr);
-  void WriteOAM(byte addr, byte value);
   bool romopened = false;
   Mem mem;
   Ppu ppu;
