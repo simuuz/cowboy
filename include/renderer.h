@@ -6,13 +6,12 @@
 
 namespace natsukashii::renderer
 {
+constexpr int WIDTH = 160, HEIGHT = 144;
 struct Renderer
 {
   Renderer();
   bool maintain_aspect_ratio = true;
   void DrawFrame(sf::RenderWindow& window, byte* buffer, int w, int h);
-  void ScaleImage(int sw, int sh);
-  sf::Sprite final_image;
-  sf::Texture texture;
+  sf::Sprite ScaleImage(byte* buffer, int sw, int sh);
 };
 } // natsukashii::renderer

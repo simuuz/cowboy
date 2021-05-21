@@ -21,9 +21,9 @@ void Bus::Reset()
 byte Bus::ReadByte(half addr)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
-    return ppu.vram[addr & 0x1fff];
+    return ppu.can_access_vram ? ppu.vram[addr & 0x1fff] : 0xff;
   else if (addr >= 0xfe00 && addr <= 0xfe9f)
-    return ppu.oam[addr & 0xff];
+    return ppu.can_access_oam ? ppu.oam[addr & 0xff] : 0xff;
   else if (addr >= 0xff40 && addr <= 0xff4b)
     return ppu.ReadIO(addr);
 
@@ -34,9 +34,9 @@ byte Bus::NextByte(half addr, half& pc)
 {
   pc++;
   if (addr >= 0x8000 && addr <= 0x9fff)
-    return ppu.vram[addr & 0x1fff];
+    return ppu.can_access_vram ? ppu.vram[addr & 0x1fff] : 0xff;
   else if (addr >= 0xfe00 && addr <= 0xfe9f)
-    return ppu.oam[addr & 0xff];
+    return ppu.can_access_oam ? ppu.oam[addr & 0xff] : 0xff;
   else if (addr >= 0xff40 && addr <= 0xff4b)
     return ppu.ReadIO(addr);
 
@@ -55,12 +55,12 @@ half Bus::NextHalf(half addr, half& pc)
 
 void Bus::WriteByte(half addr, byte val)
 {
-  if (addr >= 0x8000 && addr <= 0x9fff)
+  if (addr >= 0x8000 && addr <= 0x9fff && ppu.can_access_vram)
   {
     ppu.vram[addr & 0x1fff] = val;
     return;
   }
-  else if (addr >= 0xfe00 && addr <= 0xfe9f)
+  else if (addr >= 0xfe00 && addr <= 0xfe9f && ppu.can_access_oam)
   {
     ppu.oam[addr & 0xff] = val;
     return;

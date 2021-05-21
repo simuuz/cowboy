@@ -4,48 +4,38 @@ namespace natsukashii::renderer
 {
 Renderer::Renderer()
 {
-  if (!texture.create(160, 144))
-  {
-    printf("couldn't create texture\n");
-    exit(1);
-  }
-
-  final_image.setTexture(texture);
 }
 
 void Renderer::DrawFrame(sf::RenderWindow& window, byte* buffer, int w, int h)
 {
-  texture.update(buffer, 160, 144, 0, 0);
-  final_image.setTexture(texture);
-  ScaleImage(w, h);
-  final_image.setPosition(0, 19);
-  window.draw(final_image);
+  sf::Sprite spr(ScaleImage(buffer, w, h));
+  window.draw(spr);
   ImGui::SFML::Render(window);
   window.display();
 }
 
-void Renderer::ScaleImage(int sw, int sh)
+sf::Sprite Renderer::ScaleImage(byte* buffer, int sw, int sh)
 {
   float sx = sw, sy = sh;
   if(maintain_aspect_ratio)
   {
-    float asp_ratio_gb = 160 / 144;
-    float curr_asp_ratio = sw / sh;
-    if(curr_asp_ratio > asp_ratio_gb)
-    {
-      sx = (160 * sh) / 144;
-      final_image.setScale(sx / 160, sy / 144);
-    }
-    else
-    {
-      sy = (144 * sw) / 160;
-      final_image.setScale(sx / 160, sy / 144);
-    }
+    float asp_ratio_gb = (float)WIDTH / (float)HEIGHT;
+    sx = sh / asp_ratio_gb;
+    sy = sx / asp_ratio_gb;
   }
-  else
+
+  sf::Texture tex;
+  if (!tex.create(WIDTH, HEIGHT))
   {
-    final_image.setScale(sx / 160, sy / 144);
+    printf("couldn't create texture\n");
+    exit(1);
   }
+  tex.update(buffer, WIDTH, HEIGHT, 0, 0);
+  sf::Sprite res;
+  res.setTexture(tex);
+  res.setScale(sx / WIDTH, sy / HEIGHT);
+  res.setPosition(sw / 2 - (sx / 2), sh / 2 - (sy / 2));
+  return res;
 }
 
 } // natsukashii::renderer

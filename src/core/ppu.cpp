@@ -1,11 +1,20 @@
 #include "ppu.h"
 #include <memory.h>
+#include <time.h>
 
 namespace natsukashii::core
 {
 Ppu::Ppu(bool skip) : skip(skip)
 {
-  pixels = new byte[FBSIZE]{ 0 };
+  pixels = new byte[FBSIZE];
+  for(int y = 0; y < 144; y++) {
+    for(int x = 0; x < 160; x++) {
+      pixels[x + WIDTH * y] = 0xff;
+      pixels[(x + WIDTH * y) + 1] = 0;
+      pixels[(x + WIDTH * y) + 2] = 0;
+      pixels[(x + WIDTH * y) + 3] = 0xff;
+    }
+  }
   vram.fill(0);
   oam.fill(0);
 
@@ -136,7 +145,6 @@ void Ppu::ChangeMode(Mode m, byte& intf)
   switch (m)
   {
   case HBlank:
-    Scanline();
     if (io.stat.hblank_int)
     {
       intf |= 2;
@@ -155,8 +163,12 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     {
       intf |= 2;
     }
+    can_access_oam = false;
     break;
   case LCDTransfer:
+    can_access_oam = false;
+    can_access_vram = false;
+    Scanline();
     break;
   }
 }
@@ -278,7 +290,7 @@ void Ppu::SetColor(byte color)
 void Ppu::Scanline()
 {
   RenderBGs();
-  //RenderOBJs();
+  //RenderOBJs(); brb
 }
 
 void Ppu::RenderBGs()

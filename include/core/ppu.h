@@ -113,10 +113,9 @@ private:
     STAT stat;
   } io;
 
-  bool statIRQ = false;
-  bool vblankIRQ = false;
   word fbIndex = 0;
-  bool disabled = true;
+  bool can_access_oam = true;
+  bool can_access_vram = true;
 
   int curr_cycles = 0;
 
