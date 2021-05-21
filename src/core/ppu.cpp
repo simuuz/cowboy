@@ -5,7 +5,7 @@ namespace natsukashii::core
 {
 Ppu::Ppu(bool skip) : skip(skip)
 {
-  std::fill(pixels.begin(), pixels.end(), 0);
+  pixels = new byte[FBSIZE]{ 0 };
   std::fill(vram.begin(), vram.end(), 0);
   std::fill(oam.begin(), oam.end(), 0);
 
@@ -34,7 +34,7 @@ Ppu::Ppu(bool skip) : skip(skip)
 
 void Ppu::Reset()
 {
-  std::fill(pixels.begin(), pixels.end(), 0);
+  memset(pixels, 0, FBSIZE);
   std::fill(vram.begin(), vram.end(), 0);
   std::fill(oam.begin(), oam.end(), 0);
 
@@ -279,7 +279,7 @@ T Ppu::ReadVRAM(half addr)
 void Ppu::Scanline()
 {
   RenderBGs();
-  //RenderOBJs();
+  RenderOBJs();
 }
 
 void Ppu::RenderBGs()

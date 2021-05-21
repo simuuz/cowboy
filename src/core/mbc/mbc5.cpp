@@ -38,8 +38,13 @@ void MBC5::Write(half addr, byte val)
     break;
   case 0xa000 ... 0xbfff:
     if(ramEnable)
+    {
       ram[0x2000 * ramBank + (addr - 0xa000)] = val;
+    }
     break;
+  default:
+    printf("Wtf\n");
+    exit(1);
   }
 }
 } // natsukashii::core

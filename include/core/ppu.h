@@ -34,7 +34,8 @@ public:
   void Reset();
   void Step(int cycles);
 
-  std::array<byte, FBSIZE>pixels;
+  byte* pixels = nullptr;
+
   std::array<byte, VRAM_SZ> vram;
   std::array<byte, OAM_SZ> oam;
   friend class Bus;

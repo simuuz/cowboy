@@ -5,7 +5,6 @@ namespace natsukashii::core
 {
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
 {
-  LoadBootROM(bootrom_path);
   rom_opened = false;
   
   io.tac = 0;
@@ -17,6 +16,7 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
   io.bootrom = (skip) ? 1 : 0;
 
   memset(bootrom, 0, BOOTROM_SZ);
+  LoadBootROM(bootrom_path);
   memset(extram, 0, EXTRAM_SZ);
   memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);
@@ -91,7 +91,7 @@ void Mem::LoadROM(std::string path)
   }
 }
 
-bool Mem::LoadBootROM(std::string path)
+void Mem::LoadBootROM(std::string path)
 {
   std::ifstream file{path, std::ios::binary};
   file.unsetf(std::ios::skipws);
@@ -99,12 +99,11 @@ bool Mem::LoadBootROM(std::string path)
   if (!file.is_open())
   {
     printf("Couldn't open %s\n", path.c_str());
-    return false;
+    exit(1);
   }
 
   file.read((char*)bootrom, BOOTROM_SZ);
   file.close();
-  return true;
 }
 
 byte Mem::Read(half addr)
@@ -232,8 +231,6 @@ void Mem::WriteIO(half addr, byte val)
     break;  // STUB
   case 0x50:
     io.bootrom = val;
-    break;
-  case 0x7f:
     break;
   default:
     printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);

@@ -113,7 +113,7 @@ public:
 
 private:
   Cart* cart = nullptr;
-  bool LoadBootROM(std::string filename);
+  void LoadBootROM(std::string filename);
 
   void WriteIO(half addr, byte val);
   byte ReadIO(half addr);
