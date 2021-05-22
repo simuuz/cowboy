@@ -10,17 +10,6 @@ constexpr int FBSIZE = WIDTH * HEIGHT * 4;
 
 namespace natsukashii::core
 {
-struct Sprite
-{
-  shalf x, y;
-  byte tileNum;
-  bool priority, xflip, yflip, palNum;
-
-  Sprite(shalf x, shalf y, byte tileNum, byte attr)
-    : tileNum(tileNum), y(y - 16), x(x - 8), priority(bit<byte, 7>(attr)),
-      yflip(bit<byte, 6>(attr)), xflip(bit<byte, 5>(attr)), palNum(bit<byte, 4>(attr)) { }
-};
-
 class Ppu
 {
 public:

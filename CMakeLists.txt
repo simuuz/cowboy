@@ -8,6 +8,16 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(ImGui
+  include/external/imgui/imgui_demo.cpp
+  include/external/imgui/imgui_draw.cpp
+  include/external/imgui/imgui_tables.cpp
+  include/external/imgui/imgui_widgets.cpp
+  include/external/imgui/imgui.cpp)
+
+set(ImGui-SDL
+  include/external/imgui_sdl/imgui_sdl.cpp)
+
 set(MBCS
   src/core/mbc/nombc.cpp
   src/core/mbc/mbc1.cpp
@@ -16,6 +26,8 @@ set(MBCS
   src/core/mbc/mbc5.cpp)
 
 set(SOURCES
+  ${ImGui}
+  ${ImGui-SDL}
   ${MBCS}
   src/core/mem.cpp
   src/core/cpu.cpp
@@ -31,13 +43,13 @@ include_directories(
   include/core/
   include/external/
   include/external/imgui/
-  include/external/imgui-sfml/
+  include/external/imgui_sdl/
   include/external/nativefiledialog-extended/src/include/
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-find_package(ImGui-SFML REQUIRED)
+find_package(SDL2 REQUIRED)
 
 add_subdirectory(include/external/nativefiledialog-extended/)
 
@@ -45,5 +57,5 @@ add_executable(natsukashii
   ${SOURCES}
 )
 
+target_link_libraries(natsukashii PRIVATE SDL2)
 target_link_libraries(natsukashii PRIVATE nfd)
-target_link_libraries(natsukashii PRIVATE ImGui-SFML::ImGui-SFML)

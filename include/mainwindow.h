@@ -20,9 +20,9 @@ struct MainWindow
   void Pause();
   void Stop();
   void MenuBar();
-  bool running = false;
-  sf::RenderWindow window;
-  Renderer renderer;
+  bool running = true;
+  SDL_Window* window = nullptr;
+  Renderer* renderer = nullptr;
   std::unique_ptr<Core> core;
 };
 } // natsukashii::frontend

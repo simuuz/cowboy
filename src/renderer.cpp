@@ -2,40 +2,20 @@
 
 namespace natsukashii::renderer
 {
-Renderer::Renderer()
+Renderer::Renderer(SDL_Window* window, bool maintain_aspect_ratio) : maintain_aspect_ratio(maintain_aspect_ratio)
 {
+  int w, h;
+  SDL_GetWindowSize(window, &w, &h);
+
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  ImGui::CreateContext();
+  ImGuiSDL::Initialize(renderer, w, h);
+  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, GB_WIDTH, GB_HEIGHT);
 }
 
-void Renderer::DrawFrame(sf::RenderWindow& window, byte* buffer, int w, int h)
+void Renderer::DrawFrame(byte* buffer)
 {
-  sf::Sprite spr(ScaleImage(buffer, w, h));
-  window.draw(spr);
-  ImGui::SFML::Render(window);
-  window.display();
-}
-
-sf::Sprite Renderer::ScaleImage(byte* buffer, int sw, int sh)
-{
-  float sx = sw, sy = sh;
-  if(maintain_aspect_ratio)
-  {
-    float asp_ratio_gb = (float)WIDTH / (float)HEIGHT;
-    sx = sh / asp_ratio_gb;
-    sy = sx / asp_ratio_gb;
-  }
-
-  sf::Texture tex;
-  if (!tex.create(WIDTH, HEIGHT))
-  {
-    printf("couldn't create texture\n");
-    exit(1);
-  }
-  tex.update(buffer, WIDTH, HEIGHT, 0, 0);
-  sf::Sprite res;
-  res.setTexture(tex);
-  res.setScale(sx / WIDTH, sy / HEIGHT);
-  res.setPosition(sw / 2 - (sx / 2), sh / 2 - (sy / 2));
-  return res;
+  SDL_UpdateTexture(texture, nullptr, buffer, 4 * GB_WIDTH);
 }
 
 } // natsukashii::renderer

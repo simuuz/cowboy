@@ -6,15 +6,8 @@ namespace natsukashii::core
 {
 Ppu::Ppu(bool skip) : skip(skip)
 {
-  pixels = new byte[FBSIZE];
-  for(int y = 0; y < 144; y++) {
-    for(int x = 0; x < 160; x++) {
-      pixels[x + WIDTH * y] = 0xff;
-      pixels[(x + WIDTH * y) + 1] = 0;
-      pixels[(x + WIDTH * y) + 2] = 0;
-      pixels[(x + WIDTH * y) + 3] = 0xff;
-    }
-  }
+  srand(time(nullptr));
+  pixels = new byte[FBSIZE] { 0 };
   vram.fill(0);
   oam.fill(0);
 
@@ -290,12 +283,16 @@ void Ppu::SetColor(byte color)
 void Ppu::Scanline()
 {
   RenderBGs();
-  //RenderOBJs(); brb
+  //RenderOBJs();
 }
 
 void Ppu::RenderBGs()
 {
-  
+  for(int x = 0; x < WIDTH; x++) {
+    fbIndex = x + WIDTH * io.ly;
+    SetColor(x % 4);
+    pixels[fbIndex + 3] = 0xff;
+  }
 }
 
 void Ppu::RenderOBJs()
