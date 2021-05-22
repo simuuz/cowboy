@@ -7,3 +7,6 @@
 [submodule "include/external/imgui-sfml"]
 	path = include/external/imgui-sfml
 	url = https://github.com/eliasdaler/imgui-sfml/
+[submodule "include/external/imgui_sdl"]
+	path = include/external/imgui_sdl
+	url = https://github.com/Tyyppi77/imgui_sdl
