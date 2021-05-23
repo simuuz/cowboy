@@ -8,15 +8,24 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(OpenGL_GL_PREFERENCE GLVND)
+
 set(ImGui
+  include/external/imgui/imconfig.h
+  include/external/imgui/imgui.cpp
+  include/external/imgui/imgui.h
   include/external/imgui/imgui_demo.cpp
   include/external/imgui/imgui_draw.cpp
-  include/external/imgui/imgui_tables.cpp
+  include/external/imgui/imgui_internal.h
   include/external/imgui/imgui_widgets.cpp
-  include/external/imgui/imgui.cpp)
-
-set(ImGui-SDL
-  include/external/imgui_sdl/imgui_sdl.cpp)
+  include/external/imgui/imstb_rectpack.h
+  include/external/imgui/imstb_textedit.h
+  include/external/imgui/imstb_truetype.h
+  include/external/imgui/imgui_tables.cpp
+  include/external/imgui/backends/imgui_impl_opengl3.cpp
+  include/external/imgui/backends/imgui_impl_opengl3.h
+  include/external/imgui/backends/imgui_impl_glfw.cpp
+  include/external/imgui/backends/imgui_impl_glfw.h)
 
 set(MBCS
   src/core/mbc/nombc.cpp
@@ -27,7 +36,6 @@ set(MBCS
 
 set(SOURCES
   ${ImGui}
-  ${ImGui-SDL}
   ${MBCS}
   src/core/mem.cpp
   src/core/cpu.cpp
@@ -35,7 +43,6 @@ set(SOURCES
   src/core/ppu.cpp
   src/core.cpp
   src/main.cpp
-  src/renderer.cpp
   src/mainwindow.cpp)
 
 include_directories(
@@ -43,13 +50,15 @@ include_directories(
   include/core/
   include/external/
   include/external/imgui/
-  include/external/imgui_sdl/
+  include/external/imgui/backends/
   include/external/nativefiledialog-extended/src/include/
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-find_package(SDL2 REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(glfw3 3.3 REQUIRED)
 
 add_subdirectory(include/external/nativefiledialog-extended/)
 
@@ -57,5 +66,7 @@ add_executable(natsukashii
   ${SOURCES}
 )
 
-target_link_libraries(natsukashii PRIVATE SDL2)
+target_link_libraries(natsukashii PRIVATE GLEW)
+target_link_libraries(natsukashii PRIVATE OpenGL ${CMAKE_DL_LIBS})
+target_link_libraries(natsukashii PRIVATE glfw)
 target_link_libraries(natsukashii PRIVATE nfd)

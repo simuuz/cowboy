@@ -1,12 +1,11 @@
 #pragma once
 #include "mem.h"
-#include "renderer.h"
 
 constexpr int VRAM_SZ = 0x2000;
 constexpr int OAM_SZ = 0xa0;
 constexpr int WIDTH = 160;
 constexpr int HEIGHT = 144;
-constexpr int FBSIZE = WIDTH * HEIGHT * 4;
+constexpr int FBSIZE = WIDTH * HEIGHT;
 
 namespace natsukashii::core
 {
@@ -17,7 +16,7 @@ public:
   void Reset();
   void Step(int cycles, byte& intf);
 
-  byte* pixels = nullptr;
+  word pixels[FBSIZE];
 
   std::array<byte, VRAM_SZ> vram;
   std::array<byte, OAM_SZ> oam;
@@ -34,7 +33,7 @@ private:
     LCDTransfer
   };
 
-  void SetColor(byte color);
+  word GetColor(byte idx);
   Mode mode = OAM;
   
   struct LCDC

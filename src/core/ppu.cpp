@@ -1,13 +1,16 @@
 #include "ppu.h"
 #include <memory.h>
-#include <time.h>
 
 namespace natsukashii::core
 {
 Ppu::Ppu(bool skip) : skip(skip)
 {
-  srand(time(nullptr));
-  pixels = new byte[FBSIZE] { 0 };
+  for(int y = 0; y < HEIGHT; y++) {
+    for(int x = 0; x < WIDTH; x++) {
+      pixels[x + WIDTH * y] = 0xe0f8d0ff;
+    }
+  }
+
   vram.fill(0);
   oam.fill(0);
 
@@ -36,7 +39,12 @@ Ppu::Ppu(bool skip) : skip(skip)
 
 void Ppu::Reset()
 {
-  memset(pixels, 0, FBSIZE);
+  for(int y = 0; y < HEIGHT; y++) {
+    for(int x = 0; x < WIDTH; x++) {
+      pixels[x + WIDTH * y] = 0xe0f8d0ff;
+    }
+  }
+  
   vram.fill(0);
   oam.fill(0);
 
@@ -253,30 +261,18 @@ T Ppu::ReadVRAM(half addr)
   return *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]);
 }
 
-void Ppu::SetColor(byte color)
+word Ppu::GetColor(byte idx)
 {
-  switch(color)
+  switch(idx)
   {
   case 0:
-    pixels[fbIndex] = 0xe0;
-    pixels[fbIndex + 1] = 0xf8;
-    pixels[fbIndex + 2] = 0xd0;
-    break;
+    return 0xe0f8d0ff;
   case 1:
-    pixels[fbIndex] = 0x88;
-    pixels[fbIndex + 1] = 0xc0;
-    pixels[fbIndex + 2] = 0x70;
-    break;
+    return 0x88c070ff;
   case 2:
-    pixels[fbIndex] = 0x34;
-    pixels[fbIndex + 1] = 0x68;
-    pixels[fbIndex + 2] = 0x56;
-    break;
+    return 0x346856ff;
   case 3:
-    pixels[fbIndex] = 8;
-    pixels[fbIndex + 1] = 0x18;
-    pixels[fbIndex + 2] = 0x20;
-    break;
+    return 0x081820ff;
   }
 }
 
@@ -288,11 +284,6 @@ void Ppu::Scanline()
 
 void Ppu::RenderBGs()
 {
-  for(int x = 0; x < WIDTH; x++) {
-    fbIndex = x + WIDTH * io.ly;
-    SetColor(x % 4);
-    pixels[fbIndex + 3] = 0xff;
-  }
 }
 
 void Ppu::RenderOBJs()

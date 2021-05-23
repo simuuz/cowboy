@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 
-int main(int argc, char* argv[])
+int main(int, char**)
 {
   natsukashii::frontend::MainWindow window(1280, 720, "natsukashii");
 

@@ -4,7 +4,7 @@ namespace natsukashii::core
 {
 Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
 {
-  // log = fopen("log.txt", "w");
+  //log = fopen("optix_bootrom_log.txt", "w");
   halt = false;
   cycles = 0;
   total_cycles = 0;
@@ -65,6 +65,15 @@ void Cpu::Reset()
 void Cpu::Step()
 {
   HandleInterrupts();
+
+  //if(regs.pc == 0x100) {
+  //  fclose(log);
+  //  exit(1);
+  //}
+  //
+  //fprintf(log, "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X SP: %04X PC: 00:%04X (%02X %02X %02X %02X)\n",
+  //            regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc, bus->ReadByte(regs.pc), bus->ReadByte(regs.pc + 1),
+  //            bus->ReadByte(regs.pc + 2), bus->ReadByte(regs.pc + 3));
 
   if (!halt)
   {
