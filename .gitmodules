@@ -4,9 +4,6 @@
 [submodule "include/external/imgui"]
 	path = include/external/imgui
 	url = https://github.com/ocornut/imgui
-[submodule "include/external/imgui-sfml"]
-	path = include/external/imgui-sfml
-	url = https://github.com/eliasdaler/imgui-sfml/
-[submodule "include/external/imgui_sdl"]
-	path = include/external/imgui_sdl
-	url = https://github.com/Tyyppi77/imgui_sdl
+[submodule "include/external/implot"]
+	path = include/external/implot
+	url = https://github.com/epezent/implot
