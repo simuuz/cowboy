@@ -15,8 +15,7 @@ public:
   int cycles = 0;
   void HandleTimers();
   bool skip;
-
-private:
+  byte opcode;
   struct registers
   {
     union
@@ -58,6 +57,7 @@ private:
     half sp = 0, pc = 0;
   } regs;
 
+private:
   void UpdateF(bool z, bool n, bool h, bool c);
   bool Cond(byte opcode);
 

@@ -2,7 +2,7 @@
 
 int main(int, char**)
 {
-  natsukashii::frontend::MainWindow window(1280, 720, "natsukashii");
+  natsukashii::frontend::MainWindow window("natsukashii");
 
   window.Run();
 

@@ -1,8 +1,9 @@
 #pragma once
-#include "cpu.h"
+#include "debugwindow.h"
 
 namespace natsukashii::core
 {
+using namespace natsukashii::frontend;
 struct Core
 {
   Core(bool skip, std::string bootrom_path);
@@ -13,7 +14,9 @@ struct Core
   void LoadROM(std::string path);
   Bus bus;
   Cpu cpu;
-private:
-  bool canrun = false;
+  bool debug = true;
+  bool pause = false;
+  bool running = false;
+  bool init = false;
 };
 }  // namespace natsukashii::core

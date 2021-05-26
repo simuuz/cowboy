@@ -195,7 +195,7 @@ void Mem::WriteIO(half addr, byte val)
   case 0x00:
     break;
   case 0x01:
-    printf("%c", val);
+    //printf("%c", val);
     break;
   case 0x02:
     break;

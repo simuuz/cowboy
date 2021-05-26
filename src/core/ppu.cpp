@@ -284,6 +284,7 @@ void Ppu::Scanline()
 
 void Ppu::RenderBGs()
 {
+  
 }
 
 void Ppu::RenderOBJs()

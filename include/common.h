@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 
+constexpr int CYCLES_PER_FRAME = 4194300 / 60;
 using byte = uint8_t;
 using half = uint16_t;
 using word = uint32_t;
