@@ -77,6 +77,41 @@ namespace natsukashii::frontend
     ImGui::SameLine();
 
     ImGui::BeginChild("child3", ImVec2(0, 0), true);
+    for(int i = -5; i <= 5; i++)
+    {
+      int pc_ = i + cpu.regs.pc;
+      if(pc_ < 0)
+      {
+        ImGui::Text("INVALID");
+      }
+      else
+      {
+        if(init)
+        {
+          std::string opcode = "%04X   " + GetInstructionDisasm(bus.ReadByte(pc_), bus.ReadByte(pc_ + 1));
+          if(i == 0)
+          {
+            ImGui::PushStyleColor(ImGuiCol_Text, 0xFF0000FF);
+          }
+
+          auto find_byte = opcode.find("%02X");
+          auto find_half = opcode.find("%04X");
+          find_half = opcode.find("%04X", find_half+1);
+          
+          if(find_byte != std::string::npos)
+            ImGui::Text(opcode.c_str(), pc_, bus.ReadByte(pc_ + 1));
+          else if(find_half != std::string::npos)
+            ImGui::Text(opcode.c_str(), pc_, bus.ReadHalf(pc_ + 1));
+          else
+            ImGui::Text(opcode.c_str(), pc_);
+          
+          if(i == 0)
+          {
+            ImGui::PopStyleColor();
+          }
+        }
+      }
+    }
     ImGui::EndChild();
     
     ImGui::PopStyleVar();

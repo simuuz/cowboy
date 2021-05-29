@@ -3,3 +3,4 @@ build-windows/
 .vscode/
 roms/
 vgcore.*
+DMG_ROM.bin

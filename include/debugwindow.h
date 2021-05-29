@@ -13,7 +13,7 @@
 namespace natsukashii::frontend
 {
 using namespace natsukashii::core;
-constexpr char* opcode_disasm[256] =
+const std::string opcode_disasm[256] =
 {
   "NOP",            "LD BC, %04X", "LD (BC), A",     "INC BC",     "INC B",         "DEC B",      "LD B, %02X",    "RLCA",       "LD (%04X), SP",    "ADD HL, BC", "LD A,  (BC)",  "DEC BC",    "INC C",        "DEC C",     "LD C, %02X",  "RRCA",
   "STOP",           "LD DE, %04X", "LD (DE), A",     "INC DE",     "INC D",         "DEC D",      "LD D, %02X",    "RLA",        "JR   %02X",        "ADD HL, DE", "LD A,  (DE)",  "DEC DE",    "INC E",        "DEC E",     "LD E, %02X",  "RRA",
@@ -33,7 +33,7 @@ constexpr char* opcode_disasm[256] =
   "LD A, (FF%02X)", "POP AF",      "LD A, (FF00+C)", "DI",         "INVALID",       "PUSH AF",    "OR A, %02X",    "RST 30h",    "LD HL, SP + %02X", "LD SP, HL",  "LD A, (%04X)", "EI",        "INVALID",      "INVALID",   "CP A, %02X",  "RST 38h"
 };
 
-constexpr char* cb_opcode_disasm[256] =
+const std::string cb_opcode_disasm[256] =
 {
   "RLC B",    "RLC C",    "RLC D",    "RLC E",    "RLC H",    "RLC L",    "RLC (HL)",    "RLC A",    "RRC B",    "RRC C",    "RRC D",    "RRC E",    "RRC H",    "RRC L",    "RRC (HL)",    "RRC A",
   "RL B",     "RL C",     "RL D",     "RL E",     "RL H",     "RL L",     "RL (HL)",     "RL A",     "RR B",     "RR C",     "RR D",     "RR E",     "RR H",     "RR L",     "RR (HL)",     "RR A",
@@ -53,6 +53,19 @@ constexpr char* cb_opcode_disasm[256] =
   "SET 6, B", "SET 6, C", "SET 6, D", "SET 6, E", "SET 6, H", "SET 6, L", "SET 6, (HL)", "SET 6, A", "SET 7, B", "SET 7, C", "SET 7, D", "SET 7, E", "SET 7, H", "SET 7, L", "SET 7, (HL)", "SET 7, A"
 };
 
+static const std::string GetInstructionDisasm(byte idx, byte idx1)
+{
+  if(idx >= 0 && idx <= 255 && idx1 >= 0 && idx1 <= 255)
+  {
+    if(opcode_disasm[idx] == "PREFIX CB")
+    {
+      return cb_opcode_disasm[idx1];
+    }
+
+    return opcode_disasm[idx];
+  }
+}
+
 constexpr int METRIC_HISTORY_ITEMS = 1000;
 
 class DebugWindow
@@ -64,6 +77,7 @@ public:
 private:
   void Perf(float fps);
   void Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running);
+  void Disasm(Cpu& cpu, Bus& bus);
 
   template<typename T>
   struct RingBuffer {

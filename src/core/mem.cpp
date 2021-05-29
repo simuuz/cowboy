@@ -126,6 +126,8 @@ byte Mem::Read(half addr)
   case 0xffff:
     return ie;
   }
+
+  return 0xff;
 }
 
 void Mem::Write(half addr, byte val)
