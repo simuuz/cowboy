@@ -1,13 +1,33 @@
 #include "ppu.h"
+#include "ini.h"
 #include <memory.h>
 
 namespace natsukashii::core
 {
 Ppu::Ppu(bool skip) : skip(skip)
 {
+  mINI::INIFile file{"config.ini"};
+  mINI::INIStructure ini;
+
+  if (!file.read(ini))
+  {
+    ini["emulator"]["skip"] = "false";
+    ini["emulator"]["bootrom"] = "bootrom.bin";
+    ini["palette"]["color1"] = "e0f8d0ff";
+    ini["palette"]["color2"] = "88c070ff";
+    ini["palette"]["color3"] = "346856ff";
+    ini["palette"]["color4"] = "81820ff";
+    file.generate(ini);
+  }
+
+  color1 = std::stoul(ini["palette"]["color1"], nullptr, 16);
+  color2 = std::stoul(ini["palette"]["color2"], nullptr, 16);
+  color3 = std::stoul(ini["palette"]["color3"], nullptr, 16);
+  color4 = std::stoul(ini["palette"]["color4"], nullptr, 16);
+
   for(int y = 0; y < HEIGHT; y++) {
     for(int x = 0; x < WIDTH; x++) {
-      pixels[x + WIDTH * y] = 0xe0f8d0ff;
+      pixels[x + WIDTH * y] = color1;
     }
   }
 
@@ -41,7 +61,7 @@ void Ppu::Reset()
 {
   for(int y = 0; y < HEIGHT; y++) {
     for(int x = 0; x < WIDTH; x++) {
-      pixels[x + WIDTH * y] = 0xe0f8d0ff;
+      pixels[x + WIDTH * y] = color1;
     }
   }
   
@@ -266,13 +286,13 @@ word Ppu::GetColor(byte idx)
   switch(idx)
   {
   case 0:
-    return 0xe0f8d0ff;
+    return color1;
   case 1:
-    return 0x88c070ff;
+    return color2;
   case 2:
-    return 0x346856ff;
+    return color3;
   case 3:
-    return 0x081820ff;
+    return color4;
   }
 }
 

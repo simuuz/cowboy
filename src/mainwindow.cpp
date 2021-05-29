@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <sstream>
 
 namespace natsukashii::frontend
 {
@@ -8,6 +9,7 @@ MainWindow::~MainWindow()
 {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
+  ImPlot::DestroyContext();
   ImGui::DestroyContext();
   
   glfwDestroyWindow(window);
@@ -58,6 +60,7 @@ MainWindow::MainWindow(std::string title)
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
+  ImPlot::CreateContext();
 
   ImGui::StyleColorsDark();
 
@@ -69,7 +72,12 @@ MainWindow::MainWindow(std::string title)
 
   if (!file.read(ini))
   {
-    ini["emulator"]["skip"] = "true";
+    ini["emulator"]["skip"] = "false";
+    ini["emulator"]["bootrom"] = "bootrom.bin";
+    ini["palette"]["color1"] = "e0f8d0ff";
+    ini["palette"]["color2"] = "88c070ff";
+    ini["palette"]["color3"] = "346856ff";
+    ini["palette"]["color4"] = "81820ff";
     file.generate(ini);
   }
 
@@ -111,6 +119,7 @@ void MainWindow::UpdateTexture()
 
 void MainWindow::Run()
 {
+  int i = 0;
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   while(!glfwWindowShouldClose(window))
   {
@@ -120,8 +129,6 @@ void MainWindow::Run()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    auto start = clk::now();
-
     core->Run();
 
     if(core->bus.ppu.render) {
@@ -129,10 +136,19 @@ void MainWindow::Run()
       UpdateTexture();
     }
 
-    float ms = std::chrono::duration<float, std::milli>(clk::now() - start).count();
+    i++;
+    if(i >= 1000) {
+      i = 0;
+      char title[50]{0};
+      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", io.Framerate, 1000 / io.Framerate);
+      glfwSetWindowTitle(window, title);
+    }
 
     if(show_debug_windows)
-      DebugView(core->cpu, core->bus, core->debug, core->init, core->running, ms);
+      dbg.Main(core->cpu, core->bus, core->debug, core->init, core->running, io.Framerate);
+
+    if(show_settings)
+      Settings();
 
     ImGui::Begin("Image", (bool*)__null, ImGuiWindowFlags_NoTitleBar);
 
@@ -143,6 +159,7 @@ void MainWindow::Run()
     } else {
       x = y * aspect_ratio_gb;
     }
+
     ImVec2 image_size(x, y);
     ImVec2 centered((ImGui::GetWindowSize().x - image_size.x) * 0.5, (ImGui::GetWindowSize().y - image_size.y) * 0.5);
     ImGui::SetCursorPos(centered);
@@ -200,12 +217,139 @@ void MainWindow::MenuBar()
         core->Stop();
       }
 
+      bool settings_clicked = ImGui::MenuItem("Settings");
+      if(ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Any setting needs restart to take effect");
+      }
+      if(settings_clicked)
+      {
+        show_settings = true;
+      }
+
       ImGui::Checkbox("Show debug windows", &show_debug_windows);
 
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
   }
+}
+
+void MainWindow::Settings()
+{
+  mINI::INIFile file{"config.ini"};
+  mINI::INIStructure ini;
+
+  if (!file.read(ini))
+  {
+    ini["emulator"]["skip"] = "false";
+    ini["emulator"]["bootrom"] = "bootrom.bin";
+    ini["palette"]["color1"] = "e0f8d0ff";
+    ini["palette"]["color2"] = "88c070ff";
+    ini["palette"]["color3"] = "346856ff";
+    ini["palette"]["color4"] = "81820ff";
+    file.generate(ini);
+  }
+
+  bool skip = ini["emulator"]["skip"] == "true";
+  std::string bootrom = ini["emulator"]["bootrom"];
+
+  static bool general = true;
+  static bool graphics = false;
+  ImGui::Begin("Settings", &show_settings);
+  static float w = ImGui::GetWindowSize().x / 4;
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
+  ImGui::BeginChild("child1", ImVec2(w, 0), true);
+  if(ImGui::Button("General")) {
+    general = true;
+    graphics = false;
+  }
+  ImGui::NewLine();
+  if(ImGui::Button("Graphics")) {
+    general = false;
+    graphics = true;
+  }
+  ImGui::EndChild();
+
+  ImGui::SameLine();
+  ImGui::InvisibleButton(" ", ImVec2(8, -1));
+  if (ImGui::IsItemActive())
+    w += ImGui::GetIO().MouseDelta.x;
+  ImGui::SameLine();
+
+  ImGui::BeginChild("child2", ImVec2(0, 0), true);
+  if(general)
+  {
+    ImGui::Text("Bootrom path: \"%s\"", bootrom.c_str());
+    
+    if(ImGui::Button("Select...")) {
+      nfdchar_t *outpath;
+      nfdresult_t result = NFD_OpenDialog(&outpath, nullptr, 0, nullptr);
+      if(result == NFD_OKAY) {
+        ini["emulator"]["bootrom"] = outpath;
+        file.write(ini);
+      }
+    }
+    static const char* skip_ = "Skip bootrom: ";
+    ImGui::Text(skip_);
+    ImGui::SameLine(ImGui::CalcTextSize(skip_).x + 20);
+    if(ImGui::Checkbox(" ", &skip)) {
+      ini["emulator"]["skip"] = skip ? "true" : "false";
+      file.write(ini);
+    }
+  }
+  else if (graphics)
+  {    
+    float color1[4] = {(float)(std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 24) / 255,
+                       (float)((std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                       (float)((std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                       (float)(std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+    float color2[4] = {(float)(std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 24) / 255,
+                       (float)((std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                       (float)((std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                       (float)(std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+    float color3[4] = {(float)(std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 24) / 255,
+                       (float)((std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                       (float)((std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                       (float)(std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+    float color4[4] = {(float)(std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 24) / 255,
+                       (float)((std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                       (float)((std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                       (float)(std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+    ImGui::Text("Customize the palette");
+    ImGui::ColorEdit4("Color 1", color1);
+    ImGui::ColorEdit4("Color 2", color2);
+    ImGui::ColorEdit4("Color 3", color3);
+    ImGui::ColorEdit4("Color 4", color4);
+
+    std::stringstream sstream;
+
+    word color1_ = word((byte(255 * color1[0]) << 24) | (byte(255 * color1[1]) << 16) | (byte(255 * color1[2]) << 8) | byte(255 * color1[3]));
+    word color2_ = word((byte(255 * color2[0]) << 24) | (byte(255 * color2[1]) << 16) | (byte(255 * color2[2]) << 8) | byte(255 * color2[3]));
+    word color3_ = word((byte(255 * color3[0]) << 24) | (byte(255 * color3[1]) << 16) | (byte(255 * color3[2]) << 8) | byte(255 * color3[3]));
+    word color4_ = word((byte(255 * color4[0]) << 24) | (byte(255 * color4[1]) << 16) | (byte(255 * color4[2]) << 8) | byte(255 * color4[3]));
+
+    core->cpu.bus->ppu.color1 = color1_;
+    core->cpu.bus->ppu.color2 = color2_;
+    core->cpu.bus->ppu.color3 = color3_;
+    core->cpu.bus->ppu.color4 = color4_;
+
+    sstream << std::hex << color1_ << "\n";
+    sstream << std::hex << color2_ << "\n";
+    sstream << std::hex << color3_ << "\n";
+    sstream << std::hex << color4_ << "\n";
+
+    sstream >> ini["palette"]["color1"] >> ini["palette"]["color2"] >> ini["palette"]["color3"] >> ini["palette"]["color4"];
+    file.write(ini);
+  }
+  ImGui::EndChild();
+
+  ImGui::PopStyleVar();
+  ImGui::End();
 }
 
 } // natsukashii::frontend

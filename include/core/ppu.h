@@ -17,7 +17,7 @@ public:
   void Step(int cycles, byte& intf);
 
   word pixels[FBSIZE];
-
+  word color1, color2, color3, color4;
   std::array<byte, VRAM_SZ> vram;
   std::array<byte, OAM_SZ> oam;
 

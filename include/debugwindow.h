@@ -5,9 +5,10 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "implot.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <tuple>
+#include <array>
 
 namespace natsukashii::frontend
 {
@@ -52,96 +53,44 @@ constexpr char* cb_opcode_disasm[256] =
   "SET 6, B", "SET 6, C", "SET 6, D", "SET 6, E", "SET 6, H", "SET 6, L", "SET 6, (HL)", "SET 6, A", "SET 7, B", "SET 7, C", "SET 7, D", "SET 7, E", "SET 7, H", "SET 7, L", "SET 7, (HL)", "SET 7, A"
 };
 
-struct opcode {
-  byte length = 1;
-  std::string name = "";
-};
+constexpr int METRIC_HISTORY_ITEMS = 1000;
 
-static opcode GetOpcodeDisasm(byte idx)
+class DebugWindow
 {
-  opcode op{.length = 1, .name=""};
-  if (strcmp(opcode_disasm[idx], "PREFIX CB") == 0)
-  {
-    op.name = cb_opcode_disasm[idx];
-    op.length = 2;
-    return op;
-  }
+public:
+  DebugWindow() {}
 
-  op.name = opcode_disasm[idx];
-  size_t len_2 = op.name.find("%02X");
-  size_t len_3 = op.name.find("%04X");
-  if(len_2) {
-    op.length = 2;
-  } else if(len_3) {
-    op.length = 3;
-  } else {
-    op.length = 1;
-  }
+  void Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps);
+private:
+  void Perf(float fps);
+  void Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running);
 
-  return op;
-}
+  template<typename T>
+  struct RingBuffer {
+    int offset;
+    std::array<T, METRIC_HISTORY_ITEMS> data;
 
-static void Perf(float ms)
-{
-  ImGui::Begin("Performance", (bool*)__null, ImGuiWindowFlags_NoTitleBar);
-  
-  ImGui::End();
-}
-
-static void Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running)
-{
-  ImGui::Begin("Debugger", (bool*)__null, ImGuiWindowFlags_NoTitleBar);
-  static float w = ImGui::GetWindowSize().x / 2;
-  static float h = ImGui::GetWindowSize().y / 2 - 42;
-  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-
-  ImGui::Text("Status");
-
-  ImGui::BeginChild("child1", ImVec2(0, h), true);
-  bool Z = cpu.regs.f >> 7, N = cpu.regs.f >> 6, H = cpu.regs.f >> 5, C = cpu.regs.f >> 4;
-  ImGui::Text("PC: %04X   SP: %04X", cpu.regs.pc, cpu.regs.sp);
-  ImGui::Text("A: %02X   F: %02X   B: %02X   C: %02X", cpu.regs.a, cpu.regs.f, cpu.regs.b, cpu.regs.c);
-  ImGui::Text("D: %02X   E: %02X   H: %02X   L: %02X", cpu.regs.d, cpu.regs.e, cpu.regs.h, cpu.regs.l);
-  ImGui::Checkbox("Z   ", &Z);
-  ImGui::SameLine();
-  ImGui::Checkbox("N   ", &N);
-  ImGui::SameLine();
-  ImGui::Checkbox("H   ", &H);
-  ImGui::SameLine();
-  ImGui::Checkbox("C   ", &C);
-  ImGui::EndChild();
-  ImGui::InvisibleButton(" ", ImVec2(-1, 8));
-  if (ImGui::IsItemActive())
-    h += ImGui::GetIO().MouseDelta.y;
-
-  ImGui::Text("Debugger");
-  ImGui::SameLine(w + 24);
-  ImGui::Text("Disassembly");
-  ImGui::BeginChild("child2", ImVec2(w, 0), true);
-  ImGui::Checkbox("Debug", &debug);
-  if(ImGui::Button("Step") && debug && init && running) {
-    cpu.Step();
-    bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
-    cpu.HandleTimers();
-    if(cpu.total_cycles >= CYCLES_PER_FRAME) {
-      cpu.total_cycles -= CYCLES_PER_FRAME;
+    RingBuffer() {
+      offset = 0;
+      data.fill(0);
     }
-  }
-  ImGui::EndChild();
-  ImGui::SameLine();
-  ImGui::InvisibleButton(" ", ImVec2(8, -1));
-  if (ImGui::IsItemActive())
-    w += ImGui::GetIO().MouseDelta.x;
-  ImGui::SameLine();
-  ImGui::BeginChild("child3", ImVec2(0, 0), true);
-  ImGui::EndChild();
-  ImGui::PopStyleVar();
-  ImGui::End();
-}
 
-static void DebugView(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float ms)
-{
-  Debugger(cpu, bus, debug, init, running);
-  Perf(ms);
-}
+    T max() {
+      T max_ = 0;
+      for (int i = 0; i < METRIC_HISTORY_ITEMS; i++) {
+        if (data[i] > max_) {
+          max_ = data[i];
+        }
+      }
+      return max_;
+    }
+
+    void add_point(T point) {
+      data[offset++] = point;
+      offset %= METRIC_HISTORY_ITEMS;
+    }
+  };
+
+  RingBuffer<double> frame_times;
+};
 } // natsukashii::frontend

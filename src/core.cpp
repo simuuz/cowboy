@@ -22,7 +22,6 @@ void Core::Run()
 void Core::LoadROM(std::string path)
 {
   cpu.Reset();
-  bus.Reset();
   bus.LoadROM(path);
   init = true;
   running = true;
@@ -31,7 +30,6 @@ void Core::LoadROM(std::string path)
 void Core::Reset()
 {
   cpu.Reset();
-  bus.Reset();
 }
 
 void Core::Pause()
@@ -42,7 +40,6 @@ void Core::Pause()
 void Core::Stop()
 {
   cpu.Reset();
-  bus.Reset();
   running = false;
 }
 
