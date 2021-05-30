@@ -1,13 +1,6 @@
 #pragma once
 #include "cpu.h"
 #include "bus.h"
-#include "ini.h"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "implot.h"
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <array>
 
 namespace natsukashii::frontend
@@ -76,9 +69,9 @@ public:
   void Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps);
 private:
   void Perf(float fps);
-  void Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running);
+  void Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps);
   void Disasm(Cpu& cpu, Bus& bus);
-
+  std::string opcode;
   template<typename T>
   struct RingBuffer {
     int offset;

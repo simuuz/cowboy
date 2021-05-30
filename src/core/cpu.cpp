@@ -70,6 +70,9 @@ void Cpu::Step()
   //            regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc, bus->ReadByte(regs.pc), bus->ReadByte(regs.pc + 1),
   //            bus->ReadByte(regs.pc + 2), bus->ReadByte(regs.pc + 3));
 
+  //if(regs.pc == 0x100)
+  //  exit(1);
+
   if (!halt)
   {
     opcode = bus->NextByte(regs.pc, regs.pc);

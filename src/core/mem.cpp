@@ -24,8 +24,6 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
 
 void Mem::Reset()
 {
-  rom_opened = false;
-
   io.tac = 0;
   io.tima = 0;
   io.tma = 0;
@@ -119,15 +117,15 @@ byte Mem::Read(half addr)
     return eram[addr & 0x1dff];
   case 0xfea0 ... 0xfeff:
     return 0xff;
-  case 0xff00 ... 0xff7f:
+  case 0xff00 ... 0xff77:
     return ReadIO(addr);
   case 0xff80 ... 0xfffe:
     return hram[addr & 0x7f];
   case 0xffff:
     return ie;
+  default:
+    return 0xff;
   }
-
-  return 0xff;
 }
 
 void Mem::Write(half addr, byte val)
@@ -148,7 +146,7 @@ void Mem::Write(half addr, byte val)
     break;
   case 0xfea0 ... 0xfeff:
     break;
-  case 0xff00 ... 0xff7f:
+  case 0xff00 ... 0xff77:
     WriteIO(addr, val);
     break;
   case 0xff80 ... 0xfffe:
@@ -157,6 +155,8 @@ void Mem::Write(half addr, byte val)
   case 0xffff:
     ie = val;
     break;
+  default:
+    break;
   }
 }
 
@@ -164,7 +164,8 @@ byte Mem::ReadIO(half addr)
 {
   switch (addr & 0xff)
   {
-  case 0x00:
+  case 0 ... 0x02:
+  case 0x30 ... 0x3f:
     return 0xff;
   case 0x04:
     return io.div;
@@ -194,12 +195,8 @@ void Mem::WriteIO(half addr, byte val)
 {
   switch (addr & 0xff)
   {
-  case 0x00:
-    break;
-  case 0x01:
-    //printf("%c", val);
-    break;
-  case 0x02:
+  case 0 ... 0x02:
+  case 0x30 ... 0x3f:
     break;
   case 0x04:
     io.div = 0;
@@ -216,16 +213,14 @@ void Mem::WriteIO(half addr, byte val)
   case 0x07:
     io.tac = val;
     break;
-  case 0x10 ... 0x1e:
+  case 0x10 ... 0x1e: case 0x20 ... 0x26:
     break;
-  case 0x20 ... 0x26:
-    break;  // STUB
   case 0x50:
     io.bootrom = val;
     break;
   default:
     printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);
-    exit(1);
+    Reset();
   }
 }
 }  // namespace natsukashii::core

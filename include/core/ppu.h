@@ -16,7 +16,7 @@ public:
   void Reset();
   void Step(int cycles, byte& intf);
 
-  word pixels[FBSIZE];
+  std::array<word, FBSIZE> pixels;
   word color1, color2, color3, color4;
   std::array<byte, VRAM_SZ> vram;
   std::array<byte, OAM_SZ> oam;
@@ -91,7 +91,7 @@ private:
              (hblank_int << 3) | (lyceq << 2) | mode;
     }
   };
-
+public:
   struct IO
   {
     byte bgp = 0, scy = 0, scx = 0;
@@ -100,7 +100,7 @@ private:
     byte lyc = 0, ly = 0;
     STAT stat;
   } io;
-
+private:
   word fbIndex = 0;
   bool can_access_oam = true;
   bool can_access_vram = true;

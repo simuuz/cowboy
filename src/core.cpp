@@ -4,18 +4,18 @@ namespace natsukashii::core
 {
 Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(skip, &bus) { }
 
-void Core::Run()
+void Core::Run(float fps)
 {
-  if(init && running && !pause && !debug)
+  if((init = bus.mem.rom_opened) && running && !pause && !debug)
   {
-    while(cpu.total_cycles < CYCLES_PER_FRAME)  // TODO: This is not proper cycling
+    while(cpu.total_cycles < 4194300 / fps)  // TODO: This is not proper cycling
     {
       cpu.Step();
       bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
       cpu.HandleTimers();
     }
 
-    cpu.total_cycles -= CYCLES_PER_FRAME;
+    cpu.total_cycles -= 4194300 / fps;
   }
 }
 

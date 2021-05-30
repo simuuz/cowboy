@@ -7,7 +7,7 @@ using namespace natsukashii::frontend;
 struct Core
 {
   Core(bool skip, std::string bootrom_path);
-  void Run();
+  void Run(float fps);
   void Reset();
   void Pause();
   void Stop();

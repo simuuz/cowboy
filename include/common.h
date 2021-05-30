@@ -2,8 +2,14 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include "ini.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include "implot.h"
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
-constexpr int CYCLES_PER_FRAME = 4194300 / 60;
 using byte = uint8_t;
 using half = uint16_t;
 using word = uint32_t;

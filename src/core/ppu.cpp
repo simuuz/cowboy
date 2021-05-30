@@ -25,12 +25,7 @@ Ppu::Ppu(bool skip) : skip(skip)
   color3 = std::stoul(ini["palette"]["color3"], nullptr, 16);
   color4 = std::stoul(ini["palette"]["color4"], nullptr, 16);
 
-  for(int y = 0; y < HEIGHT; y++) {
-    for(int x = 0; x < WIDTH; x++) {
-      pixels[x + WIDTH * y] = color1;
-    }
-  }
-
+  pixels.fill(color4);
   vram.fill(0);
   oam.fill(0);
 
@@ -59,11 +54,7 @@ Ppu::Ppu(bool skip) : skip(skip)
 
 void Ppu::Reset()
 {
-  for(int y = 0; y < HEIGHT; y++) {
-    for(int x = 0; x < WIDTH; x++) {
-      pixels[x + WIDTH * y] = color1;
-    }
-  }
+  pixels.fill(color4);
   
   vram.fill(0);
   oam.fill(0);
@@ -172,7 +163,6 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     }
     break;
   case VBlank:
-    render = true;
     intf |= 1;
     if (io.stat.vblank_int)
     {
@@ -187,6 +177,7 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     can_access_oam = false;
     break;
   case LCDTransfer:
+    render = true;
     can_access_oam = false;
     can_access_vram = false;
     Scanline();
@@ -247,7 +238,7 @@ void Ppu::WriteIO(Mem& mem, half addr, byte val)
     half start = (half)val << 8;
     for (byte i = 0; i < 0xa0; i++)
     {
-      oam[i] = mem.Read(start + i);
+      oam[i] = mem.Read(start | i);
     }
   }
   break;
@@ -304,7 +295,54 @@ void Ppu::Scanline()
 
 void Ppu::RenderBGs()
 {
-  
+  fbIndex = io.ly * WIDTH;
+  half bg_tilemap = io.lcdc.bg_tilemap_area ? 0x9C00 : 0x9800;
+  half window_tilemap = io.lcdc.window_tilemap_area ? 0x9C00 : 0x9800;
+  half tiledata = io.lcdc.bgwin_tiledata_area ? 0x8000 : 0x8800;
+
+  bool render_window = (io.wy <= io.ly && io.lcdc.window_enable);
+  shalf winx = (shalf)(io.wx - 7);
+  for(int x = 0; x < WIDTH; x++)
+  {
+    half tileline = 0;
+    auto scrolled_x = io.scx + x;
+    auto scrolled_y = io.scy + io.ly;
+    
+    if(io.lcdc.bgwin_priority) {
+      byte index = vram[(bg_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
+
+      if(tiledata == 0x8000)
+      {
+        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + (half)(scrolled_y & 7) << 1);
+      }
+      else
+      {
+        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + (half)(scrolled_y & 7) << 1);
+      }
+    } else if (io.lcdc.bgwin_priority && render_window && winx <= x) {
+      scrolled_x = x - winx;
+      scrolled_y = io.ly - io.wy;
+
+      byte index = vram[(window_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
+
+      if(tiledata == 0x8000)
+      {
+        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + (half)(scrolled_y & 7) << 1);
+      }
+      else
+      {
+        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + (half)(scrolled_y & 7) << 1);
+      }
+    }
+
+    byte high = (tileline >> 8);
+    byte low = (tileline & 0xff);
+
+    byte color = ((byte)bit<byte>(high, 7 - (scrolled_x & 7)) << 1) | ((byte)bit<byte>(low, 7 - (scrolled_x & 7)));
+    byte coloridx = (io.bgp >> (color << 1)) & 3;
+    pixels[fbIndex] = GetColor(coloridx);
+    fbIndex++;
+  }
 }
 
 void Ppu::RenderOBJs()
