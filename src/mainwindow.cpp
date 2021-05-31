@@ -106,7 +106,6 @@ void MainWindow::UpdateTexture()
 
 void MainWindow::Run()
 {
-  core->LoadROM("roms/Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb");
   int i = 0;
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   while(!glfwWindowShouldClose(window))

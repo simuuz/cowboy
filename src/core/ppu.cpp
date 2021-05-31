@@ -54,8 +54,9 @@ Ppu::Ppu(bool skip) : skip(skip)
 
 void Ppu::Reset()
 {
+  fbIndex = 0;
+  mode = OAM;
   pixels.fill(color4);
-  
   vram.fill(0);
   oam.fill(0);
 
@@ -313,11 +314,11 @@ void Ppu::RenderBGs()
 
       if(tiledata == 0x8000)
       {
-        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + (half)(scrolled_y & 7) << 1);
+        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + ((half)(scrolled_y & 7) << 1));
       }
       else
       {
-        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + (half)(scrolled_y & 7) << 1);
+        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + ((half)(scrolled_y & 7) << 1));
       }
     } else if (io.lcdc.bgwin_priority && render_window && winx <= x) {
       scrolled_x = x - winx;
@@ -327,11 +328,11 @@ void Ppu::RenderBGs()
 
       if(tiledata == 0x8000)
       {
-        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + (half)(scrolled_y & 7) << 1);
+        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + ((half)(scrolled_y & 7) << 1));
       }
       else
       {
-        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + (half)(scrolled_y & 7) << 1);
+        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + ((half)(scrolled_y & 7) << 1));
       }
     }
 

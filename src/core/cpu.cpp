@@ -5,12 +5,12 @@ namespace natsukashii::core
 Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
 {
   //log = fopen("07_log.txt", "w");
+  ime = false;
   halt = false;
   cycles = 0;
   total_cycles = 0;
   tima_cycles = 0;
   div_cycles = 0;
-  ime = false;
 
   if (skip)
   {
