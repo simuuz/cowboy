@@ -35,12 +35,6 @@ Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
 void Cpu::Reset()
 {
   bus->Reset();
-  ime = false;
-  halt = false;
-  cycles = 0;
-  total_cycles = 0;
-  tima_cycles = 0;
-  div_cycles = 0;
 
   if (skip)
   {
@@ -53,6 +47,12 @@ void Cpu::Reset()
   }
   else
   {
+    ime = false;
+    halt = false;
+    cycles = 0;
+    total_cycles = 0;
+    tima_cycles = 0;
+    div_cycles = 0;
     regs.af = 0;
     regs.bc = 0;
     regs.de = 0;

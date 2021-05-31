@@ -9,6 +9,34 @@ constexpr int FBSIZE = WIDTH * HEIGHT;
 
 namespace natsukashii::core
 {
+struct Sprite
+{
+private:
+  struct Attributes
+  {
+    union
+    {
+      struct
+      {
+        unsigned:4;
+        unsigned palnum:1;
+        unsigned xflip:1;
+        unsigned yflip:1;
+        unsigned hasprio:1;
+      };
+
+      byte raw;
+    };
+
+    Attributes(byte val) : raw(val) { }
+  };
+public:
+  Sprite(byte ypos, byte xpos, byte tileidx, byte attribs)
+        : ypos(ypos), xpos(xpos), tileidx(tileidx), attribs(attribs) { }
+  byte ypos, xpos, tileidx;
+  Attributes attribs;
+};
+
 class Ppu
 {
 public:
@@ -24,6 +52,7 @@ public:
   friend class Bus;
   bool render = false;
 private:
+  bool reset = false;
   bool skip = false;
   enum Mode
   {
@@ -72,26 +101,24 @@ private:
         unsigned lyceq_int:1;
         unsigned:1;
       };
+
+      byte raw;
     };
 
-    STAT() : mode(0), lyceq(0), hblank_int(0), vblank_int(0),
-             oam_int(0), lyceq_int(0) {}
+    STAT() : raw(0) {}
 
     void write(byte value)
     {
-      hblank_int = value >> 4;
-      vblank_int = value >> 5;
-      oam_int = value >> 6;
-      lyceq_int = value >> 7;
+      raw = value;
+      raw |= 0x80;
     }
 
     byte read()
     {
-      return (1 << 7) | (lyceq_int << 6) | (oam_int << 5) | (vblank_int << 4) |
-             (hblank_int << 3) | (lyceq << 2) | mode;
+      return (1 << 7) | (raw & 0x7f);
     }
   };
-public:
+  
   struct IO
   {
     byte bgp = 0, scy = 0, scx = 0;
@@ -100,10 +127,9 @@ public:
     byte lyc = 0, ly = 0;
     STAT stat;
   } io;
-private:
+
+  byte window_internal_counter = 0;
   word fbIndex = 0;
-  bool can_access_oam = true;
-  bool can_access_vram = true;
 
   int curr_cycles = 0;
 
@@ -115,7 +141,7 @@ private:
   T ReadVRAM(half addr);
   void ChangeMode(Mode m, byte& intf);
   bool CanSprites(bool priority);
-  void RenderOBJs();
+  void RenderSprites();
   void RenderBGs();
   void Scanline();
   void CompareLYC(byte& intf);

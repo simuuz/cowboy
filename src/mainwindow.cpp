@@ -202,6 +202,7 @@ void MainWindow::MenuBar()
       if(ImGui::MenuItem("Stop"))
       {
         core->Stop();
+        UpdateTexture();
       }
 
       bool settings_clicked = ImGui::MenuItem("Settings");

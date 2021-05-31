@@ -11,7 +11,7 @@ void DebugWindow::Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& runnin
 void DebugWindow::Perf(float fps)
 {
   frame_times.add_point(1000 / fps);
-  ImGui::Begin(" ", (bool*)__null, ImGuiWindowFlags_NoTitleBar);
+  ImGui::Begin("Profiler");
 
   ImPlot::GetStyle().AntiAliasedLines = true;
 
@@ -27,7 +27,7 @@ void DebugWindow::Perf(float fps)
 
 void DebugWindow::Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
 {
-  ImGui::Begin("Debugger", (bool*)__null, ImGuiWindowFlags_NoTitleBar);
+  ImGui::Begin("Debugger");
   static float w = ImGui::GetWindowSize().x / 2;
   static float h = ImGui::GetWindowSize().y / 2 - 42;
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));

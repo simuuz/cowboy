@@ -31,7 +31,7 @@ void Mem::Reset()
   io.div = 0;
 
   io.bootrom = skip ? 1 : 0;
-  
+
   memset(extram, 0, EXTRAM_SZ);
   memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);

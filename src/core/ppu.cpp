@@ -122,6 +122,10 @@ void Ppu::Step(int cycles, byte& intf)
     {
       curr_cycles -= 204;
       io.ly++;
+      if(io.lcdc.window_enable)
+      {
+        window_internal_counter++;
+      }
       if (io.ly == 0x90)
       {
         ChangeMode(VBlank, intf);
@@ -175,12 +179,9 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     {
       intf |= 2;
     }
-    can_access_oam = false;
     break;
   case LCDTransfer:
     render = true;
-    can_access_oam = false;
-    can_access_vram = false;
     Scanline();
     break;
   }
@@ -212,6 +213,8 @@ byte Ppu::ReadIO(half addr)
     return io.wy;
   case 0x4b:
     return io.wx;
+  default:
+    return 0xff;
   }
 }
 
@@ -258,6 +261,8 @@ void Ppu::WriteIO(Mem& mem, half addr, byte val)
   case 0x4b:
     io.wx = val;
     break;
+  default:
+    break;
   }
 }
 
@@ -291,7 +296,7 @@ word Ppu::GetColor(byte idx)
 void Ppu::Scanline()
 {
   RenderBGs();
-  //RenderOBJs();
+  RenderSprites();
 }
 
 void Ppu::RenderBGs()
@@ -306,8 +311,8 @@ void Ppu::RenderBGs()
   for(int x = 0; x < WIDTH; x++)
   {
     half tileline = 0;
-    auto scrolled_x = io.scx + x;
-    auto scrolled_y = io.scy + io.ly;
+    half scrolled_x = io.scx + x;
+    half scrolled_y = io.scy + io.ly;
     
     if(io.lcdc.bgwin_priority) {
       byte index = vram[(bg_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
@@ -322,7 +327,7 @@ void Ppu::RenderBGs()
       }
     } else if (io.lcdc.bgwin_priority && render_window && winx <= x) {
       scrolled_x = x - winx;
-      scrolled_y = io.ly - io.wy;
+      scrolled_y = window_internal_counter - io.wy;
 
       byte index = vram[(window_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
 
@@ -346,8 +351,9 @@ void Ppu::RenderBGs()
   }
 }
 
-void Ppu::RenderOBJs()
+void Ppu::RenderSprites()
 {
-  
+  if(!io.lcdc.obj_enable)
+    return;
 }
 }  // namespace natsukashii::core
