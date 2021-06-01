@@ -355,5 +355,41 @@ void Ppu::RenderSprites()
 {
   if(!io.lcdc.obj_enable)
     return;
+
+  std::vector<Sprite> sprites;
+
+  byte height = io.lcdc.obj_size ? 16 : 8;
+
+  for(int i = 0; i < 0xa0 && sprites.size() < 10; i += 4) {
+    auto start_y = (sbyte)oam[i] - 16;
+    auto end_y = start_y + height;
+    if(start_y <= io.ly && io.ly < end_y)
+      sprites.push_back(Sprite(oam[i], oam[i + 1], oam[i + 2], oam[i + 3]));
+  }
+
+  for(auto& sprite : sprites) {
+    if(io.lcdc.obj_size) {
+      printf("8x16 tile!\n");
+      return;
+    } else {
+      auto tile_y = sprite.attribs.yflip ? 7 - (io.ly - sprite.ypos) : (io.ly - sprite.ypos) & 7;
+      byte pal = sprite.attribs.palnum ? io.obp1 : io.obp0;
+      fbIndex = sprite.xpos + WIDTH * io.ly;
+
+      for(int x = 0; x < 8; x++) {
+        half tile = ReadVRAM<half>(0x8000 + ((half)sprite.tileidx << 4) + ((half)tile_y << 1));
+        auto tile_x = sprite.attribs.xflip ? 7 - x : x;
+        byte high = tile >> 8;
+        byte low = tile & 0xff;
+        byte color = bit<byte>(high, 7 - tile_x) << 1 | bit<byte>(low, 7 - tile_x);
+        byte coloridx = (pal >> (color << 1)) & 3;
+        word color_ = GetColor(coloridx);
+        if(coloridx == 3) {
+          color_ = 0;
+        }
+        pixels[fbIndex++] = color_;
+      }
+    }
+  }
 }
 }  // namespace natsukashii::core
