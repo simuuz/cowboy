@@ -52,6 +52,7 @@ public:
   friend class Bus;
   bool render = false;
 private:
+  bool latch = false;
   bool reset = false;
   bool skip = false;
   enum Mode

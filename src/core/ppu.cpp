@@ -103,7 +103,7 @@ void Ppu::Step(int cycles, byte& intf)
 
   switch (mode)
   {
-  case OAM:
+  case OAM:    
     if (curr_cycles >= 80)
     {
       curr_cycles -= 80;
@@ -140,11 +140,11 @@ void Ppu::Step(int cycles, byte& intf)
     {
       curr_cycles -= 456;
       io.ly++;
+      window_internal_counter = 0;
 
       if (io.ly == 154)
       {
         io.ly = 0;
-        window_internal_counter = 0;
         ChangeMode(OAM, intf);
       }
 
@@ -304,9 +304,7 @@ void Ppu::RenderBGs()
   half window_tilemap = io.lcdc.window_tilemap_area == 1 ? 0x9C00 : 0x9800;
   half tiledata = io.lcdc.bgwin_tiledata_area == 1 ? 0x8000 : 0x8800;
 
-  bool render_window = (io.wy <= window_internal_counter && io.lcdc.window_enable);
-  
-  byte increment_window_line_counter = 0;
+  bool render_window = (io.wy <= io.ly && io.lcdc.window_enable);
 
   for(int x = 0; x < WIDTH; x++)
   {
@@ -316,13 +314,10 @@ void Ppu::RenderBGs()
     
     if(io.lcdc.bgwin_priority) {
       byte index = 0;
-      sbyte real_wx = (sbyte)io.wx - 7;
+      shalf real_wx = (shalf)io.wx - 7;
       if(render_window && real_wx <= x) {
         scrolled_x = x - real_wx;
-        scrolled_y = window_internal_counter - io.wy;
-        
-        if(io.ly >= io.wy && io.wx >= 0 && io.wx <= 166)
-          increment_window_line_counter = 1;
+        scrolled_y = window_internal_counter;
         
         index = vram[(window_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
       } else {
@@ -347,8 +342,11 @@ void Ppu::RenderBGs()
     pixels[fbIndex] = GetColor(coloridx);
     fbIndex++;
   }
-
-  window_internal_counter += increment_window_line_counter;
+  
+  if(render_window && io.ly >= io.wy && io.wx >= 0 && io.wx <= 166)
+  {
+    window_internal_counter++;
+  }
 }
 
 void Ppu::RenderSprites()
@@ -356,10 +354,10 @@ void Ppu::RenderSprites()
   if(!io.lcdc.obj_enable)
     return;
 
-  std::vector<Sprite> sprites;
-
   byte height = io.lcdc.obj_size ? 16 : 8;
   byte old_x = 0;
+
+  std::vector<Sprite> sprites;
   
   for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4) {
     shalf start_y = (sbyte)oam[i] - 16;
@@ -379,7 +377,7 @@ void Ppu::RenderSprites()
       fbIndex = sprite.xpos + WIDTH * io.ly;
 
       for(int x = 0; x < 8; x++) {
-        half tile = ReadVRAM<half>(0x8000 + ((half)sprite.tileidx << 4) + ((half)tile_y << 1));
+        half tile = ReadVRAM<half>(0x8000 + (sprite.tileidx << 4) + (tile_y << 1));
         sbyte tile_x = sprite.attribs.xflip ? 7 - x : x;
         byte high = tile >> 8;
         byte low = tile & 0xff;
