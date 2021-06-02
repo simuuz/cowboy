@@ -122,10 +122,7 @@ void Ppu::Step(int cycles, byte& intf)
     {
       curr_cycles -= 204;
       io.ly++;
-      if(io.lcdc.window_enable)
-      {
-        window_internal_counter++;
-      }
+
       if (io.ly == 0x90)
       {
         ChangeMode(VBlank, intf);
@@ -147,6 +144,7 @@ void Ppu::Step(int cycles, byte& intf)
       if (io.ly == 154)
       {
         io.ly = 0;
+        window_internal_counter = 0;
         ChangeMode(OAM, intf);
       }
 
@@ -302,34 +300,34 @@ void Ppu::Scanline()
 void Ppu::RenderBGs()
 {
   fbIndex = io.ly * WIDTH;
-  half bg_tilemap = io.lcdc.bg_tilemap_area ? 0x9C00 : 0x9800;
-  half window_tilemap = io.lcdc.window_tilemap_area ? 0x9C00 : 0x9800;
-  half tiledata = io.lcdc.bgwin_tiledata_area ? 0x8000 : 0x8800;
+  half bg_tilemap = io.lcdc.bg_tilemap_area == 1 ? 0x9C00 : 0x9800;
+  half window_tilemap = io.lcdc.window_tilemap_area == 1 ? 0x9C00 : 0x9800;
+  half tiledata = io.lcdc.bgwin_tiledata_area == 1 ? 0x8000 : 0x8800;
 
-  bool render_window = (io.wy <= io.ly && io.lcdc.window_enable);
-  shalf winx = (shalf)(io.wx - 7);
+  bool render_window = (io.wy <= window_internal_counter && io.lcdc.window_enable);
+  
+  byte increment_window_line_counter = 0;
+
   for(int x = 0; x < WIDTH; x++)
   {
     half tileline = 0;
-    half scrolled_x = io.scx + x;
-    half scrolled_y = io.scy + io.ly;
+    sbyte scrolled_x = io.scx + x;
+    sbyte scrolled_y = io.scy + io.ly;
     
     if(io.lcdc.bgwin_priority) {
-      byte index = vram[(bg_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
-
-      if(tiledata == 0x8000)
-      {
-        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + ((half)(scrolled_y & 7) << 1));
+      byte index = 0;
+      sbyte real_wx = (sbyte)io.wx - 7;
+      if(render_window && real_wx <= x) {
+        scrolled_x = x - real_wx;
+        scrolled_y = window_internal_counter - io.wy;
+        
+        if(io.ly >= io.wy && io.wx >= 0 && io.wx <= 166)
+          increment_window_line_counter = 1;
+        
+        index = vram[(window_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
+      } else {
+        index = vram[(bg_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
       }
-      else
-      {
-        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + ((half)(scrolled_y & 7) << 1));
-      }
-    } else if (io.lcdc.bgwin_priority && render_window && winx <= x) {
-      scrolled_x = x - winx;
-      scrolled_y = window_internal_counter - io.wy;
-
-      byte index = vram[(window_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
 
       if(tiledata == 0x8000)
       {
@@ -349,6 +347,8 @@ void Ppu::RenderBGs()
     pixels[fbIndex] = GetColor(coloridx);
     fbIndex++;
   }
+
+  window_internal_counter += increment_window_line_counter;
 }
 
 void Ppu::RenderSprites()
@@ -359,35 +359,43 @@ void Ppu::RenderSprites()
   std::vector<Sprite> sprites;
 
   byte height = io.lcdc.obj_size ? 16 : 8;
-
-  for(int i = 0; i < 0xa0 && sprites.size() < 10; i += 4) {
-    auto start_y = (sbyte)oam[i] - 16;
-    auto end_y = start_y + height;
-    if(start_y <= io.ly && io.ly < end_y)
-      sprites.push_back(Sprite(oam[i], oam[i + 1], oam[i + 2], oam[i + 3]));
+  byte old_x = 0;
+  
+  for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4) {
+    shalf start_y = (sbyte)oam[i] - 16;
+    shalf end_y = start_y + height;
+    if((oam[i + 1] - 8) != old_x && start_y <= io.ly && io.ly < end_y) {
+      sprites.push_back(Sprite(oam[i], oam[i + 1] - 8, oam[i + 2], oam[i + 3]));
+      old_x = oam[i + 1] - 8;
+    }
   }
-
+  
   for(auto& sprite : sprites) {
     if(io.lcdc.obj_size) {
-      printf("8x16 tile!\n");
       return;
     } else {
-      auto tile_y = sprite.attribs.yflip ? 7 - (io.ly - sprite.ypos) : (io.ly - sprite.ypos) & 7;
+      half tile_y = sprite.attribs.yflip ? 7 - (io.ly - sprite.ypos) : (io.ly - sprite.ypos) & 7;
       byte pal = sprite.attribs.palnum ? io.obp1 : io.obp0;
       fbIndex = sprite.xpos + WIDTH * io.ly;
 
       for(int x = 0; x < 8; x++) {
         half tile = ReadVRAM<half>(0x8000 + ((half)sprite.tileidx << 4) + ((half)tile_y << 1));
-        auto tile_x = sprite.attribs.xflip ? 7 - x : x;
+        sbyte tile_x = sprite.attribs.xflip ? 7 - x : x;
         byte high = tile >> 8;
         byte low = tile & 0xff;
         byte color = bit<byte>(high, 7 - tile_x) << 1 | bit<byte>(low, 7 - tile_x);
         byte coloridx = (pal >> (color << 1)) & 3;
         word color_ = GetColor(coloridx);
-        if(coloridx == 3) {
-          color_ = 0;
+        
+        if(sprite.xpos + x < 168 && coloridx != 0 && pixels[fbIndex] != color_) {
+          if(sprite.attribs.hasprio) {
+            if(pixels[fbIndex] == color1)
+              pixels[fbIndex] = color_;
+          } else {
+            pixels[fbIndex] = color_;
+          }
         }
-        pixels[fbIndex++] = color_;
+        fbIndex++;
       }
     }
   }

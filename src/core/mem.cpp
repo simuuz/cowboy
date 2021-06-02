@@ -186,8 +186,7 @@ byte Mem::ReadIO(half addr)
   case 0x50:
     return io.bootrom;
   default:
-    printf("IO READ: Unsupported IO %04X\n", addr);
-    exit(1);
+    return 0xff;
   }
 }
 
@@ -219,8 +218,7 @@ void Mem::WriteIO(half addr, byte val)
     io.bootrom = val;
     break;
   default:
-    printf("IO WRITE: Unsupported IO %02x\n", addr & 0xff);
-    Reset();
+    break;
   }
 }
 }  // namespace natsukashii::core

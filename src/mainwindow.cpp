@@ -87,7 +87,7 @@ void MainWindow::OpenFile()
 {
   nfdchar_t *outpath;
   nfdfilteritem_t filteritem = { "Game Boy roms", "gb" };
-  nfdresult_t result = NFD_OpenDialog(&outpath, &filteritem, 1, nullptr);
+  nfdresult_t result = NFD_OpenDialog(&outpath, &filteritem, 1, "roms/");
   if(result == NFD_OKAY)
   {
     core->LoadROM(std::string(outpath));

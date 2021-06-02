@@ -23,6 +23,7 @@ void Core::Run(float fps)
 void Core::LoadROM(std::string path)
 {
   cpu.Reset();
+  bus.Reset();
   bus.LoadROM(path);
   cpu.bus = &bus;
   init = true;

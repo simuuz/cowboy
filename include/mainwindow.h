@@ -24,7 +24,7 @@ struct MainWindow
   void Settings();
   bool running = true;
   bool show_palette = false;
-  bool show_debug_windows = true;
+  bool show_debug_windows = false;
   bool show_settings = false;
   ImVec2 display_size;
   ImVec2 debug_size;

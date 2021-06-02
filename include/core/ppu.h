@@ -31,7 +31,7 @@ private:
     Attributes(byte val) : raw(val) { }
   };
 public:
-  Sprite(byte ypos, byte xpos, byte tileidx, byte attribs)
+  Sprite(byte ypos = 0, byte xpos = 0, byte tileidx = 0, byte attribs = 0)
         : ypos(ypos), xpos(xpos), tileidx(tileidx), attribs(attribs) { }
   byte ypos, xpos, tileidx;
   Attributes attribs;
