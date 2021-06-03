@@ -375,42 +375,49 @@ void Ppu::RenderSprites()
   
   for(auto& sprite : sprites)
   {
-    if(io.lcdc.obj_size)
-    {
-      return;
-    }
-    else
-    {
-      shalf tile_y = (sprite.attribs.yflip) ? (io.ly - sprite.ypos) ^ 7 : (io.ly - sprite.ypos) & 7;
-      byte pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
-      fbIndex = sprite.xpos + WIDTH * io.ly;
+    half tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 15) & 7 : (io.ly - sprite.ypos) & 7;
+    byte pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
+    fbIndex = sprite.xpos + WIDTH * io.ly;
 
-      for(int x = 0; x < 8; x++)
+    for(int x = 0; x < 8; x++)
+    {
+      half tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
+      half tile_index2 = io.lcdc.obj_size ? sprite.tileidx | 1 : 0;
+
+      half tile = ReadVRAM<half>(0x8000 + (tile_index << 4) + (tile_y << 1));
+      half tile2 = 0;
+      if(io.lcdc.obj_size)
       {
-        half tile = ReadVRAM<half>(0x8000 + ((half)sprite.tileidx << 4) + (tile_y << 1));
-        sbyte tile_x = (sprite.attribs.xflip) ? 7 - x : x;
-        byte high = tile >> 8;
-        byte low = tile & 0xff;
-        byte color = (bit<byte>(high, 7 - tile_x) << 1) | bit<byte>(low, 7 - tile_x);
-        byte coloridx = (pal >> (color << 1)) & 3;
-        word color_ = GetColor(coloridx);
-        
-        if((sprite.xpos + x) < 160 && coloridx != 0 && pixels[fbIndex] != color_)
+        tile2 = ReadVRAM<half>(0x8000 + (tile_index2 << 4) + (tile_y << 1));
+      }
+      sbyte tile_x = (sprite.attribs.xflip) ? 7 - x : x;
+      byte high1 = tile >> 8;
+      byte low1 = tile & 0xff;
+      byte high2 = tile2 >> 8;
+      byte low2 = tile2 & 0xff;
+      byte color1 = (bit<byte>(high1, 7 - tile_x) << 1) | bit<byte>(low1, 7 - tile_x);
+      byte color2 = (bit<byte>(high2, 7 - tile_x) << 1) | bit<byte>(low2, 7 - tile_x);
+      byte coloridx1 = (pal >> (color1 << 1)) & 3;
+      byte coloridx2 = (pal >> (color2 << 1)) & 3;
+      word color1_ = GetColor(coloridx1);
+      word color2_ = GetColor(coloridx2);
+      
+      if((sprite.xpos + x) < 160 && coloridx1 != 0 && pixels[fbIndex] != color1_)
+      {
+        if(sprite.attribs.hasprio)
         {
-          if(sprite.attribs.hasprio)
+          if(pixels[fbIndex] == this->color1)
           {
-            if(pixels[fbIndex] == color1)
-            {
-              pixels[fbIndex] = color_;
-            }
-          }
-          else
-          {
-            pixels[fbIndex] = color_;
+            pixels[fbIndex] = color1_;
           }
         }
-        fbIndex++;
+        else
+        {
+          pixels[fbIndex] = color1_;
+        }
       }
+
+      fbIndex++;
     }
   }
 }
