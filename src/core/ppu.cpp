@@ -315,12 +315,15 @@ void Ppu::RenderBGs()
     if(io.lcdc.bgwin_priority) {
       byte index = 0;
       shalf real_wx = (shalf)io.wx - 7;
-      if(render_window && real_wx <= x) {
+      if(render_window && real_wx <= x)
+      {
         scrolled_x = x - real_wx;
         scrolled_y = window_internal_counter;
         
         index = vram[(window_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
-      } else {
+      }
+      else
+      {
         index = vram[(bg_tilemap + (((scrolled_y >> 3) << 5) & 0x3FF) + ((scrolled_x >> 3) & 31)) & 0x1fff];
       }
 
@@ -359,37 +362,50 @@ void Ppu::RenderSprites()
 
   std::vector<Sprite> sprites;
   
-  for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4) {
+  for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4)
+  {
     shalf start_y = (sbyte)oam[i] - 16;
     shalf end_y = start_y + height;
-    if((oam[i + 1] - 8) != old_x && start_y <= io.ly && io.ly < end_y) {
+    if((oam[i + 1] - 8) != old_x && start_y <= io.ly && io.ly < end_y)
+    {
       sprites.push_back(Sprite(oam[i], oam[i + 1] - 8, oam[i + 2], oam[i + 3]));
       old_x = oam[i + 1] - 8;
     }
   }
   
-  for(auto& sprite : sprites) {
-    if(io.lcdc.obj_size) {
+  for(auto& sprite : sprites)
+  {
+    if(io.lcdc.obj_size)
+    {
       return;
-    } else {
-      half tile_y = sprite.attribs.yflip ? 7 - (io.ly - sprite.ypos) : (io.ly - sprite.ypos) & 7;
-      byte pal = sprite.attribs.palnum ? io.obp1 : io.obp0;
+    }
+    else
+    {
+      shalf tile_y = (sprite.attribs.yflip) ? (io.ly - sprite.ypos) ^ 7 : (io.ly - sprite.ypos) & 7;
+      byte pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
       fbIndex = sprite.xpos + WIDTH * io.ly;
 
-      for(int x = 0; x < 8; x++) {
-        half tile = ReadVRAM<half>(0x8000 + (sprite.tileidx << 4) + (tile_y << 1));
-        sbyte tile_x = sprite.attribs.xflip ? 7 - x : x;
+      for(int x = 0; x < 8; x++)
+      {
+        half tile = ReadVRAM<half>(0x8000 + ((half)sprite.tileidx << 4) + (tile_y << 1));
+        sbyte tile_x = (sprite.attribs.xflip) ? 7 - x : x;
         byte high = tile >> 8;
         byte low = tile & 0xff;
-        byte color = bit<byte>(high, 7 - tile_x) << 1 | bit<byte>(low, 7 - tile_x);
+        byte color = (bit<byte>(high, 7 - tile_x) << 1) | bit<byte>(low, 7 - tile_x);
         byte coloridx = (pal >> (color << 1)) & 3;
         word color_ = GetColor(coloridx);
         
-        if(sprite.xpos + x < 168 && coloridx != 0 && pixels[fbIndex] != color_) {
-          if(sprite.attribs.hasprio) {
+        if((sprite.xpos + x) < 160 && coloridx != 0 && pixels[fbIndex] != color_)
+        {
+          if(sprite.attribs.hasprio)
+          {
             if(pixels[fbIndex] == color1)
+            {
               pixels[fbIndex] = color_;
-          } else {
+            }
+          }
+          else
+          {
             pixels[fbIndex] = color_;
           }
         }

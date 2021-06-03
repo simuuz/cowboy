@@ -65,6 +65,8 @@ private:
 
   word GetColor(byte idx);
   Mode mode = OAM;
+
+  byte coloridx_bg = 0, coloridx_sprite = 0;
   
   struct LCDC
   {
