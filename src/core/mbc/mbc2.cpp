@@ -43,4 +43,11 @@ void MBC2::Write(half addr, byte val)
     break;
   }
 }
+
+void MBC2::Save(std::string filename)
+{
+  FILE* file = fopen(filename.c_str(), "wb");
+  fwrite(ram.data(), 1, sizeof(ram.data()), file);
+  fclose(file);
+}
 } // natsukashii::core

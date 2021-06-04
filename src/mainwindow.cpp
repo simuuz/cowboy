@@ -3,9 +3,15 @@
 
 namespace natsukashii::frontend
 {
-using clk = std::chrono::high_resolution_clock;
+int key, action;
 
-extern int key, action;
+static void key_callback(GLFWwindow* window, int key_, int scancode, int action_, int mods)
+{
+  key = key_;
+  action = action_;
+}
+
+using clk = std::chrono::high_resolution_clock;
 
 MainWindow::~MainWindow()
 {
@@ -41,7 +47,7 @@ MainWindow::MainWindow(std::string title)
   glfwMakeContextCurrent(window);
   glfwSwapInterval(0);
 
-  glfwSetKeyCallback(window, (GLFWkeyfun)(key_callback));
+  glfwSetKeyCallback(window, key_callback);
   
   if (glewInit() != GLEW_OK)
   {
@@ -90,8 +96,8 @@ MainWindow::MainWindow(std::string title)
 void MainWindow::OpenFile()
 {
   nfdchar_t *outpath;
-  nfdfilteritem_t filteritem = { "Game Boy roms", "gb" };
-  nfdresult_t result = NFD_OpenDialog(&outpath, &filteritem, 1, "roms/");
+  nfdfilteritem_t filteritem[2] = {{ "Game Boy roms", "gb" }, { "Game Boy Color roms", "gbc" }};
+  nfdresult_t result = NFD_OpenDialog(&outpath, filteritem, 2, "roms/");
   if(result == NFD_OKAY)
   {
     core->LoadROM(std::string(outpath));
@@ -116,8 +122,7 @@ void MainWindow::Run()
   {
     glfwPollEvents();
 
-    core->bus.mem.key = key;
-    core->bus.mem.action = action;
+    core->bus.mem.DoInputs(key, action);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();

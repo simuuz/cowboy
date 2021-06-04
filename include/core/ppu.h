@@ -55,6 +55,9 @@ private:
   bool latch = false;
   bool reset = false;
   bool skip = false;
+
+  std::array<byte, FBSIZE> indices;
+
   enum Mode
   {
     HBlank,
@@ -66,7 +69,7 @@ private:
   word GetColor(byte idx);
   Mode mode = OAM;
 
-  byte coloridx_bg = 0, coloridx_sprite = 0;
+  byte colorID_bg = 0, colorID_sprite = 0;
   
   struct LCDC
   {

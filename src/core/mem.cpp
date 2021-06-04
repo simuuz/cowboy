@@ -8,6 +8,7 @@ Mem::~Mem()
 {
   size_t lastindex = filename.find_last_of("."); 
   std::string rawname = filename.substr(0, lastindex); 
+  rawname += ".sav";
   cart->Save(rawname);
 }
 
@@ -174,7 +175,7 @@ byte Mem::ReadIO(half addr)
   switch (addr & 0xff)
   {
   case 0:
-    return GetJoypad();
+    return io.joy;
   case 1 ... 0x02:
   case 0x30 ... 0x3f:
     return 0xff;
@@ -242,27 +243,41 @@ void Mem::HandleJoypad(byte val)
   dpad = !bit<byte, 4>(val);
 }
 
-byte Mem::GetJoypad()
+void Mem::DoInputs(int key, int action)
 {
-  byte num = 0xff;
-  setbit<byte, 5>(num, !button);
-  setbit<byte, 4>(num, !dpad);
+  setbit<byte, 5>(io.joy, !button);
+  setbit<byte, 4>(io.joy, !dpad);
 
-  if(button)
-  {
-    setbit<byte, 3>(num, !(action == GLFW_PRESS && key == GLFW_KEY_ENTER));
-    setbit<byte, 2>(num, !(action == GLFW_PRESS && key == GLFW_KEY_RIGHT_SHIFT));
-    setbit<byte, 1>(num, !(action == GLFW_PRESS && key == GLFW_KEY_A));
-    setbit<byte, 0>(num, !(action == GLFW_PRESS && key == GLFW_KEY_B));
-  }
-  else if(dpad)
-  {
-    setbit<byte, 3>(num, !(action == GLFW_PRESS && key == GLFW_KEY_DOWN));
-    setbit<byte, 2>(num, !(action == GLFW_PRESS && key == GLFW_KEY_UP));
-    setbit<byte, 1>(num, !(action == GLFW_PRESS && key == GLFW_KEY_LEFT));
-    setbit<byte, 0>(num, !(action == GLFW_PRESS && key == GLFW_KEY_RIGHT));
-  }
+  if(action == GLFW_PRESS) {
+    if(button) {
+      setbit<byte, 3>(io.joy, !(key == GLFW_KEY_ENTER));
+      setbit<byte, 2>(io.joy, !(key == GLFW_KEY_RIGHT_SHIFT));
+      setbit<byte, 1>(io.joy, !(key == GLFW_KEY_Z));
+      setbit<byte, 0>(io.joy, !(key == GLFW_KEY_X));
+    }
 
-  return num;
+    if(dpad) {
+      setbit<byte, 3>(io.joy, !(key == GLFW_KEY_DOWN));
+      setbit<byte, 2>(io.joy, !(key == GLFW_KEY_UP));
+      setbit<byte, 1>(io.joy, !(key == GLFW_KEY_LEFT));
+      setbit<byte, 0>(io.joy, !(key == GLFW_KEY_RIGHT));
+    }
+  }
+  
+  if(action == GLFW_RELEASE) {
+    if(button) {
+      setbit<byte, 3>(io.joy, key == GLFW_KEY_ENTER);
+      setbit<byte, 2>(io.joy, key == GLFW_KEY_RIGHT_SHIFT);
+      setbit<byte, 1>(io.joy, key == GLFW_KEY_Z);
+      setbit<byte, 0>(io.joy, key == GLFW_KEY_X);
+    }
+
+    if(dpad) {
+      setbit<byte, 3>(io.joy, key == GLFW_KEY_DOWN);
+      setbit<byte, 2>(io.joy, key == GLFW_KEY_UP);
+      setbit<byte, 1>(io.joy, key == GLFW_KEY_LEFT);
+      setbit<byte, 0>(io.joy, key == GLFW_KEY_RIGHT);
+    }
+  }
 }
 }  // namespace natsukashii::core

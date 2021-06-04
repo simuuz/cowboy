@@ -25,6 +25,7 @@ Ppu::Ppu(bool skip) : skip(skip)
   color3 = std::stoul(ini["palette"]["color3"], nullptr, 16);
   color4 = std::stoul(ini["palette"]["color4"], nullptr, 16);
 
+  indices.fill(0);
   pixels.fill(color4);
   vram.fill(0);
   oam.fill(0);
@@ -56,6 +57,7 @@ void Ppu::Reset()
 {
   fbIndex = 0;
   mode = OAM;
+  indices.fill(0);
   pixels.fill(color4);
   vram.fill(0);
   oam.fill(0);
@@ -340,9 +342,9 @@ void Ppu::RenderBGs()
     byte high = (tileline >> 8);
     byte low = (tileline & 0xff);
 
-    byte color = ((byte)bit<byte>(high, 7 - (scrolled_x & 7)) << 1) | ((byte)bit<byte>(low, 7 - (scrolled_x & 7)));
-    coloridx_bg = (io.bgp >> (color << 1)) & 3;
-    pixels[fbIndex] = GetColor(coloridx_bg);
+    colorID_bg = ((byte)bit<byte>(high, 7 - (scrolled_x & 7)) << 1) | ((byte)bit<byte>(low, 7 - (scrolled_x & 7)));
+    byte color_index = (io.bgp >> (colorID_bg << 1)) & 3;
+    pixels[fbIndex] = GetColor(color_index);
     fbIndex++;
   }
   
@@ -397,14 +399,14 @@ void Ppu::RenderSprites()
       byte high = tile >> 8;
       byte low = tile & 0xff;
       byte colorID = (bit<byte>(high, 7 - tile_x) << 1) | bit<byte>(low, 7 - tile_x);
-      coloridx_sprite = (pal >> (colorID << 1)) & 3;
-      word color = GetColor(coloridx_sprite);
+      byte colorIndex = (pal >> (colorID << 1)) & 3;
+      word color = GetColor(colorIndex);
       
-      if((sprite.xpos + x) < 160 && coloridx_sprite != 0 && pixels[fbIndex] != color)
+      if((sprite.xpos + x) < 166 && colorID != 0 && pixels[fbIndex] != color)
       {
         if(sprite.attribs.obj_to_bg_prio)
         {
-          if(coloridx_bg < 1)
+          if(pixels[fbIndex] == GetColor(colorID_bg) && colorID_bg < 1)
           {
             pixels[fbIndex] = color;
           }
@@ -416,6 +418,7 @@ void Ppu::RenderSprites()
       }
 
       fbIndex++;
+      colorID_sprite = colorID;
       
       if(io.lcdc.obj_size)
       {
@@ -424,14 +427,14 @@ void Ppu::RenderSprites()
         byte high2 = tile2 >> 8;
         byte low2 = tile2 & 0xff;
         byte colorID2 = (bit<byte>(high2, 7 - tile_x) << 1) | bit<byte>(low2, 7 - tile_x);
-        coloridx_sprite = (pal >> (colorID2 << 1)) & 3;
-        word color2 = GetColor(coloridx_sprite);
+        byte colorIndex2 = (pal >> (colorID2 << 1)) & 3;
+        word color2 = GetColor(colorIndex2);
         
-        if((sprite.xpos + x) < 160 && coloridx_sprite != 0 && pixels[fbIndex2] != color2)
+        if((sprite.xpos + x) < 168 && colorID2 != 0 && pixels[fbIndex2] != color2)
         {
           if(sprite.attribs.obj_to_bg_prio)
           {
-            if(coloridx_bg < 1)
+            if(pixels[fbIndex2] == GetColor(colorID_bg) && colorID_bg < 1)
             {
               pixels[fbIndex2] = color2;
             }
@@ -441,6 +444,8 @@ void Ppu::RenderSprites()
             pixels[fbIndex2] = color2;
           }
         }
+
+        colorID_sprite = colorID2;
 
         fbIndex2++;
       }

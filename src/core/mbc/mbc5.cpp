@@ -43,8 +43,7 @@ void MBC5::Write(half addr, byte val)
     }
     break;
   default:
-    printf("Wtf\n");
-    exit(1);
+    printf("Unhandled write MBC5, addr %04X val %02X\n", addr, val);
   }
 }
 

@@ -39,7 +39,7 @@ public:
   MBC1(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename) {}
+  void Save(std::string filename);
 private:
   byte romBank = 1;
   byte ramBank = 1;
@@ -59,7 +59,7 @@ public:
   MBC2(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename) {}
+  void Save(std::string filename);
 private:
   byte romBank = 1;
   bool ramEnable = false;
@@ -112,12 +112,12 @@ public:
 
   struct IO
   {
-    byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
+    byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0, joy = 0xff;
   } io;
 
   friend class Ppu;
   bool rom_opened = false;
-  int key, action;
+  void DoInputs(int key, int action);
 private:
   std::string filename;
   Cart* cart = nullptr;
@@ -137,6 +137,5 @@ private:
   bool button = false;
 
   void HandleJoypad(byte val);
-  byte GetJoypad();
 };
 }  // namespace natsukashii::core
