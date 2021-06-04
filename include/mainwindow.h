@@ -12,6 +12,13 @@ static void glfw_error_callback(int error, const char* description)
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+int key, action;
+static void key_callback(GLFWwindow* window, int key_, int scancode, int action_, int mods)
+{
+  key = key_;
+  action = action_;
+}
+
 constexpr float aspect_ratio_gb = (float)WIDTH / (float)HEIGHT;
 struct MainWindow
 {

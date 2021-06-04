@@ -1,8 +1,16 @@
 #include "mem.h"
 #include <memory.h>
+#include <filesystem>
 
 namespace natsukashii::core
 {
+Mem::~Mem()
+{
+  size_t lastindex = filename.find_last_of("."); 
+  std::string rawname = filename.substr(0, lastindex); 
+  cart->Save(rawname);
+}
+
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
 {
   rom_opened = false;
@@ -39,7 +47,8 @@ void Mem::Reset()
 }
 
 void Mem::LoadROM(std::string path)
-{  
+{
+  filename = path;
   if(cart != nullptr)
   {
     cart = nullptr;
@@ -164,7 +173,9 @@ byte Mem::ReadIO(half addr)
 {
   switch (addr & 0xff)
   {
-  case 0 ... 0x02:
+  case 0:
+    return GetJoypad();
+  case 1 ... 0x02:
   case 0x30 ... 0x3f:
     return 0xff;
   case 0x04:
@@ -194,7 +205,10 @@ void Mem::WriteIO(half addr, byte val)
 {
   switch (addr & 0xff)
   {
-  case 0 ... 0x02:
+  case 0:
+    HandleJoypad(val);
+    break;
+  case 1 ... 0x02:
   case 0x30 ... 0x3f:
     break;
   case 0x04:
@@ -220,5 +234,35 @@ void Mem::WriteIO(half addr, byte val)
   default:
     break;
   }
+}
+
+void Mem::HandleJoypad(byte val)
+{
+  button = !bit<byte, 5>(val);
+  dpad = !bit<byte, 4>(val);
+}
+
+byte Mem::GetJoypad()
+{
+  byte num = 0xff;
+  setbit<byte, 5>(num, !button);
+  setbit<byte, 4>(num, !dpad);
+
+  if(button)
+  {
+    setbit<byte, 3>(num, !(action == GLFW_PRESS && key == GLFW_KEY_ENTER));
+    setbit<byte, 2>(num, !(action == GLFW_PRESS && key == GLFW_KEY_RIGHT_SHIFT));
+    setbit<byte, 1>(num, !(action == GLFW_PRESS && key == GLFW_KEY_A));
+    setbit<byte, 0>(num, !(action == GLFW_PRESS && key == GLFW_KEY_B));
+  }
+  else if(dpad)
+  {
+    setbit<byte, 3>(num, !(action == GLFW_PRESS && key == GLFW_KEY_DOWN));
+    setbit<byte, 2>(num, !(action == GLFW_PRESS && key == GLFW_KEY_UP));
+    setbit<byte, 1>(num, !(action == GLFW_PRESS && key == GLFW_KEY_LEFT));
+    setbit<byte, 0>(num, !(action == GLFW_PRESS && key == GLFW_KEY_RIGHT));
+  }
+
+  return num;
 }
 }  // namespace natsukashii::core

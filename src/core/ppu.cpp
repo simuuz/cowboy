@@ -341,8 +341,8 @@ void Ppu::RenderBGs()
     byte low = (tileline & 0xff);
 
     byte color = ((byte)bit<byte>(high, 7 - (scrolled_x & 7)) << 1) | ((byte)bit<byte>(low, 7 - (scrolled_x & 7)));
-    byte coloridx = (io.bgp >> (color << 1)) & 3;
-    pixels[fbIndex] = GetColor(coloridx);
+    coloridx_bg = (io.bgp >> (color << 1)) & 3;
+    pixels[fbIndex] = GetColor(coloridx_bg);
     fbIndex++;
   }
   
@@ -368,56 +368,82 @@ void Ppu::RenderSprites()
     shalf end_y = start_y + height;
     if((oam[i + 1] - 8) != old_x && start_y <= io.ly && io.ly < end_y)
     {
-      sprites.push_back(Sprite(oam[i], oam[i + 1] - 8, oam[i + 2], oam[i + 3]));
+      sprites.push_back(Sprite(oam[i] - 16, oam[i + 1] - 8, oam[i + 2], oam[i + 3]));
       old_x = oam[i + 1] - 8;
     }
   }
   
   for(auto& sprite : sprites)
   {
-    half tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 15) & 7 : (io.ly - sprite.ypos) & 7;
+    half tile_y;
+    if(io.lcdc.obj_size)
+    {
+      tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 15) : io.ly - sprite.ypos;
+    }
+    else
+    {
+      tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 7) & 7 : (io.ly - sprite.ypos) & 7;
+    }
+    
     byte pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
     fbIndex = sprite.xpos + WIDTH * io.ly;
+    word fbIndex2 = sprite.xpos + WIDTH * (io.ly + 8);
 
     for(int x = 0; x < 8; x++)
     {
       half tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
-      half tile_index2 = io.lcdc.obj_size ? sprite.tileidx | 1 : 0;
-
       half tile = ReadVRAM<half>(0x8000 + (tile_index << 4) + (tile_y << 1));
-      half tile2 = 0;
-      if(io.lcdc.obj_size)
-      {
-        tile2 = ReadVRAM<half>(0x8000 + (tile_index2 << 4) + (tile_y << 1));
-      }
       sbyte tile_x = (sprite.attribs.xflip) ? 7 - x : x;
-      byte high1 = tile >> 8;
-      byte low1 = tile & 0xff;
-      byte high2 = tile2 >> 8;
-      byte low2 = tile2 & 0xff;
-      byte color1 = (bit<byte>(high1, 7 - tile_x) << 1) | bit<byte>(low1, 7 - tile_x);
-      byte color2 = (bit<byte>(high2, 7 - tile_x) << 1) | bit<byte>(low2, 7 - tile_x);
-      byte coloridx1 = (pal >> (color1 << 1)) & 3;
-      byte coloridx2 = (pal >> (color2 << 1)) & 3;
-      word color1_ = GetColor(coloridx1);
-      word color2_ = GetColor(coloridx2);
+      byte high = tile >> 8;
+      byte low = tile & 0xff;
+      byte colorID = (bit<byte>(high, 7 - tile_x) << 1) | bit<byte>(low, 7 - tile_x);
+      coloridx_sprite = (pal >> (colorID << 1)) & 3;
+      word color = GetColor(coloridx_sprite);
       
-      if((sprite.xpos + x) < 160 && coloridx1 != 0 && pixels[fbIndex] != color1_)
+      if((sprite.xpos + x) < 160 && coloridx_sprite != 0 && pixels[fbIndex] != color)
       {
-        if(sprite.attribs.hasprio)
+        if(sprite.attribs.obj_to_bg_prio)
         {
-          if(pixels[fbIndex] == this->color1)
+          if(coloridx_bg < 1)
           {
-            pixels[fbIndex] = color1_;
+            pixels[fbIndex] = color;
           }
         }
         else
         {
-          pixels[fbIndex] = color1_;
+          pixels[fbIndex] = color;
         }
       }
 
       fbIndex++;
+      
+      if(io.lcdc.obj_size)
+      {
+        half tile_index2 = sprite.tileidx | 1;
+        half tile2 = ReadVRAM<half>(0x8000 + (tile_index2 << 4) + (tile_y << 1));
+        byte high2 = tile2 >> 8;
+        byte low2 = tile2 & 0xff;
+        byte colorID2 = (bit<byte>(high2, 7 - tile_x) << 1) | bit<byte>(low2, 7 - tile_x);
+        coloridx_sprite = (pal >> (colorID2 << 1)) & 3;
+        word color2 = GetColor(coloridx_sprite);
+        
+        if((sprite.xpos + x) < 160 && coloridx_sprite != 0 && pixels[fbIndex2] != color2)
+        {
+          if(sprite.attribs.obj_to_bg_prio)
+          {
+            if(coloridx_bg < 1)
+            {
+              pixels[fbIndex2] = color2;
+            }
+          }
+          else
+          {
+            pixels[fbIndex2] = color2;
+          }
+        }
+
+        fbIndex2++;
+      }
     }
   }
 }

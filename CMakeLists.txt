@@ -35,6 +35,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
+find_package(SDL2 REQUIRED)
 add_subdirectory(include/external/nativefiledialog-extended/)
 
 add_executable(natsukashii
@@ -46,4 +47,5 @@ add_executable(natsukashii
 target_link_libraries(natsukashii PRIVATE OpenGL::GL)
 target_link_libraries(natsukashii PRIVATE GLEW::glew)
 target_link_libraries(natsukashii PRIVATE glfw)
+target_link_libraries(natsukashii PRIVATE SDL2)
 target_link_libraries(natsukashii PRIVATE nfd)

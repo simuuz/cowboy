@@ -19,6 +19,7 @@ public:
   virtual byte Read(half addr) { return 0xff; }
   virtual void Write(half addr, byte val) { }
   virtual void Clear() { }
+  virtual void Save(std::string filename) { }
 };
 
 class NoMBC : public Cart
@@ -27,6 +28,7 @@ public:
   NoMBC(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
+  void Save(std::string filename) {}
 private:
   std::vector<byte> rom;
 };
@@ -37,6 +39,7 @@ public:
   MBC1(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
+  void Save(std::string filename) {}
 private:
   byte romBank = 1;
   byte ramBank = 1;
@@ -56,6 +59,7 @@ public:
   MBC2(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
+  void Save(std::string filename) {}
 private:
   byte romBank = 1;
   bool ramEnable = false;
@@ -69,6 +73,7 @@ public:
   MBC3(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
+  void Save(std::string filename);
 private:
   byte ramBank = 0;
   byte romBank = 0;
@@ -83,6 +88,7 @@ public:
   MBC5(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
+  void Save(std::string filename);
 private:
   half romBank = 1;
   byte ramBank = 1;
@@ -94,6 +100,7 @@ private:
 class Mem
 {
 public:
+  ~Mem();
   Mem(bool skip, std::string bootrom_path);
   void LoadROM(std::string filename);
   void Reset();
@@ -110,8 +117,9 @@ public:
 
   friend class Ppu;
   bool rom_opened = false;
-
+  int key, action;
 private:
+  std::string filename;
   Cart* cart = nullptr;
   void LoadBootROM(std::string filename);
 
@@ -128,12 +136,7 @@ private:
   bool dpad = false;
   bool button = false;
 
-  void HandleJoypad(byte val)
-  {
-    button = !bit<byte, 5>(val);
-    dpad = !bit<byte, 4>(val);
-  }
-
+  void HandleJoypad(byte val);
   byte GetJoypad();
 };
 }  // namespace natsukashii::core

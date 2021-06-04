@@ -22,7 +22,7 @@ private:
         unsigned palnum:1;
         unsigned xflip:1;
         unsigned yflip:1;
-        unsigned hasprio:1;
+        unsigned obj_to_bg_prio:1;
       };
 
       byte raw;

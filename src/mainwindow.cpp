@@ -5,6 +5,8 @@ namespace natsukashii::frontend
 {
 using clk = std::chrono::high_resolution_clock;
 
+extern int key, action;
+
 MainWindow::~MainWindow()
 {
   ImGui_ImplOpenGL3_Shutdown();
@@ -39,6 +41,8 @@ MainWindow::MainWindow(std::string title)
   glfwMakeContextCurrent(window);
   glfwSwapInterval(0);
 
+  glfwSetKeyCallback(window, (GLFWkeyfun)(key_callback));
+  
   if (glewInit() != GLEW_OK)
   {
     fprintf(stderr, "Failed to initialize OpenGL loader!\n");
@@ -111,6 +115,9 @@ void MainWindow::Run()
   while(!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
+
+    core->bus.mem.key = key;
+    core->bus.mem.action = action;
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
