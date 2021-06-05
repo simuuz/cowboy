@@ -6,7 +6,7 @@
 
 constexpr int BOOTROM_SZ = 0x100;
 constexpr int EXTRAM_SZ = 0x2000;
-constexpr int ERAM_SZ = 0x1e00;
+constexpr int ERAM_SZ = 0x1fff;
 constexpr int WRAM_SZ = 0x2000;
 constexpr int HRAM_SZ = 0x7f;
 constexpr int ROM_SZ_MIN = 0x8000;
@@ -19,7 +19,7 @@ public:
   virtual byte Read(half addr) { return 0xff; }
   virtual void Write(half addr, byte val) { }
   virtual void Clear() { }
-  virtual void Save(std::string filename, std::string title) { }
+  virtual void Save(std::string filename) { }
 };
 
 class NoMBC : public Cart
@@ -28,7 +28,7 @@ public:
   NoMBC(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename, std::string title) {}
+  void Save(std::string filename) {}
 private:
   std::vector<byte> rom;
 };
@@ -36,10 +36,10 @@ private:
 class MBC1 : public Cart
 {
 public:
-  MBC1(std::vector<byte>& rom);
+  MBC1(std::vector<byte>& rom, std::string savefile);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename, std::string title);
+  void Save(std::string filename);
 private:
   byte romBank = 1;
   byte ramBank = 1;
@@ -49,6 +49,7 @@ private:
   bool ramEnable = false;
   static constexpr half bitmasks[7] = {0x1, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x1f};
   static constexpr word RAM_SIZES[6] = {0, 2 * 1024, 8 * 1024, 32 * 1024, 128 * 1024, 64 * 1024};
+  
   std::array<byte, ERAM_SZ> ram;
   std::vector<byte> rom;
 };
@@ -56,13 +57,14 @@ private:
 class MBC2 : public Cart
 {
 public:
-  MBC2(std::vector<byte>& rom);
+  MBC2(std::vector<byte>& rom, std::string savefile);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename, std::string title);
+  void Save(std::string filename);
 private:
   byte romBank = 1;
   bool ramEnable = false;
+
   std::array<byte, ERAM_SZ> ram;
   std::vector<byte> rom;
 };
@@ -70,13 +72,14 @@ private:
 class MBC3 : public Cart
 {
 public:
-  MBC3(std::vector<byte>& rom);
+  MBC3(std::vector<byte>& rom, std::string savefile);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename, std::string title);
+  void Save(std::string filename);
 private:
   byte ramBank = 0;
   byte romBank = 0;
+
   std::array<byte, ERAM_SZ> ram;
   std::vector<byte> rom;
   bool ramEnable = false;
@@ -85,10 +88,10 @@ private:
 class MBC5 : public Cart
 {
 public:
-  MBC5(std::vector<byte>& rom);
+  MBC5(std::vector<byte>& rom, std::string savefile);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename, std::string title);
+  void Save(std::string filename);
 private:
   half romBank = 1;
   byte ramBank = 1;
@@ -147,8 +150,7 @@ public:
   void DoInputs(int key, int action);
 private:
   bool held = false;
-  std::string filename;
-  std::string title = "";
+  std::string savefile;
   Cart* cart = nullptr;
   void LoadBootROM(std::string filename);
 

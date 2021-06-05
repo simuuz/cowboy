@@ -44,6 +44,9 @@ add_executable(natsukashii
   ${EMU_SRC}
 )
 
+#target_compile_options(natsukashii PRIVATE -fsanitize=address)
+#target_link_options(natsukashii PRIVATE -fsanitize=address)
+
 target_link_libraries(natsukashii PRIVATE OpenGL::GL)
 target_link_libraries(natsukashii PRIVATE GLEW::glew)
 target_link_libraries(natsukashii PRIVATE glfw)

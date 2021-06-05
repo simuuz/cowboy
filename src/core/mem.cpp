@@ -6,9 +6,7 @@ namespace natsukashii::core
 {
 Mem::~Mem()
 {
-  std::string filename = title + ".sav";
-  cart->Save(filename, title);
-  delete cart;
+  cart->Save(savefile);
 }
 
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
@@ -50,9 +48,11 @@ void Mem::Reset()
 
 void Mem::LoadROM(std::string path)
 {
+  std::filesystem::path filename = path;
+  savefile = filename.replace_extension("sav").string();
   if(cart != nullptr)
   {
-    cart = nullptr;
+    delete cart;
   }
   std::ifstream file{path, std::ios::binary};
   file.unsetf(std::ios::skipws);
@@ -68,25 +68,23 @@ void Mem::LoadROM(std::string path)
 
   rom_opened = true;
   printf("%s\n", mbcs[rom[0x147]].c_str());
-  char title_[0x143 - 0x134];
-  memcpy(title_, &rom.data()[0x134], 0x143 - 0x134);
-  title = title_;
+  
   switch(rom[0x147])
   {
   case 0:
     cart = new NoMBC(rom);
     break;
   case 1 ... 3:
-    cart = new MBC1(rom);
+    cart = new MBC1(rom, savefile);
     break;
   case 5: case 6:
-    cart = new MBC2(rom);
+    cart = new MBC2(rom, savefile);
     break;
   case 0xF ... 0x13:
-    cart = new MBC3(rom);
+    cart = new MBC3(rom, savefile);
     break;
   case 0x19 ... 0x1E:
-    cart = new MBC5(rom);
+    cart = new MBC5(rom, savefile);
     break;
   }
 }

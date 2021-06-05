@@ -2,9 +2,20 @@
 
 namespace natsukashii::core
 {
-MBC3::MBC3(std::vector<byte>& rom) : rom(rom)
+MBC3::MBC3(std::vector<byte>& rom, std::string savefile) : rom(rom)
 {
-  ram.fill(0);
+  std::ifstream file{savefile, std::ios::binary};
+  file.unsetf(std::ios::skipws);
+
+  if (!file.is_open())
+  {
+    ram.fill(0);
+  }
+  else
+  {
+    file.read((char*)ram.data(), ERAM_SZ);
+    file.close();
+  }
 }
 
 byte MBC3::Read(half addr)
@@ -14,9 +25,9 @@ byte MBC3::Read(half addr)
   case 0 ... 0x3fff:
     return rom[addr];
   case 0x4000 ... 0x7fff:
-    return rom[0x4000 * romBank + (addr - 0x4000)];
+    return rom[(0x4000 * romBank + (addr - 0x4000)) % rom.size()];
   case 0xa000 ... 0xbfff:
-    return ramEnable ? ram[0x2000 * ramBank + (addr - 0xa000)] : 0xff;
+    return ramEnable ? ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ] : 0xff;
   }
 }
 
@@ -40,19 +51,16 @@ void MBC3::Write(half addr, byte val)
   case 0xa000 ... 0xbfff:
     if (ramEnable)
     {
-      ram[0x2000 * ramBank + (addr - 0xA000)] = val;
+      ram[(0x2000 * ramBank + (addr - 0xA000)) % ERAM_SZ] = val;
     }
     break;
   }
 }
 
-void MBC3::Save(std::string filename, std::string title)
+void MBC3::Save(std::string filename)
 {
   FILE* file = fopen(filename.c_str(), "wb");
-  fwrite(title.data(), 1, sizeof(title.data()), file);
-  fclose(file);
-  file = fopen(filename.c_str(), "ab");
-  fwrite(ram.data(), 1, sizeof(ram.data()), file);
+  fwrite(ram.data(), 1, ERAM_SZ, file);
   fclose(file);
 }
 } // natsukashii::core

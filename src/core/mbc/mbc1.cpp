@@ -2,9 +2,21 @@
 
 namespace natsukashii::core
 {
-MBC1::MBC1(std::vector<byte>& rom) : rom(rom)
+MBC1::MBC1(std::vector<byte>& rom, std::string savefile) : rom(rom)
 {
-  ram.fill(0);
+  std::ifstream file{savefile, std::ios::binary};
+  file.unsetf(std::ios::skipws);
+
+  if (!file.is_open())
+  {
+    ram.fill(0);
+  }
+  else
+  {
+    file.read((char*)ram.data(), ERAM_SZ);
+    file.close();
+  }
+
   romSize = rom[0x148];
   ramSize = rom[0x149];
 }
@@ -31,7 +43,7 @@ byte MBC1::Read(half addr)
         setbit<byte, 6>(zeroBank, ramBank >> 1);
         break;
       }
-      return rom[0x4000 * zeroBank + addr];
+      return rom[(0x4000 * zeroBank + addr) % rom.size()];
     }
     else
     {
@@ -50,7 +62,7 @@ byte MBC1::Read(half addr)
       setbit<byte, 6>(highBank, ramBank >> 1);
       break;
     }
-    return rom[0x4000 * highBank + (addr - 0x4000)];
+    return rom[(0x4000 * highBank + (addr - 0x4000)) % rom.size()];
   case 0xa000 ... 0xbfff:
     if (ramEnable)
     {
@@ -62,11 +74,11 @@ byte MBC1::Read(half addr)
       {
         if (mode)
         {
-        	return ram[0x2000 * ramBank + (addr - 0xa000)];
+        	return ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ];
         }
         else
         {
-          return ram[addr - 0xa000];
+          return ram[(addr - 0xa000) % ERAM_SZ];
         }
       }
     }
@@ -106,11 +118,11 @@ void MBC1::Write(half addr, byte val)
       {
         if (mode)
         {
-          ram[0x2000 * ramBank + (addr - 0xa000)] = val;
+          ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ] = val;
         }
         else
         {
-          ram[addr - 0xa000] = val;
+          ram[(addr - 0xa000) % ERAM_SZ] = val;
         }
       }
     }
@@ -118,13 +130,10 @@ void MBC1::Write(half addr, byte val)
   }
 }
 
-void MBC1::Save(std::string filename, std::string title)
+void MBC1::Save(std::string filename)
 {
   FILE* file = fopen(filename.c_str(), "wb");
-  fwrite(title.data(), 1, sizeof(title.data()), file);
-  fclose(file);
-  file = fopen(filename.c_str(), "ab");
-  fwrite(ram.data(), 1, sizeof(ram.data()), file);
+  fwrite(ram.data(), 1, ERAM_SZ, file);
   fclose(file);
 }
 } // natsukashii::core

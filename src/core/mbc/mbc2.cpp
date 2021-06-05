@@ -2,9 +2,20 @@
 
 namespace natsukashii::core
 {
-MBC2::MBC2(std::vector<byte>& rom) : rom(rom)
+MBC2::MBC2(std::vector<byte>& rom, std::string savefile) : rom(rom)
 {
-  std::fill(ram.begin(), ram.end(), 0);
+  std::ifstream file{savefile, std::ios::binary};
+  file.unsetf(std::ios::skipws);
+
+  if (!file.is_open())
+  {
+    ram.fill(0);
+  }
+  else
+  {
+    file.read((char*)ram.data(), ERAM_SZ);
+    file.close();
+  }
 }
 
 byte MBC2::Read(half addr)
@@ -14,7 +25,7 @@ byte MBC2::Read(half addr)
   case 0 ... 0x3fff:
     return rom[addr];
   case 0x4000 ... 0x7fff:
-    return rom[0x4000 * romBank + (addr - 0x4000)];
+    return rom[(0x4000 * romBank + (addr - 0x4000)) % rom.size()];
   case 0xa000 ... 0xbfff:
     return ramEnable ? (0xf0 | (ram[addr & 0x1ff] & 0xf)) : 0xff;
   }
@@ -44,13 +55,10 @@ void MBC2::Write(half addr, byte val)
   }
 }
 
-void MBC2::Save(std::string filename, std::string title)
+void MBC2::Save(std::string filename)
 {
   FILE* file = fopen(filename.c_str(), "wb");
-  fwrite(title.data(), 1, sizeof(title.data()), file);
-  fclose(file);
-  file = fopen(filename.c_str(), "ab");
-  fwrite(ram.data(), 1, sizeof(ram.data()), file);
+  fwrite(ram.data(), 1, ERAM_SZ, file);
   fclose(file);
 }
 } // natsukashii::core

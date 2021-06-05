@@ -2,9 +2,20 @@
 
 namespace natsukashii::core
 {
-MBC5::MBC5(std::vector<byte>& rom) : rom(rom)
+MBC5::MBC5(std::vector<byte>& rom, std::string savefile) : rom(rom.begin(), rom.end())
 {
-  std::fill(ram.begin(), ram.end(), 0);
+  std::ifstream file{savefile, std::ios::binary};
+  file.unsetf(std::ios::skipws);
+
+  if (!file.is_open())
+  {
+    ram.fill(0);
+  }
+  else
+  {
+    file.read((char*)ram.data(), ERAM_SZ);
+    file.close();
+  }
 }
 
 byte MBC5::Read(half addr)
@@ -12,11 +23,11 @@ byte MBC5::Read(half addr)
   switch (addr)
   {
   case 0 ... 0x3fff:
-      return rom[addr];
+    return rom[addr];
   case 0x4000 ... 0x7fff:
-      return rom[0x4000 * romBank + (addr - 0x4000)];
+    return rom[(0x4000 * (romBank & 0x1ff) + (addr - 0x4000)) % rom.size()];
   case 0xa000 ... 0xbfff:
-      return ramEnable ? ram[0x2000 * ramBank + (addr - 0xa000)] : 0xff;
+    return ramEnable ? ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ] : 0xff;
   }
 }
 
@@ -25,7 +36,7 @@ void MBC5::Write(half addr, byte val)
   switch (addr)
   {
   case 0 ... 0x1fff:
-    ramEnable = ((val & 0xf) == 0x0a);
+    ramEnable = (val & 0xf) == 0xa;
     break;
   case 0x2000 ... 0x2fff:
     romBank = val & 0xff;
@@ -34,12 +45,12 @@ void MBC5::Write(half addr, byte val)
     setbit<half, 8>(romBank, val & 1);
     break;
   case 0x4000 ... 0x5fff:
-    ramBank = val & 0xf;
+    ramBank = val;
     break;
   case 0xa000 ... 0xbfff:
     if(ramEnable)
     {
-      ram[0x2000 * ramBank + (addr - 0xa000)] = val;
+      ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ] = val;
     }
     break;
   default:
@@ -47,13 +58,10 @@ void MBC5::Write(half addr, byte val)
   }
 }
 
-void MBC5::Save(std::string filename, std::string title)
+void MBC5::Save(std::string filename)
 {
   FILE* file = fopen(filename.c_str(), "wb");
-  fwrite(title.data(), 1, sizeof(title.data()), file);
-  fclose(file);
-  file = fopen(filename.c_str(), "ab");
-  fwrite(ram.data(), 1, sizeof(ram.data()), file);
+  fwrite(ram.data(), 1, ERAM_SZ, file);
   fclose(file);
 }
 } // natsukashii::core
