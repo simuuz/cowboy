@@ -19,7 +19,7 @@ public:
   virtual byte Read(half addr) { return 0xff; }
   virtual void Write(half addr, byte val) { }
   virtual void Clear() { }
-  virtual void Save(std::string filename) { }
+  virtual void Save(std::string filename, std::string title) { }
 };
 
 class NoMBC : public Cart
@@ -28,7 +28,7 @@ public:
   NoMBC(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename) {}
+  void Save(std::string filename, std::string title) {}
 private:
   std::vector<byte> rom;
 };
@@ -39,7 +39,7 @@ public:
   MBC1(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename);
+  void Save(std::string filename, std::string title);
 private:
   byte romBank = 1;
   byte ramBank = 1;
@@ -59,7 +59,7 @@ public:
   MBC2(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename);
+  void Save(std::string filename, std::string title);
 private:
   byte romBank = 1;
   bool ramEnable = false;
@@ -73,7 +73,7 @@ public:
   MBC3(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename);
+  void Save(std::string filename, std::string title);
 private:
   byte ramBank = 0;
   byte romBank = 0;
@@ -88,7 +88,7 @@ public:
   MBC5(std::vector<byte>& rom);
   byte Read(half addr);
   void Write(half addr, byte val);
-  void Save(std::string filename);
+  void Save(std::string filename, std::string title);
 private:
   half romBank = 1;
   byte ramBank = 1;
@@ -110,16 +110,45 @@ public:
   byte ie = 0;
   bool skip;
 
+  struct Joypad
+  {
+    union
+    {
+      struct
+      {
+        unsigned:1;
+        unsigned:1;
+        unsigned select_btn:1;
+        unsigned select_dpad:1;
+        unsigned btn_start_down:1;
+        unsigned btn_select_up:1;
+        unsigned btn_a_left:1;
+        unsigned btn_b_right:1;
+      };
+
+      byte raw;
+    };
+
+    Joypad() : raw(0xff) {}
+    void write(byte val) {
+      raw = val;
+      raw |= (0b11000000);
+    }
+  };
+
   struct IO
   {
-    byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0, joy = 0xff;
+    byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
+    Joypad joy;
   } io;
 
   friend class Ppu;
   bool rom_opened = false;
   void DoInputs(int key, int action);
 private:
+  bool held = false;
   std::string filename;
+  std::string title = "";
   Cart* cart = nullptr;
   void LoadBootROM(std::string filename);
 

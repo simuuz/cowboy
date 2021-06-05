@@ -122,13 +122,11 @@ void MainWindow::Run()
   {
     glfwPollEvents();
 
-    core->bus.mem.DoInputs(key, action);
-
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    core->Run(io.Framerate);
+    core->Run(io.Framerate, key, action);
 
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;

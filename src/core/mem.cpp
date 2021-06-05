@@ -6,10 +6,9 @@ namespace natsukashii::core
 {
 Mem::~Mem()
 {
-  size_t lastindex = filename.find_last_of("."); 
-  std::string rawname = filename.substr(0, lastindex); 
-  rawname += ".sav";
-  cart->Save(rawname);
+  std::string filename = title + ".sav";
+  cart->Save(filename, title);
+  delete cart;
 }
 
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
@@ -21,6 +20,7 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
   io.tma = 0;
   io.intf = 0;
   io.div = 0;
+  io.joy.raw = 0xff;
 
   io.bootrom = skip ? 1 : 0;
 
@@ -38,6 +38,7 @@ void Mem::Reset()
   io.tma = 0;
   io.intf = 0;
   io.div = 0;
+  io.joy.raw = 0xff;
 
   io.bootrom = skip ? 1 : 0;
 
@@ -49,7 +50,6 @@ void Mem::Reset()
 
 void Mem::LoadROM(std::string path)
 {
-  filename = path;
   if(cart != nullptr)
   {
     cart = nullptr;
@@ -68,6 +68,9 @@ void Mem::LoadROM(std::string path)
 
   rom_opened = true;
   printf("%s\n", mbcs[rom[0x147]].c_str());
+  char title_[0x143 - 0x134];
+  memcpy(title_, &rom.data()[0x134], 0x143 - 0x134);
+  title = title_;
   switch(rom[0x147])
   {
   case 0:
@@ -175,7 +178,7 @@ byte Mem::ReadIO(half addr)
   switch (addr & 0xff)
   {
   case 0:
-    return io.joy;
+    return io.joy.raw;
   case 1 ... 0x02:
   case 0x30 ... 0x3f:
     return 0xff;
@@ -245,39 +248,30 @@ void Mem::HandleJoypad(byte val)
 
 void Mem::DoInputs(int key, int action)
 {
-  setbit<byte, 5>(io.joy, !button);
-  setbit<byte, 4>(io.joy, !dpad);
-
-  if(action == GLFW_PRESS) {
-    if(button) {
-      setbit<byte, 3>(io.joy, !(key == GLFW_KEY_ENTER));
-      setbit<byte, 2>(io.joy, !(key == GLFW_KEY_RIGHT_SHIFT));
-      setbit<byte, 1>(io.joy, !(key == GLFW_KEY_Z));
-      setbit<byte, 0>(io.joy, !(key == GLFW_KEY_X));
-    }
-
-    if(dpad) {
-      setbit<byte, 3>(io.joy, !(key == GLFW_KEY_DOWN));
-      setbit<byte, 2>(io.joy, !(key == GLFW_KEY_UP));
-      setbit<byte, 1>(io.joy, !(key == GLFW_KEY_LEFT));
-      setbit<byte, 0>(io.joy, !(key == GLFW_KEY_RIGHT));
-    }
-  }
+  byte input = ((byte)(~button) << 5) | ((byte)(~dpad) << 4);
   
-  if(action == GLFW_RELEASE) {
-    if(button) {
-      setbit<byte, 3>(io.joy, key == GLFW_KEY_ENTER);
-      setbit<byte, 2>(io.joy, key == GLFW_KEY_RIGHT_SHIFT);
-      setbit<byte, 1>(io.joy, key == GLFW_KEY_Z);
-      setbit<byte, 0>(io.joy, key == GLFW_KEY_X);
-    }
-
-    if(dpad) {
-      setbit<byte, 3>(io.joy, key == GLFW_KEY_DOWN);
-      setbit<byte, 2>(io.joy, key == GLFW_KEY_UP);
-      setbit<byte, 1>(io.joy, key == GLFW_KEY_LEFT);
-      setbit<byte, 0>(io.joy, key == GLFW_KEY_RIGHT);
-    }
+  if(action == GLFW_PRESS) held = true;
+  if(action == GLFW_RELEASE) held = false;
+  
+  if(button && !dpad) {
+    input |= (!(held && key == GLFW_KEY_ENTER      ) << 3) |
+             (!(held && key == GLFW_KEY_RIGHT_SHIFT) << 2) |
+             (!(held && key == GLFW_KEY_Z          ) << 1) |
+             (!(held && key == GLFW_KEY_X          ) << 0);
+  } else if(dpad && !button) {
+    input |= (!(held && key == GLFW_KEY_DOWN ) << 3) |
+             (!(held && key == GLFW_KEY_UP   ) << 2) |
+             (!(held && key == GLFW_KEY_LEFT ) << 1) |
+             (!(held && key == GLFW_KEY_RIGHT) << 0);
+  } else if(dpad && button) {
+    input |= (!(held && (key == GLFW_KEY_DOWN  || key == GLFW_KEY_ENTER      )) << 3) |
+             (!(held && (key == GLFW_KEY_UP    || key == GLFW_KEY_RIGHT_SHIFT)) << 2) |
+             (!(held && (key == GLFW_KEY_LEFT  || key == GLFW_KEY_Z          )) << 1) |
+             (!(held && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_X          )) << 0);
+  } else {
+    input = 0xff;
   }
+
+  io.joy.write(input);
 }
 }  // namespace natsukashii::core

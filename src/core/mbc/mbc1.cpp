@@ -4,7 +4,7 @@ namespace natsukashii::core
 {
 MBC1::MBC1(std::vector<byte>& rom) : rom(rom)
 {
-  std::fill(ram.begin(), ram.end(), 0);
+  ram.fill(0);
   romSize = rom[0x148];
   ramSize = rom[0x149];
 }
@@ -118,9 +118,12 @@ void MBC1::Write(half addr, byte val)
   }
 }
 
-void MBC1::Save(std::string filename)
+void MBC1::Save(std::string filename, std::string title)
 {
   FILE* file = fopen(filename.c_str(), "wb");
+  fwrite(title.data(), 1, sizeof(title.data()), file);
+  fclose(file);
+  file = fopen(filename.c_str(), "ab");
   fwrite(ram.data(), 1, sizeof(ram.data()), file);
   fclose(file);
 }

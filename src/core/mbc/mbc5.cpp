@@ -47,9 +47,12 @@ void MBC5::Write(half addr, byte val)
   }
 }
 
-void MBC5::Save(std::string filename)
+void MBC5::Save(std::string filename, std::string title)
 {
   FILE* file = fopen(filename.c_str(), "wb");
+  fwrite(title.data(), 1, sizeof(title.data()), file);
+  fclose(file);
+  file = fopen(filename.c_str(), "ab");
   fwrite(ram.data(), 1, sizeof(ram.data()), file);
   fclose(file);
 }
