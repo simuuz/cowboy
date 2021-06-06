@@ -3,7 +3,7 @@ build-windows/
 build/
 .vscode/
 roms/
-vgcore.*
 DMG_ROM.bin
+bootrom.bin
 *.sav
 *.ini
