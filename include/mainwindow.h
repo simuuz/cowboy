@@ -25,9 +25,6 @@ struct MainWindow
   bool show_palette = false;
   bool show_debug_windows = false;
   bool show_settings = false;
-  ImVec2 display_size;
-  ImVec2 debug_size;
-  ImVec2 perf_size;
   GLFWwindow* window = nullptr;
   std::unique_ptr<Core> core;
   unsigned int id = 0;

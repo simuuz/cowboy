@@ -169,6 +169,7 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     }
     break;
   case VBlank:
+    render = true;
     intf |= 1;
     if (io.stat.vblank_int)
     {
@@ -182,7 +183,6 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     }
     break;
   case LCDTransfer:
-    render = true;
     Scanline();
     break;
   }
@@ -372,11 +372,7 @@ std::vector<Sprite> Ppu::FetchSprites()
   }
 
   std::stable_sort(sprites.begin(), sprites.end(), [](Sprite a, Sprite b) {
-    return b.xpos < a.xpos;
-  });
-
-  std::stable_sort(sprites.begin(), sprites.end(), [](Sprite a, Sprite b) {
-    return b.xpos == a.xpos;
+    return b.xpos <= a.xpos;
   });
 
   return sprites;

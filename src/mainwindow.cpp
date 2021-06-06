@@ -125,6 +125,7 @@ void MainWindow::Run()
     ImGui::NewFrame();
 
     core->Run(io.Framerate, key, action);
+
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
       UpdateTexture();
