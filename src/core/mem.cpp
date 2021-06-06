@@ -31,6 +31,10 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
 
 void Mem::Reset()
 {
+  if(cart != nullptr) {
+    cart->Save(savefile);
+  }
+
   io.tac = 0;
   io.tima = 0;
   io.tma = 0;

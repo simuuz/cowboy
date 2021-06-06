@@ -34,8 +34,6 @@ Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
 
 void Cpu::Reset()
 {
-  bus->Reset();
-
   if (skip)
   {
     regs.af = 0x1b0;

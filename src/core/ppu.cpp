@@ -342,8 +342,9 @@ void Ppu::RenderBGs()
     byte high = (tileline >> 8);
     byte low = (tileline & 0xff);
 
-    colorID_bg = ((byte)bit<byte>(high, 7 - (scrolled_x & 7)) << 1) | ((byte)bit<byte>(low, 7 - (scrolled_x & 7)));
-    byte color_index = (io.bgp >> (colorID_bg << 1)) & 3;
+    byte colorID = ((byte)bit<byte>(high, 7 - (scrolled_x & 7)) << 1) | ((byte)bit<byte>(low, 7 - (scrolled_x & 7)));
+    byte color_index = (io.bgp >> (colorID << 1)) & 3;
+    colorIDbg[fbIndex] = colorID;
     pixels[fbIndex] = GetColor(color_index);
     fbIndex++;
   }
@@ -354,26 +355,30 @@ void Ppu::RenderBGs()
   }
 }
 
+std::vector<Sprite> Ppu::FetchSprites()
+{
+  std::vector<Sprite> sprites;
+  
+  byte height = io.lcdc.obj_size ? 16 : 8;
+
+  for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4)
+  {
+    Sprite sprite(oam[i] - 16, oam[i + 1] - 8, oam[i + 2], oam[i + 3]);
+    if(io.ly >= (shalf)sprite.ypos && io.ly < ((shalf)sprite.ypos + height))
+    {
+      sprites.push_back(sprite);
+    }
+  }
+
+  return sprites;
+}
+
 void Ppu::RenderSprites()
 {
   if(!io.lcdc.obj_enable)
     return;
 
-  byte height = io.lcdc.obj_size ? 16 : 8;
-  byte old_x = 0;
-
-  std::vector<Sprite> sprites;
-  
-  for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4)
-  {
-    shalf start_y = (sbyte)oam[i] - 16;
-    shalf end_y = start_y + height;
-    if((oam[i + 1] - 8) != old_x && start_y <= io.ly && io.ly < end_y)
-    {
-      sprites.push_back(Sprite(oam[i] - 16, oam[i + 1] - 8, oam[i + 2], oam[i + 3]));
-      old_x = oam[i + 1] - 8;
-    }
-  }
+  std::vector<Sprite> sprites = FetchSprites();
   
   for(auto& sprite : sprites)
   {
@@ -390,11 +395,11 @@ void Ppu::RenderSprites()
     byte pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
     fbIndex = sprite.xpos + WIDTH * io.ly;
     word fbIndex2 = sprite.xpos + WIDTH * (io.ly + 8);
+    half tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
+    half tile = ReadVRAM<half>(0x8000 | ((tile_index << 4) + (tile_y << 1)));
 
     for(int x = 0; x < 8; x++)
     {
-      half tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
-      half tile = ReadVRAM<half>(0x8000 + (tile_index << 4) + (tile_y << 1));
       sbyte tile_x = (sprite.attribs.xflip) ? 7 - x : x;
       byte high = tile >> 8;
       byte low = tile & 0xff;
@@ -406,7 +411,7 @@ void Ppu::RenderSprites()
       {
         if(sprite.attribs.obj_to_bg_prio)
         {
-          if(pixels[fbIndex] == GetColor(colorID_bg) && colorID_bg < 1)
+          if(colorIDbg[fbIndex] < 1)
           {
             pixels[fbIndex] = color;
           }
@@ -418,23 +423,22 @@ void Ppu::RenderSprites()
       }
 
       fbIndex++;
-      colorID_sprite = colorID;
       
       if(io.lcdc.obj_size)
       {
-        half tile_index2 = sprite.tileidx | 1;
-        half tile2 = ReadVRAM<half>(0x8000 + (tile_index2 << 4) + (tile_y << 1));
+        tile_index = sprite.tileidx | 1;
+        half tile2 = ReadVRAM<half>(0x8000 | ((tile_index << 4) + (tile_y << 1)));
         byte high2 = tile2 >> 8;
         byte low2 = tile2 & 0xff;
         byte colorID2 = (bit<byte>(high2, 7 - tile_x) << 1) | bit<byte>(low2, 7 - tile_x);
         byte colorIndex2 = (pal >> (colorID2 << 1)) & 3;
         word color2 = GetColor(colorIndex2);
         
-        if((sprite.xpos + x) < 168 && colorID2 != 0 && pixels[fbIndex2] != color2)
+        if((sprite.xpos + x) < 166 && colorID2 != 0 && pixels[fbIndex2] != color2)
         {
           if(sprite.attribs.obj_to_bg_prio)
           {
-            if(pixels[fbIndex2] == GetColor(colorID_bg) && colorID_bg < 1)
+            if(colorIDbg[fbIndex2] < 1)
             {
               pixels[fbIndex2] = color2;
             }
@@ -444,8 +448,6 @@ void Ppu::RenderSprites()
             pixels[fbIndex2] = color2;
           }
         }
-
-        colorID_sprite = colorID2;
 
         fbIndex2++;
       }

@@ -68,8 +68,6 @@ private:
 
   word GetColor(byte idx);
   Mode mode = OAM;
-
-  byte colorID_bg = 0, colorID_sprite = 0;
   
   struct LCDC
   {
@@ -137,6 +135,8 @@ private:
   byte window_internal_counter = 0;
   word fbIndex = 0;
 
+  byte colorIDbg[FBSIZE];
+
   int curr_cycles = 0;
 
   void WriteIO(Mem& mem, half addr, byte val);
@@ -146,7 +146,7 @@ private:
   template <typename T>
   T ReadVRAM(half addr);
   void ChangeMode(Mode m, byte& intf);
-  bool CanSprites(bool priority);
+  std::vector<Sprite> FetchSprites();
   void RenderSprites();
   void RenderBGs();
   void Scanline();
