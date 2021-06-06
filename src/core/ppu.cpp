@@ -1,6 +1,7 @@
 #include "ppu.h"
 #include "ini.h"
 #include <memory.h>
+#include <algorithm>
 
 namespace natsukashii::core
 {
@@ -370,6 +371,14 @@ std::vector<Sprite> Ppu::FetchSprites()
     }
   }
 
+  std::stable_sort(sprites.begin(), sprites.end(), [](Sprite a, Sprite b) {
+    return b.xpos < a.xpos;
+  });
+
+  std::stable_sort(sprites.begin(), sprites.end(), [](Sprite a, Sprite b) {
+    return b.xpos == a.xpos;
+  });
+
   return sprites;
 }
 
@@ -394,7 +403,6 @@ void Ppu::RenderSprites()
     
     byte pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
     fbIndex = sprite.xpos + WIDTH * io.ly;
-    word fbIndex2 = sprite.xpos + WIDTH * (io.ly + 8);
     half tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
     half tile = ReadVRAM<half>(0x8000 | ((tile_index << 4) + (tile_y << 1)));
 
@@ -423,34 +431,6 @@ void Ppu::RenderSprites()
       }
 
       fbIndex++;
-      
-      if(io.lcdc.obj_size)
-      {
-        tile_index = sprite.tileidx | 1;
-        half tile2 = ReadVRAM<half>(0x8000 | ((tile_index << 4) + (tile_y << 1)));
-        byte high2 = tile2 >> 8;
-        byte low2 = tile2 & 0xff;
-        byte colorID2 = (bit<byte>(high2, 7 - tile_x) << 1) | bit<byte>(low2, 7 - tile_x);
-        byte colorIndex2 = (pal >> (colorID2 << 1)) & 3;
-        word color2 = GetColor(colorIndex2);
-        
-        if((sprite.xpos + x) < 166 && colorID2 != 0 && pixels[fbIndex2] != color2)
-        {
-          if(sprite.attribs.obj_to_bg_prio)
-          {
-            if(colorIDbg[fbIndex2] < 1)
-            {
-              pixels[fbIndex2] = color2;
-            }
-          }
-          else
-          {
-            pixels[fbIndex2] = color2;
-          }
-        }
-
-        fbIndex2++;
-      }
     }
   }
 }

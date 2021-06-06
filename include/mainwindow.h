@@ -1,7 +1,6 @@
 #pragma once
 #include "core.h"
 #include <nfd.hpp>
-#include <chrono>
 
 namespace natsukashii::frontend
 {

@@ -142,6 +142,7 @@ public:
   struct IO
   {
     byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
+    byte nr41, nr42, nr43, nr44, nr50, nr51, nr52;
     Joypad joy;
   } io;
 

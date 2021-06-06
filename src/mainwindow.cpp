@@ -11,8 +11,6 @@ static void key_callback(GLFWwindow* window, int key_, int scancode, int action_
   action = action_;
 }
 
-using clk = std::chrono::high_resolution_clock;
-
 MainWindow::~MainWindow()
 {
   ImGui_ImplOpenGL3_Shutdown();
@@ -127,7 +125,6 @@ void MainWindow::Run()
     ImGui::NewFrame();
 
     core->Run(io.Framerate, key, action);
-
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
       UpdateTexture();
