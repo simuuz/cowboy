@@ -12,4 +12,4 @@ https://github.com/Hacktix/Bootix</br>
 - Enter -> Start
 - Right shift -> Select
 
-![pokemon blue](img/pokemon_blue.png)
+<img src="./img/pokemon_blue.png" width="300"/> &nbsp;
