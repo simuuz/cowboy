@@ -256,12 +256,14 @@ void MainWindow::Settings()
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
   ImGui::BeginChild("child1", ImVec2(w, 0), true);
-  if(ImGui::Button("General")) {
+  if(ImGui::Button("General"))
+  {
     general = true;
     graphics = false;
   }
   ImGui::NewLine();
-  if(ImGui::Button("Graphics")) {
+  if(ImGui::Button("Graphics"))
+  {
     general = false;
     graphics = true;
   }
@@ -276,76 +278,88 @@ void MainWindow::Settings()
   ImGui::BeginChild("child2", ImVec2(0, 0), true);
   if(general)
   {
-    ImGui::Text("Bootrom path: \"%s\"", bootrom.c_str());
-    
-    if(ImGui::Button("Select...")) {
-      nfdchar_t *outpath;
-      nfdresult_t result = NFD_OpenDialog(&outpath, nullptr, 0, nullptr);
-      if(result == NFD_OKAY) {
-        ini["emulator"]["bootrom"] = outpath;
-        file.write(ini);
-      }
-    }
-    static const char* skip_ = "Skip bootrom: ";
-    ImGui::Text(skip_);
-    ImGui::SameLine(ImGui::CalcTextSize(skip_).x + 20);
-    if(ImGui::Checkbox(" ", &skip)) {
-      ini["emulator"]["skip"] = skip ? "true" : "false";
-      file.write(ini);
-    }
+    GeneralSettings(ini);
   }
   else if (graphics)
   {    
-    float color1[4] = {(float)(std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 24) / 255,
-                       (float)((std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
-                       (float)((std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
-                       (float)(std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) & 0xFF) / 255};
-
-    float color2[4] = {(float)(std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 24) / 255,
-                       (float)((std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
-                       (float)((std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
-                       (float)(std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) & 0xFF) / 255};
-
-    float color3[4] = {(float)(std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 24) / 255,
-                       (float)((std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
-                       (float)((std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
-                       (float)(std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) & 0xFF) / 255};
-
-    float color4[4] = {(float)(std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 24) / 255,
-                       (float)((std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
-                       (float)((std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
-                       (float)(std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) & 0xFF) / 255};
-
-    ImGui::Text("Customize the palette");
-    ImGui::ColorEdit4("Color 1", color1);
-    ImGui::ColorEdit4("Color 2", color2);
-    ImGui::ColorEdit4("Color 3", color3);
-    ImGui::ColorEdit4("Color 4", color4);
-
-    std::stringstream sstream;
-
-    word color1_ = word((byte(255 * color1[0]) << 24) | (byte(255 * color1[1]) << 16) | (byte(255 * color1[2]) << 8) | byte(255 * color1[3]));
-    word color2_ = word((byte(255 * color2[0]) << 24) | (byte(255 * color2[1]) << 16) | (byte(255 * color2[2]) << 8) | byte(255 * color2[3]));
-    word color3_ = word((byte(255 * color3[0]) << 24) | (byte(255 * color3[1]) << 16) | (byte(255 * color3[2]) << 8) | byte(255 * color3[3]));
-    word color4_ = word((byte(255 * color4[0]) << 24) | (byte(255 * color4[1]) << 16) | (byte(255 * color4[2]) << 8) | byte(255 * color4[3]));
-
-    core->cpu.bus->ppu.color1 = color1_;
-    core->cpu.bus->ppu.color2 = color2_;
-    core->cpu.bus->ppu.color3 = color3_;
-    core->cpu.bus->ppu.color4 = color4_;
-
-    sstream << std::hex << color1_ << "\n";
-    sstream << std::hex << color2_ << "\n";
-    sstream << std::hex << color3_ << "\n";
-    sstream << std::hex << color4_ << "\n";
-
-    sstream >> ini["palette"]["color1"] >> ini["palette"]["color2"] >> ini["palette"]["color3"] >> ini["palette"]["color4"];
-    file.write(ini);
+    GraphicsSettings(ini);
   }
   ImGui::EndChild();
 
   ImGui::PopStyleVar();
   ImGui::End();
+}
+
+void MainWindow::GeneralSettings(mINI::INIStructure& ini, bool& skip)
+{
+  ImGui::Text("Bootrom path: \"%s\"", bootrom.c_str());
+    
+  if(ImGui::Button("Select...")) {
+    nfdchar_t *outpath;
+    nfdresult_t result = NFD_OpenDialog(&outpath, nullptr, 0, nullptr);
+    if(result == NFD_OKAY) {
+      ini["emulator"]["bootrom"] = outpath;
+      file.write(ini);
+    }
+  }
+
+  static const char* skip_ = "Skip bootrom: ";
+  ImGui::Text(skip_);
+  ImGui::SameLine(ImGui::CalcTextSize(skip_).x + 20);
+  if(ImGui::Checkbox(" ", &skip))
+  {
+    ini["emulator"]["skip"] = skip ? "true" : "false";
+    file.write(ini);
+  }
+}
+
+void MainWindow::GraphicsSettings(mINI::INIStructure& ini)
+{
+  float color1[4] = {(float)(std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 24) / 255,
+                     (float)((std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                     (float)((std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                     (float)(std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+  float color2[4] = {(float)(std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 24) / 255,
+                     (float)((std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                     (float)((std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                     (float)(std::stoul(ini["palette"]["color2"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+  float color3[4] = {(float)(std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 24) / 255,
+                     (float)((std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                     (float)((std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                     (float)(std::stoul(ini["palette"]["color3"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+  float color4[4] = {(float)(std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 24) / 255,
+                     (float)((std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
+                     (float)((std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) >> 8) & 0xFF) / 255,
+                     (float)(std::stoul(ini["palette"]["color4"].c_str(), nullptr, 16) & 0xFF) / 255};
+
+  ImGui::Text("Customize the palette");
+  ImGui::ColorEdit4("Color 1", color1);
+  ImGui::ColorEdit4("Color 2", color2);
+  ImGui::ColorEdit4("Color 3", color3);
+  ImGui::ColorEdit4("Color 4", color4);
+
+  std::stringstream sstream;
+
+  word color1_ = word((byte(255 * color1[0]) << 24) | (byte(255 * color1[1]) << 16) | (byte(255 * color1[2]) << 8) | byte(255 * color1[3]));
+  word color2_ = word((byte(255 * color2[0]) << 24) | (byte(255 * color2[1]) << 16) | (byte(255 * color2[2]) << 8) | byte(255 * color2[3]));
+  word color3_ = word((byte(255 * color3[0]) << 24) | (byte(255 * color3[1]) << 16) | (byte(255 * color3[2]) << 8) | byte(255 * color3[3]));
+  word color4_ = word((byte(255 * color4[0]) << 24) | (byte(255 * color4[1]) << 16) | (byte(255 * color4[2]) << 8) | byte(255 * color4[3]));
+
+  core->cpu.bus->ppu.color1 = color1_;
+  core->cpu.bus->ppu.color2 = color2_;
+  core->cpu.bus->ppu.color3 = color3_;
+  core->cpu.bus->ppu.color4 = color4_;
+
+  sstream << std::hex << color1_ << "\n";
+  sstream << std::hex << color2_ << "\n";
+  sstream << std::hex << color3_ << "\n";
+  sstream << std::hex << color4_ << "\n";
+
+  sstream >> ini["palette"]["color1"] >> ini["palette"]["color2"] >> ini["palette"]["color3"] >> ini["palette"]["color4"];
+  file.write(ini);
 }
 
 } // natsukashii::frontend
