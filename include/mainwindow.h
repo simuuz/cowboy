@@ -21,8 +21,8 @@ struct MainWindow
   void MenuBar();
   void UpdateTexture();
   void Settings();
-  void GeneralSettings(mINI::INIStructure& ini, bool& skip);
-  void GraphicsSettings(mINI::INIStructure& ini);
+  void GeneralSettings(mINI::INIFile& file, mINI::INIStructure& ini, bool& skip, std::string& bootrom);
+  void GraphicsSettings(mINI::INIFile& file, mINI::INIStructure& ini);
   bool running = true;
   bool show_palette = false;
   bool show_debug_windows = false;

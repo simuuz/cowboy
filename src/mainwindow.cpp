@@ -278,11 +278,11 @@ void MainWindow::Settings()
   ImGui::BeginChild("child2", ImVec2(0, 0), true);
   if(general)
   {
-    GeneralSettings(ini);
+    GeneralSettings(file, ini, skip, bootrom);
   }
   else if (graphics)
   {    
-    GraphicsSettings(ini);
+    GraphicsSettings(file, ini);
   }
   ImGui::EndChild();
 
@@ -290,7 +290,7 @@ void MainWindow::Settings()
   ImGui::End();
 }
 
-void MainWindow::GeneralSettings(mINI::INIStructure& ini, bool& skip)
+void MainWindow::GeneralSettings(mINI::INIFile& file, mINI::INIStructure& ini, bool& skip, std::string& bootrom)
 {
   ImGui::Text("Bootrom path: \"%s\"", bootrom.c_str());
     
@@ -313,7 +313,7 @@ void MainWindow::GeneralSettings(mINI::INIStructure& ini, bool& skip)
   }
 }
 
-void MainWindow::GraphicsSettings(mINI::INIStructure& ini)
+void MainWindow::GraphicsSettings(mINI::INIFile& file, mINI::INIStructure& ini)
 {
   float color1[4] = {(float)(std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 24) / 255,
                      (float)((std::stoul(ini["palette"]["color1"].c_str(), nullptr, 16) >> 16) & 0xFF) / 255,
