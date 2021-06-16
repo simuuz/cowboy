@@ -85,12 +85,28 @@ void Cpu::Step()
   total_cycles += cycles;
 }
 
+template <byte instruction>
+void Cpu::invalid()
+{
+  printf("Unrecognized opcode: %02x\n", instruction);
+  exit(1);
+}
+
+template <byte instruction>
+void Cpu::misc()
+{
+  if constexpr (instructon == 0xF3) {
+    ime = false;
+  } else if constexpr (instruction == 0xFB) {
+    ime = true;
+  }
+}
+
 void Cpu::Execute(byte opcode)
 {
   switch (opcode)
   {
-  case 0:
-  case 0x10:
+  case 0: case 0x10:
     break;  // NOP
   case 0x01:
   case 0x11:
@@ -867,7 +883,7 @@ void Cpu::WriteR8(byte bits, byte val)
 template <int group>
 half Cpu::ReadR16(byte bits)
 {
-  if (group == 1)
+  if constexpr (group == 1)
   {
     switch (bits)
     {
@@ -881,7 +897,7 @@ half Cpu::ReadR16(byte bits)
       return regs.sp;
     }
   }
-  else if (group == 2)
+  else if constexpr (group == 2)
   {
     switch (bits)
     {
@@ -889,12 +905,11 @@ half Cpu::ReadR16(byte bits)
       return regs.bc;
     case 1:
       return regs.de;
-    case 2:
-    case 3:
+    case 2: case 3:
       return regs.hl;
     }
   }
-  else if (group == 3)
+  else if constexpr (group == 3)
   {
     switch (bits)
     {
@@ -913,7 +928,7 @@ half Cpu::ReadR16(byte bits)
 template <int group>
 void Cpu::WriteR16(byte bits, half value)
 {
-  if (group == 1)
+  if constexpr (group == 1)
   {
     switch (bits)
     {
@@ -931,7 +946,7 @@ void Cpu::WriteR16(byte bits, half value)
       break;
     }
   }
-  else if (group == 2)
+  else if constexpr (group == 2)
   {
     switch (bits)
     {
@@ -941,13 +956,12 @@ void Cpu::WriteR16(byte bits, half value)
     case 1:
       regs.de = value;
       break;
-    case 2:
-    case 3:
+    case 2: case 3:
       regs.hl = value;
       break;
     }
   }
-  else if (group == 3)
+  else if constexpr (group == 3)
   {
     switch (bits)
     {
@@ -961,15 +975,15 @@ void Cpu::WriteR16(byte bits, half value)
       regs.hl = value;
       break;
     case 3:
-    {
-      regs.a = (value >> 8) & 0xff;
-      bool z = (value >> 7) & 1;
-      bool n = (value >> 6) & 1;
-      bool h = (value >> 5) & 1;
-      bool c = (value >> 4) & 1;
-      UpdateF(z, n, h, c);
-    }
-    break;
+      {
+        regs.a = (value >> 8) & 0xff;
+        bool z = (value >> 7) & 1;
+        bool n = (value >> 6) & 1;
+        bool h = (value >> 5) & 1;
+        bool c = (value >> 4) & 1;
+        UpdateF(z, n, h, c);
+      }
+      break;
     }
   }
 }
