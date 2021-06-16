@@ -6,7 +6,7 @@
 
 constexpr int BOOTROM_SZ = 0x100;
 constexpr int EXTRAM_SZ = 0x2000;
-constexpr int ERAM_SZ = 0x1fff;
+constexpr int ERAM_SZ = 0x2000;
 constexpr int WRAM_SZ = 0x2000;
 constexpr int HRAM_SZ = 0x7f;
 constexpr int ROM_SZ_MIN = 0x8000;

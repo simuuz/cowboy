@@ -34,7 +34,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -static")
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(glfw3 3.3 REQUIRED)
+find_package(glfw3 REQUIRED)
 add_subdirectory(include/external/nativefiledialog-extended/)
 
 add_executable(natsukashii
