@@ -226,7 +226,10 @@ void Mem::WriteIO(half addr, byte val)
   case 0:
     HandleJoypad(val);
     break;
-  case 1 ... 0x02:
+  case 0x01:
+    printf("%c", val);
+    break;
+  case 0x02: break;
   case 0x30 ... 0x3f:
     break;
   case 0x04:
