@@ -25,25 +25,12 @@ struct Entry
 
 struct EventQueue
 {
-    std::array<Entry, ENTRIES_MAX> actual_entries;
-    std::array<Entry, ENTRIES_MAX> new_entries;
+    std::array<Entry, ENTRIES_MAX> entries;
     bool is_new_event = false;
 
-    EventQueue()
-    {
-        actual_entries.fill(Entry());
-        new_entries.fill(Entry());
-    }
-
-    void push(Entry entry)
-    {
-        new_entries[pos--] = entry;
-    }
-    
-    void pop()
-    {
-        actual_entries[pos++] = Entry();
-    }
+    EventQueue();
+    void push(Entry entry);
+    void pop();
 private:
     int pos = ENTRIES_MAX - 1;
 };

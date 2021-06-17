@@ -8,7 +8,7 @@ void Core::Run(float fps, int key, int action)
 {
   if(init && running && !pause && !debug)
   {
-    while(cpu.total_cycles < 4194300 / fps)  // TODO: This is not proper cycling
+    while(cpu.total_cycles < 70224)  // TODO: This is not proper cycling
     {
       cpu.Step();
       bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
@@ -17,7 +17,7 @@ void Core::Run(float fps, int key, int action)
       cpu.HandleTimers();
     }
 
-    cpu.total_cycles -= 4194300 / fps;
+    cpu.total_cycles -= 70224;
   }
 }
 
