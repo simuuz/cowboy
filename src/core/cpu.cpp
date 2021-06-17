@@ -22,9 +22,6 @@ constexpr auto Cpu::NoPrefixGenerator() -> Cpu::Handler<instruction>
                        instruction == 0xEC || instruction == 0xED || instruction == 0xF4 ||
                        instruction == 0xFC || instruction == 0xFD) {
     return &Cpu::invalid<instruction>;
-  } else if constexpr (instruction == 0x00 || instruction == 0x10 || instruction == 0x77 ||
-                instruction == 0xF3 || instruction == 0xFB || instruction == 0xCB) {
-    return &Cpu::misc<instruction>;
   } else if constexpr (((instruction >= 0x40 && instruction <= 0x75) || (instruction >= 0x77 && instruction <= 0x7F)) ||
                          instruction == 0x06 || instruction == 0x16  ||  instruction == 0x26 || instruction == 0x36 ||
                          instruction == 0x0E || instruction == 0x1E  ||  instruction == 0x2E || instruction == 0x3E ||

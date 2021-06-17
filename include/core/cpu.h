@@ -59,7 +59,7 @@ public:
     half sp = 0, pc = 0;
   } regs;
 
-  template <byte instruction = 0>
+  template <byte instruction = 0xD3>
   using Handler = void (Cpu::*)();
   using CBHandler = void (Cpu::*)(byte instruction);
 private:
