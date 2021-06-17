@@ -18,7 +18,6 @@ public:
   void HandleTimers();
   bool skip;
   byte opcode;
-  byte cb_opcode;
   struct registers
   {
     union
@@ -60,24 +59,25 @@ public:
     half sp = 0, pc = 0;
   } regs;
 
+  typedef void (Cpu::*Handler)(byte instruction);
 private:
-  typedef void (Cpu::*Handler)();
+  void cbops(byte instruction);
+  void load8(byte instruction);
+  void load16(byte instruction);
+  void alu8(byte instruction);
+  void alu16(byte instruction);
+  void bit8(byte instruction);
+  void branch(byte instruction);
+  void misc(byte instruction);
+  void invalid(byte instruction);
 
   template <byte instruction>
   static constexpr auto NoPrefixGenerator() -> Handler;
-  
-  std::array<Handler, 256> no_prefix;
-  std::array<Handler, 256> cb_prefix;
+  static constexpr auto GenerateTableNP() -> std::array<Handler, 256>;
+  static constexpr auto GenerateTableCB() -> std::array<Handler, 256>;
 
-  void load8();
-  void load16();
-  void alu8();
-  void alu16();
-  void bit8();
-  void branch();
-  void misc();
-  void invalid();
-  void cbops();
+  std::array<Handler, 256> no_prefix{};
+  std::array<Handler, 256> cb_prefix{};
 
   void UpdateF(bool z, bool n, bool h, bool c);
   bool Cond(byte opcode);
@@ -90,7 +90,6 @@ private:
   byte ReadR8(byte bits);
   void WriteR8(byte bits, byte value);
 
-  void Execute(byte opcode);
   void Push(half val);
   half Pop();
   FILE* log;

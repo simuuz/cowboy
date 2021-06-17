@@ -1,17 +1,19 @@
 #include "scheduler.h"
 
+namespace natsukashii::core
+{
 EventQueue::EventQueue()
 {
-    actual_entries.fill(Entry());
-    new_entries.fill(Entry());
+    entries.fill(Entry());
 }
 
 void EventQueue::push(Entry entry)
 {
-    new_entries[pos--] = entry;
+    entries[pos--] = entry;
 }
 
 void EventQueue::pop()
 {
-    actual_entries[pos++] = Entry();
+    entries[pos++] = Entry();
+}
 }
