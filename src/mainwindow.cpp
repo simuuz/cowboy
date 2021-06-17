@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include <sstream>
+#include <chrono>
 
 namespace natsukashii::frontend
 {
@@ -116,6 +117,8 @@ void MainWindow::Run()
 {
   int i = 0;
   ImGuiIO& io = ImGui::GetIO(); (void)io;
+  auto start = std::chrono::high_resolution_clock::now();
+  float frametime = 60;
   while(!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
@@ -124,7 +127,10 @@ void MainWindow::Run()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    core->Run(io.Framerate, key, action);
+    core->Run(1000 / frametime, key, action);
+    auto end = std::chrono::high_resolution_clock::now();
+    frametime = std::chrono::duration<float, std::milli>(end - start).count();
+    start = end;
 
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
@@ -135,7 +141,7 @@ void MainWindow::Run()
     if(i >= 1000) {
       i = 0;
       char title[50]{0};
-      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", io.Framerate, 1000 / io.Framerate);
+      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", 1000 / frametime, frametime);
       glfwSetWindowTitle(window, title);
     }
 

@@ -163,7 +163,7 @@ void Cpu::UpdateF(bool z, bool n, bool h, bool c)
 template <byte opcode>
 bool Cpu::Cond()
 {
-  if (opcode & 1)
+  if constexpr (opcode & 1)
     return true;
   byte bits = (opcode >> 3) & 3;
   switch (bits)
