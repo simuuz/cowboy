@@ -18,6 +18,7 @@ public:
   void HandleTimers();
   bool skip;
   byte opcode;
+  byte cb_opcode;
   struct registers
   {
     union
@@ -60,34 +61,26 @@ public:
   } regs;
 
 private:
-  void GenerateTable();
+  typedef void (Cpu::*Handler)();
+
+  template <byte instruction>
+  static constexpr auto NoPrefixGenerator() -> Handler;
+  
+  std::array<Handler, 256> no_prefix;
+  std::array<Handler, 256> cb_prefix;
+
+  void load8();
+  void load16();
+  void alu8();
+  void alu16();
+  void bit8();
+  void branch();
+  void misc();
+  void invalid();
+  void cbops();
+
   void UpdateF(bool z, bool n, bool h, bool c);
   bool Cond(byte opcode);
-
-  template <byte instruction>
-  typedef void (Cpu::*NoPrefixHandler)();
-  
-  template <byte instruction>
-  typedef void (Cpu::*CBPrefixHandler)();
-
-  std::array<NoPrefixHandler, 256> no_prefix;
-  std::array<CBPrefixHandler, 256> cb_prefix;
-
-  template <byte instruction>
-  void load8();
-  template <byte instruction>
-  void load16();
-  template <byte instruction>
-  void alu8();
-  template <byte instruction>
-  void alu16();
-  template <byte instruction>
-  void branch();
-  template <byte instruction>
-  void misc();
-
-  template <byte instruction>
-  void invalid();
 
   template <int group>
   half ReadR16(byte bits);

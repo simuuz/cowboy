@@ -4,7 +4,22 @@ namespace natsukashii::core
 {
 Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
 {
-  //log = fopen("07_log.txt", "w");
+  no_prefix = []{
+    std::array<Cpu::Handler, 256> table;
+    static_for<size_t, 0, 256>([&](auto i) {
+      table[i] = NoPrefixGenerator<i>();
+    });
+    return table;
+  }();
+
+  cb_prefix = []{
+    std::array<Cpu::Handler, 256> table;
+    static_for<size_t, 0, 256>([&](auto i) {
+      table[i] = cbops;
+    });
+    return table;
+  }();
+
   ime = false;
   halt = false;
   cycles = 0;
@@ -63,19 +78,12 @@ void Cpu::Reset()
 void Cpu::Step()
 {
   HandleInterrupts();
-  
-  //fprintf(log, "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X SP: %04X PC: 00:%04X (%02X %02X %02X %02X)\n",
-  //            regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, regs.pc, bus->ReadByte(regs.pc), bus->ReadByte(regs.pc + 1),
-  //            bus->ReadByte(regs.pc + 2), bus->ReadByte(regs.pc + 3));
-
-  //if(regs.pc == 0x100)
-  //  exit(1);
 
   if (!halt)
   {
     opcode = bus->NextByte(regs.pc, regs.pc);
     cycles = opcycles[opcode];
-    Execute(opcode);
+    (this->*no_prefix[opcode])();
   }
   else
   {
@@ -83,23 +91,6 @@ void Cpu::Step()
   }
 
   total_cycles += cycles;
-}
-
-template <byte instruction>
-void Cpu::invalid()
-{
-  printf("Unrecognized opcode: %02x\n", instruction);
-  exit(1);
-}
-
-template <byte instruction>
-void Cpu::misc()
-{
-  if constexpr (instructon == 0xF3) {
-    ime = false;
-  } else if constexpr (instruction == 0xFB) {
-    ime = true;
-  }
 }
 
 void Cpu::Execute(byte opcode)
@@ -286,7 +277,7 @@ void Cpu::Execute(byte opcode)
   }
   break;
   case 0xf8:
-  {  // LD HL, REGS.SP+sbyte
+  {  // LD HL, SP+sbyte
     byte offset = bus->NextByte(regs.pc, regs.pc);
     bool z = false;
     bool n = false;
