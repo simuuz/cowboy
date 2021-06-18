@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <cstdint>
 
 namespace natsukashii::core
 {
@@ -15,23 +16,23 @@ enum Event
 struct Entry
 {
     Event event;
-    int cycles = 0;
+    uint64_t time = 0;
+    uint64_t cycles = 0;
+    
     Entry() : event(None)
     { }
 
-    Entry(Event event) : event(event) 
+    Entry(Event event, uint64_t cycles) : event(event), cycles(cycles), time(0)
     { }
 };
 
-struct EventQueue
+struct Scheduler
 {
-    std::array<Entry, ENTRIES_MAX> entries;
-    bool is_new_event = false;
+    std::array<Entry, ENTRIES_MAX> entries{};
 
-    EventQueue();
+    Scheduler();
     void push(Entry entry);
     void pop();
-private:
-    int pos = ENTRIES_MAX - 1;
+    int pos = 0;
 };
 } // natsukashii::core

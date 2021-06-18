@@ -1,5 +1,6 @@
 #pragma once
 #include "mem.h"
+#include "scheduler.h"
 
 constexpr int VRAM_SZ = 0x2000;
 constexpr int OAM_SZ = 0xa0;
@@ -42,7 +43,7 @@ class Ppu
 public:
   Ppu(bool skip);
   void Reset();
-  void Step(int cycles, byte& intf);
+  void OnEvent(Entry entry, Scheduler* scheduler, byte& intf);
 
   std::array<word, FBSIZE> pixels;
   word color1, color2, color3, color4;
@@ -139,13 +140,15 @@ private:
 
   int curr_cycles = 0;
 
-  void WriteIO(Mem& mem, half addr, byte val);
+  void WriteIO(uint64_t time, Scheduler* scheduler, Mem& mem, half addr, byte val);
   byte ReadIO(half addr);
+  
   template <typename T>
   void WriteVRAM(half addr, T val);
   template <typename T>
   T ReadVRAM(half addr);
-  void ChangeMode(Mode m, byte& intf);
+  void ChangeMode(Entry entry, Scheduler* scheduler, Mode m, byte& intf);
+  void ChangeMode(uint64_t time, Scheduler* scheduler, Mode m, byte& intf);
   std::vector<Sprite> FetchSprites();
   void RenderSprites();
   void RenderBGs();

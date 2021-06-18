@@ -12,6 +12,8 @@ struct Core
   void Pause();
   void Stop();
   void LoadROM(std::string path);
+  void ProcessPendingEvents();
+  Scheduler scheduler;
   Bus bus;
   Cpu cpu;
   bool debug = false;

@@ -2,9 +2,9 @@
 
 namespace natsukashii::frontend
 {
-void DebugWindow::Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
+void DebugWindow::Main(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
 {
-  Debugger(cpu, bus, debug, init, running, fps);
+  Debugger(scheduler, cpu, bus, debug, init, running, fps);
   Perf(fps);
 }
 
@@ -25,7 +25,23 @@ void DebugWindow::Perf(float fps)
   ImGui::End();
 }
 
-void DebugWindow::Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
+void DebugWindow::ProcessPendingEvents(Scheduler& scheduler, Cpu& cpu, Bus& bus) {
+  for(auto& entry: scheduler.entries) {
+    if(entry.time > cpu.timestamp) {
+      break;
+    }
+
+    switch (entry.event)
+    {
+    case Event::PPU:
+      bus.ppu.OnEvent(entry, &scheduler, bus.mem.io.intf);
+      break;
+    }
+  }
+  scheduler.pop();
+}
+
+void DebugWindow::Debugger(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
 {
   ImGui::Begin("Debugger");
   static float w = ImGui::GetWindowSize().x / 2;
@@ -60,11 +76,9 @@ void DebugWindow::Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& ru
 
   ImGui::Checkbox("Debug", &debug);
   if(ImGui::Button("Step") && debug && init && running) {
-    cpu.Step();
-    bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
-    cpu.HandleTimers();
-    if(cpu.total_cycles >= 4194300 / fps) {
-      cpu.total_cycles -= 4194300 / fps;
+    cpu.Step();    
+    if(cpu.timestamp > scheduler.entries[0].time) {
+      ProcessPendingEvents(scheduler, cpu, bus);
     }
   }
 

@@ -77,7 +77,7 @@ constexpr auto Cpu::GenerateTableCB() -> std::array<Cpu::CBHandler, 256> {
   return table;
 }
 
-Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
+Cpu::Cpu(Scheduler* scheduler, bool skip, Bus* bus) : bus(bus), skip(skip), scheduler(scheduler)
 {
   no_prefix = GenerateTableNP();
   cb_prefix = GenerateTableCB();
@@ -85,7 +85,7 @@ Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
   ime = false;
   halt = false;
   cycles = 0;
-  total_cycles = 0;
+  timestamp = 0;
   tima_cycles = 0;
   div_cycles = 0;
 
@@ -125,7 +125,7 @@ void Cpu::Reset()
     ime = false;
     halt = false;
     cycles = 0;
-    total_cycles = 0;
+    timestamp = 0;
     tima_cycles = 0;
     div_cycles = 0;
     regs.af = 0;
@@ -152,7 +152,7 @@ void Cpu::Step()
     cycles = 4;
   }
 
-  total_cycles += cycles;
+  timestamp += cycles;
 }
 
 void Cpu::UpdateF(bool z, bool n, bool h, bool c)
@@ -177,6 +177,8 @@ bool Cpu::Cond()
   case 3:
     return ((regs.f >> 4) & 1);
   }
+
+  return false;
 }
 
 half Cpu::Pop()
@@ -189,7 +191,7 @@ half Cpu::Pop()
 void Cpu::Push(half val)
 {
   regs.sp -= 2;
-  bus->WriteHalf(regs.sp, val);
+  bus->WriteHalf(timestamp, scheduler, regs.sp, val);
 }
 
 template <byte bits>
@@ -240,7 +242,7 @@ void Cpu::WriteR8(byte val)
     regs.l = val;
     break;
   case 6:
-    bus->WriteByte(regs.hl, val);
+    bus->WriteByte(timestamp, scheduler, regs.hl, val);
     break;
   case 7:
     regs.a = val;
@@ -294,7 +296,7 @@ void Cpu::WriteR8(byte bits, byte val)
     regs.l = val;
     break;
   case 6:
-    bus->WriteByte(regs.hl, val);
+    bus->WriteByte(timestamp, scheduler, regs.hl, val);
     break;
   case 7:
     regs.a = val;
@@ -579,12 +581,12 @@ void Cpu::load8()
   case 0x0e: case 0x1e: case 0x2e: case 0x3e:
   WriteR8<(opcode >> 3) & 7>(bus->NextByte(regs.pc, regs.pc));
   break;
-  case 0xe0: bus->WriteByte(0xff00 + bus->NextByte(regs.pc, regs.pc), regs.a); break;
+  case 0xe0: bus->WriteByte(timestamp, scheduler, 0xff00 + bus->NextByte(regs.pc, regs.pc), regs.a); break;
   case 0xf0: regs.a = bus->ReadByte(0xff00 + bus->NextByte(regs.pc, regs.pc)); break;
-  case 0xe2: bus->WriteByte(0xff00 + regs.c, regs.a); break;
+  case 0xe2: bus->WriteByte(timestamp, scheduler, 0xff00 + regs.c, regs.a); break;
   case 0xf2: regs.a = bus->ReadByte(0xff00 + regs.c); break;
   case 0x02: case 0x12: case 0x22: case 0x32:
-  bus->WriteByte(ReadR16<2, (opcode >> 4) & 3>(), regs.a);
+  bus->WriteByte(timestamp, scheduler, ReadR16<2, (opcode >> 4) & 3>(), regs.a);
   if constexpr (opcode == 0x22)
     regs.hl++;
   if constexpr (opcode == 0x32)
@@ -597,7 +599,7 @@ void Cpu::load8()
   if constexpr (opcode == 0x3a)
     regs.hl--;
   break;
-  case 0xea: bus->WriteByte(bus->NextHalf(regs.pc, regs.pc), regs.a); break;
+  case 0xea: bus->WriteByte(timestamp, scheduler, bus->NextHalf(regs.pc, regs.pc), regs.a); break;
   case 0xfa: regs.a = bus->ReadByte(bus->NextHalf(regs.pc, regs.pc)); break;
   }
 }
@@ -609,7 +611,7 @@ void Cpu::load16()
   case 0x01: case 0x11: case 0x21: case 0x31:
   WriteR16<1, (opcode >> 4) & 3>(bus->NextHalf(regs.pc, regs.pc));
   break;
-  case 0x08: bus->WriteHalf(bus->NextHalf(regs.pc, regs.pc), regs.sp); break;
+  case 0x08: bus->WriteHalf(timestamp, scheduler, bus->NextHalf(regs.pc, regs.pc), regs.sp); break;
   case 0xf9: regs.sp = regs.hl; break;
   case 0xc1: case 0xd1: case 0xe1: case 0xf1:
   WriteR16<3, (opcode >> 4) & 3>(Pop());

@@ -53,7 +53,7 @@ half Bus::NextHalf(half addr, half& pc)
   return (NextByte(addr + 1, pc) << 8) | NextByte(addr, pc);
 }
 
-void Bus::WriteByte(half addr, byte val)
+void Bus::WriteByte(uint64_t time, Scheduler* scheduler, half addr, byte val)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
   {
@@ -67,17 +67,17 @@ void Bus::WriteByte(half addr, byte val)
   }
   else if (addr >= 0xff40 && addr <= 0xff4b)
   {
-    ppu.WriteIO(mem, addr, val);
+    ppu.WriteIO(time, scheduler, mem, addr, val);
     return;
   }
 
   mem.Write(addr, val);
 }
 
-void Bus::WriteHalf(half addr, half val)
+void Bus::WriteHalf(uint64_t time, Scheduler* scheduler, half addr, half val)
 {
-  WriteByte(addr + 1, val >> 8);
-  WriteByte(addr, val);
+  WriteByte(time, scheduler, addr + 1, val >> 8);
+  WriteByte(time, scheduler, addr, val);
 }
 
 }  // namespace natsukashii::core

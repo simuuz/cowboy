@@ -8,16 +8,18 @@ using namespace natsukashii::util;
 class Cpu
 {
 public:
-  Cpu(bool skip, Bus* bus);
+  Cpu(Scheduler* scheduler, bool skip, Bus* bus);
   void Step();
   void Reset();
   Bus* bus;
   bool halt = false;
-  int total_cycles = 0;
+  uint64_t timestamp = 0;
   int cycles = 0;
   void HandleTimers();
   bool skip;
   byte opcode;
+  Scheduler* scheduler;
+
   struct registers
   {
     union

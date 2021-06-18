@@ -95,81 +95,57 @@ void Ppu::CompareLYC(byte& intf)
   }
 }
 
-void Ppu::Step(int cycles, byte& intf)
+void Ppu::OnEvent(Entry entry, Scheduler* scheduler, byte& intf)
 {
-  if (!io.lcdc.enabled)
-  {
-    return;
-  }
-
-  curr_cycles += cycles;
-
   switch (mode)
   {
-  case OAM:    
-    if (curr_cycles >= 80)
-    {
-      curr_cycles -= 80;
-      ChangeMode(LCDTransfer, intf);
-    }
-    break;
-  case LCDTransfer:
-    if (curr_cycles >= 172)
-    {
-      curr_cycles -= 172;
-      ChangeMode(HBlank, intf);
-    }
-    break;
   case HBlank:
-    if (curr_cycles >= 204)
+    CompareLYC(intf);
+
+    if (io.ly == 0x90)
     {
-      curr_cycles -= 204;
-      io.ly++;
-
-      if (io.ly == 0x90)
-      {
-        ChangeMode(VBlank, intf);
-      }
-      else
-      {
-        ChangeMode(OAM, intf);
-      }
-
-      CompareLYC(intf);
+      ChangeMode(entry, scheduler, VBlank, intf);
+    }
+    else
+    {
+      ChangeMode(entry, scheduler, OAM, intf);
     }
     break;
   case VBlank:
-    if (curr_cycles >= 456)
+    if (io.ly == 154)
     {
-      curr_cycles -= 456;
-      io.ly++;
+      scheduler->push(Entry(PPU, entry.time + 452));
+      io.ly = 0;
       window_internal_counter = 0;
-
-      if (io.ly == 154)
-      {
-        io.ly = 0;
-        ChangeMode(OAM, intf);
-      }
-
       CompareLYC(intf);
     }
+    break;
+  case OAM:
+    io.ly++;
+    ChangeMode(entry, scheduler, LCDTransfer, intf);
+    break;
+  case LCDTransfer:
+    ChangeMode(entry, scheduler, HBlank, intf);
     break;
   }
 }
 
-void Ppu::ChangeMode(Mode m, byte& intf)
+void Ppu::ChangeMode(Entry entry, Scheduler* scheduler, Mode m, byte& intf)
 {
   mode = m;
   switch (m)
   {
   case HBlank:
+    scheduler->push(Entry(PPU, entry.time + 204));
+    render = true;
+    Scanline();
     if (io.stat.hblank_int)
     {
       intf |= 2;
     }
     break;
   case VBlank:
-    render = true;
+    scheduler->push(Entry(PPU, entry.time +  456));
     intf |= 1;
     if (io.stat.vblank_int)
     {
@@ -177,13 +153,49 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     }
     break;
   case OAM:
+    scheduler->push(Entry(PPU, entry.time +  80));
     if (io.stat.oam_int)
     {
       intf |= 2;
     }
     break;
   case LCDTransfer:
+    scheduler->push(Entry(PPU, entry.time + 172));
+    break;
+  }
+}
+
+void Ppu::ChangeMode(uint64_t time, Scheduler* scheduler, Mode m, byte& intf)
+{
+  mode = m;
+  switch (m)
+  {
+  case HBlank:
+    scheduler->push(Entry(PPU, time + 204));
+    render = true;
     Scanline();
+    if (io.stat.hblank_int)
+    {
+      intf |= 2;
+    }
+    break;
+  case VBlank:
+    scheduler->push(Entry(PPU, time +  456));
+    intf |= 1;
+    if (io.stat.vblank_int)
+    {
+      intf |= 2;
+    }
+    break;
+  case OAM:
+    scheduler->push(Entry(PPU, time +  80));
+    if (io.stat.oam_int)
+    {
+      intf |= 2;
+    }
+    break;
+  case LCDTransfer:
+    scheduler->push(Entry(PPU, time + 172));
     break;
   }
 }
@@ -219,12 +231,16 @@ byte Ppu::ReadIO(half addr)
   }
 }
 
-void Ppu::WriteIO(Mem& mem, half addr, byte val)
+void Ppu::WriteIO(uint64_t time, Scheduler* scheduler, Mem& mem, half addr, byte val)
 {
   switch (addr & 0xff)
   {
   case 0x40:
     io.lcdc.raw = val;
+    if (io.lcdc.enabled) {
+      curr_cycles = 0;
+      ChangeMode(time, scheduler, OAM, mem.io.intf);
+    }
     break;
   case 0x41:
     io.stat.write(val);

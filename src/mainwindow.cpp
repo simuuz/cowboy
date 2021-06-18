@@ -146,7 +146,7 @@ void MainWindow::Run()
     }
 
     if(show_debug_windows)
-      dbg.Main(core->cpu, core->bus, core->debug, core->init, core->running, io.Framerate);
+      dbg.Main(core->scheduler, core->cpu, core->bus, core->debug, core->init, core->running, 1000 / frametime);
 
     if(show_settings)
       Settings();

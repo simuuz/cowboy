@@ -2,23 +2,43 @@
 
 namespace natsukashii::core
 {
-Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(skip, &bus) { }
+Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(&scheduler, skip, &bus) { }
 
 void Core::Run(float fps, int key, int action)
 {
   if(init && running && !pause && !debug)
   {
-    while(cpu.total_cycles < 70224)  // TODO: This is not proper cycling
+    while(cpu.timestamp <= scheduler.entries[0].time)
     {
       cpu.Step();
-      bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
+      scheduler = *cpu.scheduler;
       bus.mem.DoInputs(key, action);
       cpu.bus = &bus;
       cpu.HandleTimers();
     }
 
-    cpu.total_cycles -= 70224;
+    ProcessPendingEvents();
   }
+}
+
+void Core::ProcessPendingEvents() {
+  for(auto& entry: scheduler.entries) {
+    if(entry.time > cpu.timestamp) {
+      break;
+    }
+
+    switch (entry.event)
+    {
+    case Event::PPU:
+      bus.ppu.OnEvent(entry, &scheduler, bus.mem.io.intf);
+      break;
+    }
+
+    scheduler.pop();
+  }
+
+  scheduler.entries[scheduler.pos - 1].time = UINT64_MAX;
+  cpu.scheduler = &scheduler;
 }
 
 void Core::LoadROM(std::string path)

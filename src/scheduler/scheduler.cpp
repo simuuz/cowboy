@@ -1,19 +1,36 @@
 #include "scheduler.h"
+#include <numeric>
+#include <algorithm>
+#include <cstring>
 
 namespace natsukashii::core
 {
-EventQueue::EventQueue()
+Scheduler::Scheduler()
 {
-    entries.fill(Entry());
+  entries.fill(Entry());
+  entries[0].time = UINT64_MAX;
 }
 
-void EventQueue::push(Entry entry)
+void Scheduler::push(Entry entry)
 {
-    entries[pos--] = entry;
+  if(pos < ENTRIES_MAX) {
+    for(int i = 0; i < pos; i++) {
+      if(entries[i].time > entry.time) {
+        memmove(&entries.data()[i + 1], &entries.data()[i], sizeof(Entry));
+        entries[i] = entry;
+        break;
+      }
+    }
+
+    pos++;
+  }
 }
 
-void EventQueue::pop()
+void Scheduler::pop()
 {
-    entries[pos++] = Entry();
+  if(pos > 0) {
+    entries[pos--] = Entry();
+  }
 }
+
 }
