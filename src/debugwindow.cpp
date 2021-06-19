@@ -36,7 +36,7 @@ void DebugWindow::ProcessPendingEvents(Scheduler& scheduler, Cpu& cpu, Bus& bus)
     switch (scheduler.entries[i].event)
     {
     case Event::PPU:
-      bus.ppu.OnEvent(scheduler.entries[i], &scheduler, bus.mem.io.intf);
+      bus.ppu.OnModeEnd(scheduler.entries[i], &scheduler, bus.mem.io.intf);
       break;
     }
   }

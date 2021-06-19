@@ -95,14 +95,14 @@ void Ppu::CompareLYC(byte& intf)
   }
 }
 
-void Ppu::OnEvent(Entry entry, Scheduler* scheduler, byte& intf)
+void Ppu::OnModeEnd(Entry entry, Scheduler* scheduler, byte& intf)
 {
   switch (mode)
   {
   case HBlank:
     CompareLYC(intf);
 
-    if (io.ly == 0x8F)
+    if (io.ly == 0x90)
     {
       ChangeMode(entry, scheduler, VBlank, intf);
     }
@@ -113,22 +113,16 @@ void Ppu::OnEvent(Entry entry, Scheduler* scheduler, byte& intf)
     break;
   case VBlank:
     io.ly++;
-    if (io.ly == 153)
-    {
-      scheduler->push(Entry(PPU, entry.time + 456));
+    if (io.ly == 153) {
+      io.ly = 0;
+      window_internal_counter = 0;
+      ChangeMode(entry, scheduler, OAM, intf);
       CompareLYC(intf);
+    } else {      
+      scheduler->push(Entry(PPU, entry.time + 456));
     }
     break;
   case OAM:
-    if (io.ly == 153)
-    {
-      io.ly = 0;
-      window_internal_counter = 0;
-    }
-    else
-    {
-      io.ly++;
-    }
     ChangeMode(entry, scheduler, LCDTransfer, intf);
     break;
   case LCDTransfer:
@@ -144,8 +138,6 @@ void Ppu::ChangeMode(Entry entry, Scheduler* scheduler, Mode m, byte& intf)
   {
   case HBlank:
     scheduler->push(Entry(PPU, entry.time + 204));
-    render = true;
-    Scanline();
     if (io.stat.hblank_int)
     {
       intf |= 2;
@@ -167,6 +159,8 @@ void Ppu::ChangeMode(Entry entry, Scheduler* scheduler, Mode m, byte& intf)
     }
     break;
   case LCDTransfer:
+    render = true;
+    Scanline();
     scheduler->push(Entry(PPU, entry.time + 172));
     break;
   }
@@ -403,8 +397,11 @@ std::vector<Sprite> Ppu::FetchSprites()
 
 void Ppu::RenderSprites()
 {
-  if(!io.lcdc.obj_enable)
+  if(!io.lcdc.obj_enable) {
     return;
+  } else {
+    printf("Sprites enabled\n");
+  }
 
   std::vector<Sprite> sprites = FetchSprites();
   

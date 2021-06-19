@@ -43,7 +43,7 @@ class Ppu
 public:
   Ppu(bool skip);
   void Reset();
-  void OnEvent(Entry entry, Scheduler* scheduler, byte& intf);
+  void OnModeEnd(Entry entry, Scheduler* scheduler, byte& intf);
 
   std::array<word, FBSIZE> pixels;
   word color1, color2, color3, color4;
