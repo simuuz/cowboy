@@ -16,7 +16,7 @@ void Scheduler::push(Entry entry)
   if(pos < ENTRIES_MAX) {
     for(int i = 0; i < pos; i++) {
       if(entries[i].time > entry.time) {
-        memmove(&entries.data()[i + 1], &entries.data()[i], sizeof(Entry));
+        memmove(&entries.data()[i + 1], &entries.data()[i], (pos - i) * sizeof(Entry));
         entries[i] = entry;
         break;
       }
