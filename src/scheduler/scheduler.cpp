@@ -8,7 +8,7 @@ namespace natsukashii::core
 Scheduler::Scheduler()
 {
   entries.fill(Entry());
-  entries[0].time = UINT64_MAX;
+  entries[0] = Entry(Panic, UINT64_MAX);
 }
 
 void Scheduler::push(Entry entry)
@@ -26,11 +26,9 @@ void Scheduler::push(Entry entry)
   }
 }
 
-void Scheduler::pop()
+void Scheduler::pop(int count)
 {
-  if(pos > 0) {
-    entries[pos--] = Entry();
-  }
+  memmove(&entries.data()[0], &entries.data()[count], pos - count);
+  pos -= count;
 }
-
 }

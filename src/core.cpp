@@ -22,22 +22,22 @@ void Core::Run(float fps, int key, int action)
 }
 
 void Core::ProcessPendingEvents() {
-  for(auto& entry: scheduler.entries) {
-    if(entry.time > cpu.timestamp) {
+  int last_pos = 0;
+  for(int i = 0; i < scheduler.pos; i++) {
+    if(scheduler.entries[i].time > cpu.timestamp) {
+      last_pos = i;
       break;
     }
 
-    switch (entry.event)
+    switch (scheduler.entries[i].event)
     {
     case Event::PPU:
-      bus.ppu.OnEvent(entry, &scheduler, bus.mem.io.intf);
+      bus.ppu.OnEvent(scheduler.entries[i], &scheduler, bus.mem.io.intf);
       break;
     }
-
-    scheduler.pop();
   }
-
-  scheduler.entries[scheduler.pos - 1].time = UINT64_MAX;
+  
+  scheduler.pop(last_pos);
   cpu.scheduler = &scheduler;
 }
 

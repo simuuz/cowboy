@@ -11,18 +11,18 @@ enum Event
     None,
     PPU,
     Timer,
+    Panic,
 };
 
 struct Entry
 {
     Event event;
     uint64_t time = 0;
-    uint64_t cycles = 0;
     
     Entry() : event(None)
     { }
 
-    Entry(Event event, uint64_t cycles) : event(event), cycles(cycles), time(0)
+    Entry(Event event, uint64_t time) : event(event), time(time)
     { }
 };
 
@@ -32,7 +32,7 @@ struct Scheduler
 
     Scheduler();
     void push(Entry entry);
-    void pop();
+    void pop(int count);
     int pos = 0;
 };
 } // natsukashii::core

@@ -8,6 +8,12 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (WIN32)
+  set(FLAGS "-O3 -static")
+else()
+  set(FLAGS "-O3")
+endif()
+
 file(GLOB_RECURSE IMPLOT_SRC "include/external/implot/*.cpp")
 file(GLOB_RECURSE EMU_SRC "src/*.cpp")
 
@@ -31,7 +37,7 @@ include_directories(
   include/external/nativefiledialog-extended/
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
