@@ -6,7 +6,8 @@ namespace natsukashii::core
 {
 Mem::~Mem()
 {
-  cart->Save(savefile);
+  if(cart != nullptr)
+    cart->Save(savefile);
 }
 
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)

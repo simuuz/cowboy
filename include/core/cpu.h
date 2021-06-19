@@ -3,8 +3,6 @@
 
 namespace natsukashii::core
 {
-using namespace natsukashii::util;
-
 class Cpu
 {
 public:
@@ -14,12 +12,11 @@ public:
   Bus* bus;
   bool halt = false;
   uint64_t timestamp = 0;
+  Scheduler* scheduler;
   int cycles = 0;
   void HandleTimers();
   bool skip;
   byte opcode;
-  Scheduler* scheduler;
-
   struct registers
   {
     union
@@ -61,53 +58,19 @@ public:
     half sp = 0, pc = 0;
   } regs;
 
-  template <byte instruction = 0xD3>
-  using Handler = void (Cpu::*)();
-  using CBHandler = void (Cpu::*)(byte instruction);
 private:
-  void cbops(byte instruction);
-  template <byte instruction>
-  void load8();
-  template <byte instruction>
-  void load16();
-  template <byte instruction>
-  void alu8();
-  template <byte instruction>
-  void alu16();
-  template <byte instruction>
-  void bit8();
-  template <byte instruction>
-  void branch();
-  template <byte instruction>
-  void misc();
-  template <byte instruction>
-  void invalid();
-
-  template <byte instruction>
-  static constexpr auto NoPrefixGenerator() -> Handler<instruction>;
-  static constexpr auto GenerateTableNP() -> std::array<Handler<>, 256>;
-  static constexpr auto GenerateTableCB() -> std::array<CBHandler, 256>;
-
-  std::array<Handler<>, 256> no_prefix{};
-  std::array<CBHandler, 256> cb_prefix{};
-
   void UpdateF(bool z, bool n, bool h, bool c);
-  template <byte opcode>
-  bool Cond();
+  bool Cond(byte opcode);
 
-  template <int group, byte bits>
-  half ReadR16();
-  template <int group, byte bits>
-  void WriteR16(half val);
-
-  template <byte bits>
-  byte ReadR8();
-  template <byte bits>
-  void WriteR8(byte value);
+  template <int group>
+  half ReadR16(byte bits);
+  template <int group>
+  void WriteR16(byte bits, half val);
 
   byte ReadR8(byte bits);
   void WriteR8(byte bits, byte value);
 
+  void Execute(byte opcode);
   void Push(half val);
   half Pop();
   FILE* log;

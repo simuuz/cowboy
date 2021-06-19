@@ -100,6 +100,7 @@ void Ppu::OnModeEnd(Entry entry, Scheduler* scheduler, byte& intf)
   switch (mode)
   {
   case HBlank:
+    io.ly++;
     CompareLYC(intf);
 
     if (io.ly == 0x90)
@@ -113,13 +114,13 @@ void Ppu::OnModeEnd(Entry entry, Scheduler* scheduler, byte& intf)
     break;
   case VBlank:
     io.ly++;
+    CompareLYC(intf);
     if (io.ly == 153) {
       io.ly = 0;
       window_internal_counter = 0;
       ChangeMode(entry, scheduler, OAM, intf);
-      CompareLYC(intf);
-    } else {      
-      scheduler->push(Entry(PPU, entry.time + 456));
+    } else {
+      ChangeMode(entry, scheduler, VBlank, intf);
     }
     break;
   case OAM:
