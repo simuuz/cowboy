@@ -102,7 +102,7 @@ void Ppu::OnEvent(Entry entry, Scheduler* scheduler, byte& intf)
   case HBlank:
     CompareLYC(intf);
 
-    if (io.ly == 0x90)
+    if (io.ly == 0x8F)
     {
       ChangeMode(entry, scheduler, VBlank, intf);
     }
@@ -112,16 +112,23 @@ void Ppu::OnEvent(Entry entry, Scheduler* scheduler, byte& intf)
     }
     break;
   case VBlank:
-    if (io.ly == 154)
+    io.ly++;
+    if (io.ly == 153)
     {
-      scheduler->push(Entry(PPU, entry.time + 452));
-      io.ly = 0;
-      window_internal_counter = 0;
+      scheduler->push(Entry(PPU, entry.time + 456));
       CompareLYC(intf);
     }
     break;
   case OAM:
-    io.ly++;
+    if (io.ly == 153)
+    {
+      io.ly = 0;
+      window_internal_counter = 0;
+    }
+    else
+    {
+      io.ly++;
+    }
     ChangeMode(entry, scheduler, LCDTransfer, intf);
     break;
   case LCDTransfer:

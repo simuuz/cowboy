@@ -33,6 +33,6 @@ struct Scheduler
     Scheduler();
     void push(Entry entry);
     void pop(int count);
-    int pos = 0;
+    int pos = 1;
 };
 } // natsukashii::core
