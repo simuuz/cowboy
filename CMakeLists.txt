@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (WIN32)
   set(FLAGS "-O3 -static")
 else()
-  set(FLAGS "-g")
+  set(FLAGS "-O3")
 endif()
 
 file(GLOB_RECURSE IMPLOT_SRC "include/external/implot/*.cpp")

@@ -8,14 +8,13 @@ void Core::Run(int key, int action)
 {
   if(init && running && !pause && !debug)
   {
+    ProcessPendingEvents();
     while(cpu.timestamp <= scheduler.entries[0].time)
     {
       cpu.Step();
       bus.mem.DoInputs(key, action);
       cpu.HandleTimers();
     }
-
-    ProcessPendingEvents();
   }
 }
 
