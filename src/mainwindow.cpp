@@ -86,8 +86,8 @@ MainWindow::MainWindow(std::string title)
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, core->bus.ppu.pixels.data());
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
   NFD_Init();
 }
@@ -109,8 +109,8 @@ void MainWindow::UpdateTexture()
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, core->bus.ppu.pixels.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 }
 
 void MainWindow::Run()
@@ -127,10 +127,7 @@ void MainWindow::Run()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    core->Run(1000 / frametime, key, action);
-    auto end = std::chrono::high_resolution_clock::now();
-    frametime = std::chrono::duration<float, std::milli>(end - start).count();
-    start = end;
+    core->Run(io.Framerate, key, action);
 
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
@@ -141,7 +138,7 @@ void MainWindow::Run()
     if(i >= 1000) {
       i = 0;
       char title[50]{0};
-      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", 1000 / frametime, frametime);
+      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", io.Framerate, 1000 / io.Framerate);
       glfwSetWindowTitle(window, title);
     }
 

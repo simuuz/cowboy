@@ -67,7 +67,7 @@ void Bus::WriteByte(half addr, byte val)
   }
   else if (addr >= 0xff40 && addr <= 0xff4b)
   {
-    ppu.WriteIO(mem, addr, val);
+    ppu.WriteIO(mem, addr, val, mem.io.intf);
     return;
   }
 

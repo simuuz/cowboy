@@ -13,7 +13,6 @@ void Core::Run(float fps, int key, int action)
       cpu.Step();
       bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
       bus.mem.DoInputs(key, action);
-      cpu.bus = &bus;
       cpu.HandleTimers();
     }
 
@@ -26,7 +25,6 @@ void Core::LoadROM(std::string path)
   cpu.Reset();
   bus.Reset();
   bus.LoadROM(path);
-  cpu.bus = &bus;
   init = true;
   running = true;
 }
@@ -35,7 +33,6 @@ void Core::Reset()
 {
   cpu.Reset();
   bus.Reset();
-  cpu.bus = &bus;
 }
 
 void Core::Pause()
@@ -47,7 +44,6 @@ void Core::Stop()
 {
   cpu.Reset();
   bus.Reset();
-  cpu.bus = &bus;
   running = false;
 }
 

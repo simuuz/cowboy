@@ -106,25 +106,11 @@ void Ppu::Step(int cycles, byte& intf)
 
   switch (mode)
   {
-  case OAM:    
-    if (curr_cycles >= 80)
-    {
-      curr_cycles -= 80;
-      ChangeMode(LCDTransfer, intf);
-    }
-    break;
-  case LCDTransfer:
-    if (curr_cycles >= 172)
-    {
-      curr_cycles -= 172;
-      ChangeMode(HBlank, intf);
-    }
-    break;
   case HBlank:
     if (curr_cycles >= 204)
     {
-      curr_cycles -= 204;
       io.ly++;
+      curr_cycles -= 204;
 
       if (io.ly == 0x90)
       {
@@ -141,17 +127,31 @@ void Ppu::Step(int cycles, byte& intf)
   case VBlank:
     if (curr_cycles >= 456)
     {
-      curr_cycles -= 456;
       io.ly++;
-      window_internal_counter = 0;
+      curr_cycles -= 456;
 
       if (io.ly == 154)
       {
         io.ly = 0;
+        window_internal_counter = 0;
         ChangeMode(OAM, intf);
       }
 
       CompareLYC(intf);
+    }
+    break;
+  case OAM:    
+    if (curr_cycles >= 80)
+    {
+      curr_cycles -= 80;
+      ChangeMode(LCDTransfer, intf);
+    }
+    break;
+  case LCDTransfer:
+    if (curr_cycles >= 172)
+    {
+      curr_cycles -= 172;
+      ChangeMode(HBlank, intf);
     }
     break;
   }
@@ -169,7 +169,6 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     }
     break;
   case VBlank:
-    render = true;
     intf |= 1;
     if (io.stat.vblank_int)
     {
@@ -183,6 +182,7 @@ void Ppu::ChangeMode(Mode m, byte& intf)
     }
     break;
   case LCDTransfer:
+    render = true;
     Scanline();
     break;
   }
@@ -219,12 +219,17 @@ byte Ppu::ReadIO(half addr)
   }
 }
 
-void Ppu::WriteIO(Mem& mem, half addr, byte val)
+void Ppu::WriteIO(Mem& mem, half addr, byte val, byte& intf)
 {
   switch (addr & 0xff)
   {
   case 0x40:
+    io.old_lcdc.raw = io.lcdc.raw;
     io.lcdc.raw = val;
+    if(!io.old_lcdc.enabled && io.lcdc.enabled) {
+      curr_cycles = 0;
+      intf |= 2;
+    }
     break;
   case 0x41:
     io.stat.write(val);
@@ -350,7 +355,7 @@ void Ppu::RenderBGs()
     fbIndex++;
   }
   
-  if(render_window && io.ly >= io.wy && io.wx >= 0 && io.wx <= 166)
+  if(render_window && io.ly >= io.wy && io.wx >= 0 && io.wx <= 168)
   {
     window_internal_counter++;
   }
