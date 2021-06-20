@@ -127,7 +127,7 @@ private:
   struct IO
   {
     byte bgp = 0, scy = 0, scx = 0;
-    LCDC lcdc;
+    LCDC lcdc, old_lcdc;
     byte wx = 0, wy = 0, obp0 = 0, obp1 = 0;
     byte lyc = 0, ly = 0;
     STAT stat;
@@ -147,7 +147,6 @@ private:
   void WriteVRAM(half addr, T val);
   template <typename T>
   T ReadVRAM(half addr);
-  void ChangeMode(Entry entry, Scheduler* scheduler, Mode m, byte& intf);
   void ChangeMode(uint64_t time, Scheduler* scheduler, Mode m, byte& intf);
   std::vector<Sprite> FetchSprites();
   void RenderSprites();

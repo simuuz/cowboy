@@ -4,7 +4,7 @@ namespace natsukashii::core
 {
 Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(&scheduler, skip, &bus) { }
 
-void Core::Run(float fps, int key, int action)
+void Core::Run(int key, int action)
 {
   if(init && running && !pause && !debug)
   {

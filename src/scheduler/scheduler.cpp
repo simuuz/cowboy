@@ -28,7 +28,7 @@ void Scheduler::push(Entry entry)
 
 void Scheduler::pop(int count)
 {
-  memmove(&entries.data()[0], &entries.data()[count], pos - count);
+  memmove(&entries.data()[0], &entries.data()[count], sizeof(Entry) * (pos - count));
   pos -= count;
 }
 }

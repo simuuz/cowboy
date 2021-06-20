@@ -4,7 +4,7 @@ namespace natsukashii::frontend
 {
 void DebugWindow::Main(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
 {
-  Debugger(scheduler, cpu, bus, debug, init, running, fps);
+  Debugger(scheduler, cpu, bus, debug, init, running);
   Perf(fps);
 }
 
@@ -42,10 +42,9 @@ void DebugWindow::ProcessPendingEvents(Scheduler& scheduler, Cpu& cpu, Bus& bus)
   }
   
   scheduler.pop(last_pos);
-  cpu.scheduler = &scheduler;
 }
 
-void DebugWindow::Debugger(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
+void DebugWindow::Debugger(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running)
 {
   ImGui::Begin("Debugger");
   static float w = ImGui::GetWindowSize().x / 2;

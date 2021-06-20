@@ -69,7 +69,7 @@ public:
   void Main(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps);
 private:
   void Perf(float fps);
-  void Debugger(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps);
+  void Debugger(Scheduler& scheduler, Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running);
   void ProcessPendingEvents(Scheduler& scheduler, Cpu& cpu, Bus& bus);
   void Disasm(Cpu& cpu, Bus& bus);
   std::string opcode;

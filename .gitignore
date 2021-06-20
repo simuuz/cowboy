@@ -4,5 +4,5 @@ build/
 roms/
 DMG_ROM.bin
 bootrom.bin
-*.ini
+/*.ini
 vgcore.*

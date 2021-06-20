@@ -7,7 +7,7 @@ using namespace natsukashii::frontend;
 struct Core
 {
   Core(bool skip, std::string bootrom_path);
-  void Run(float fps, int key, int action);
+  void Run(int key, int action);
   void Reset();
   void Pause();
   void Stop();
@@ -16,7 +16,7 @@ struct Core
   Scheduler scheduler;
   Bus bus;
   Cpu cpu;
-  bool debug = true;
+  bool debug = false;
   bool pause = false;
   bool running = false;
   bool init = false;
