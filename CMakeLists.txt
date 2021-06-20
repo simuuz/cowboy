@@ -23,7 +23,6 @@ set(IMGUI_SRC
 include_directories(
   include/
   include/core/
-  include/scheduler/
   include/external/
   include/external/imgui/
   include/external/imgui/backends/
