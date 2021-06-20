@@ -126,7 +126,7 @@ private:
   struct IO
   {
     byte bgp = 0, scy = 0, scx = 0;
-    LCDC lcdc;
+    LCDC lcdc, old_lcdc;
     byte wx = 0, wy = 0, obp0 = 0, obp1 = 0;
     byte lyc = 0, ly = 0;
     STAT stat;
@@ -139,7 +139,7 @@ private:
 
   int curr_cycles = 0;
 
-  void WriteIO(Mem& mem, half addr, byte val);
+  void WriteIO(Mem& mem, half addr, byte val, byte& intf);
   byte ReadIO(half addr);
   template <typename T>
   void WriteVRAM(half addr, T val);
