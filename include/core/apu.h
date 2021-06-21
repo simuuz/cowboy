@@ -1,6 +1,5 @@
 #pragma once
 #include "mem.h"
-#include <SDL_audio.h>
 
 namespace natsukashii::core
 {
@@ -14,8 +13,9 @@ constexpr s8 duty_sq2[4][8] = {
 class Apu {
 public:
 	Apu(bool skip);
+	~Apu();
 	void Reset();
-	void Step(u64)
+	void Step(u64 cycles);
 private:
 	bool skip;
 	union {
@@ -55,7 +55,7 @@ private:
 			unsigned freq:3;
 			unsigned:3;
 			unsigned len_enable:1;
-			unsigned trigger:1,
+			unsigned trigger:1;
 		};
 
 		u8 raw;
@@ -106,7 +106,7 @@ private:
 		struct {
 			unsigned:6;
 			unsigned len_enable:1;
-			unsigned trigger:1,
+			unsigned trigger:1;
 		};
 
 		u8 raw;
@@ -125,14 +125,14 @@ private:
 
 	union {
 		struct {
-			unsigned sq1_r_enable:1
-			unsigned sq2_r_enable:1
-			unsigned wave_r_enable:1
-			unsigned noise_r_enable:1
-			unsigned sq1_l_enable:1
-			unsigned sq2_l_enable:1
-			unsigned wave_l_enable:1
-			unsigned noise_l_enable:1
+			unsigned sq1_r_enable:1;
+			unsigned sq2_r_enable:1;
+			unsigned wave_r_enable:1;
+			unsigned noise_r_enable:1;
+			unsigned sq1_l_enable:1;
+			unsigned sq2_l_enable:1;
+			unsigned wave_l_enable:1;
+			unsigned noise_l_enable:1;
 		};
 
 		u8 raw;
@@ -151,12 +151,19 @@ private:
 		u8 raw;
 	} nr52;
 
+	constexpr static int frequency = 48000;
+	constexpr static int samples = 512;
+	constexpr static u8 channels = 2;
+	constexpr static int maxSampleCycles = 4194304 / frequency;
+	constexpr static int maxSequencerCycles = 4194304 / samples;
+
 	u16 reload_timer2();
 	s8 sample_sq2();
 	void sample();
-	SDL_Audio
+	u8 sample_rate = 88;
+	SDL_AudioDeviceID audio_device;
 	u8 ch2_duty_index;
-	u8 frequency;
+
 	s16 timer2;
 	int frequency_timer;
 };

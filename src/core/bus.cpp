@@ -2,7 +2,7 @@
 
 namespace natsukashii::core
 {
-Bus::Bus(bool skip, std::string bootrom_path) : mem(skip, bootrom_path), ppu(skip)
+Bus::Bus(bool skip, std::string bootrom_path) : mem(skip, bootrom_path), ppu(skip), apu(skip)
 {
 }
 
@@ -30,9 +30,9 @@ u8 Bus::ReadByte(u16 addr)
   return mem.Read(addr);
 }
 
-u8 Bus::NextByte(u16 addr, u16& pc, u64& cycles)
+u8 Bus::NextByte(u16 addr, u16& pc, u8& cycles)
 {
-  cycles+=4;
+  cycles += 4;
   pc++;
   if (addr >= 0x8000 && addr <= 0x9fff)
     return ppu.vram[addr & 0x1fff];
@@ -49,7 +49,7 @@ u16 Bus::ReadHalf(u16 addr)
   return (ReadByte(addr + 1) << 8) | ReadByte(addr);
 }
 
-u16 Bus::NextHalf(u16 addr, u16& pc, u64& cycles)
+u16 Bus::NextHalf(u16 addr, u16& pc, u8& cycles)
 {
   return (NextByte(addr + 1, pc, cycles) << 8) | NextByte(addr, pc, cycles);
 }

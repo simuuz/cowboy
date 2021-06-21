@@ -36,6 +36,7 @@ MainWindow::~MainWindow()
 
 MainWindow::MainWindow(std::string title) : file("config.ini")
 {
+  SDL_Init(SDL_INIT_AUDIO);
   glfwSetErrorCallback(glfw_error_callback);
   if(!glfwInit())
   {
