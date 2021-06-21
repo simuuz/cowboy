@@ -12,5 +12,6 @@ https://github.com/Hacktix/Bootix</br>
 - Arrow keys -> DPAD
 - Enter -> Start
 - Right shift -> Select
+- Hold left shift to disable the frame limiter, release to enable it again
 
 <img src="./img/pokemon_blue.png" width="300"/> &nbsp;

@@ -5,9 +5,19 @@
 namespace natsukashii::frontend
 {
 int key, action;
+bool old_lock_fps, lock_fps;
 
 static void key_callback(GLFWwindow* window, int key_, int scancode, int action_, int mods)
 {
+  if(key_ == GLFW_KEY_LEFT_SHIFT && action_ == GLFW_PRESS) {
+    old_lock_fps = lock_fps;
+    lock_fps = false;
+  }
+
+  if(old_lock_fps && key_ == GLFW_KEY_LEFT_SHIFT && action_ == GLFW_RELEASE) {
+    lock_fps = true;
+  }
+
   key = key_;
   action = action_;
 }

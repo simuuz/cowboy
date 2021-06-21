@@ -11,8 +11,8 @@ public:
   void Reset();
   Bus* bus;
   bool halt = false;
-  int total_cycles = 0;
-  int cycles = 0;
+  u64 total_cycles = 0;
+  u8 cycles = 0;
   void HandleTimers();
   bool skip;
   u8 opcode;

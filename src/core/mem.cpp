@@ -194,24 +194,6 @@ u8 Mem::ReadIO(u16 addr)
     return io.tac;
   case 0x0f:
     return io.intf;
-  case 0x10 ... 0x1e:
-    return 0xff;
-  case 0x20:
-    return io.nr41;
-  case 0x21:
-    return io.nr42;
-  case 0x22:
-    return io.nr43;
-  case 0x23:
-    return io.nr44;
-  case 0x24:
-    return io.nr50;
-  case 0x25:
-    return io.nr51;
-  case 0x26:
-    return io.nr52;
-  case 0x4d:
-    return 0xff;
   case 0x50:
     return io.bootrom;
   default:
@@ -242,29 +224,6 @@ void Mem::WriteIO(u16 addr, u8 val)
     break;
   case 0x07:
     io.tac = val;
-    break;
-  case 0x10 ... 0x1e:
-    break;
-  case 0x20:
-    io.nr41 = val;
-    break;
-  case 0x21:
-    io.nr42 = val;
-    break;
-  case 0x22:
-    io.nr43 = val;
-    break;
-  case 0x23:
-    io.nr44 = val;
-    break;
-  case 0x24:
-    io.nr50 = val;
-    break;
-  case 0x25:
-    io.nr51 = val;
-    break;
-  case 0x26:
-    io.nr52 = val;
     break;
   case 0x50:
     io.bootrom = val;

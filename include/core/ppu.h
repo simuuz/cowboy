@@ -42,7 +42,7 @@ class Ppu
 public:
   Ppu(bool skip);
   void Reset();
-  void Step(int cycles, u8& intf);
+  void Step(u64 cycles, u8& intf);
 
   std::array<u32, FBSIZE> pixels;
   u32 color1, color2, color3, color4;
@@ -137,7 +137,7 @@ private:
 
   u8 colorIDbg[FBSIZE];
 
-  int curr_cycles = 0;
+  u64 curr_cycles = 0;
 
   void WriteIO(Mem& mem, u16 addr, u8 val, u8& intf);
   u8 ReadIO(u16 addr);

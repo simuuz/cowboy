@@ -30,7 +30,7 @@ u8 Bus::ReadByte(u16 addr)
   return mem.Read(addr);
 }
 
-u8 Bus::NextByte(u16 addr, u16& pc, int& cycles)
+u8 Bus::NextByte(u16 addr, u16& pc, u64& cycles)
 {
   cycles+=4;
   pc++;
@@ -49,7 +49,7 @@ u16 Bus::ReadHalf(u16 addr)
   return (ReadByte(addr + 1) << 8) | ReadByte(addr);
 }
 
-u16 Bus::NextHalf(u16 addr, u16& pc, int& cycles)
+u16 Bus::NextHalf(u16 addr, u16& pc, u64& cycles)
 {
   return (NextByte(addr + 1, pc, cycles) << 8) | NextByte(addr, pc, cycles);
 }
