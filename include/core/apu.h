@@ -154,6 +154,7 @@ private:
 	u16 reload_timer2();
 	s8 sample_sq2();
 	void sample();
+	SDL_Audio
 	u8 ch2_duty_index;
 	u8 frequency;
 	s16 timer2;
