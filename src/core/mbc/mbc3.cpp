@@ -2,7 +2,7 @@
 
 namespace natsukashii::core
 {
-MBC3::MBC3(std::vector<byte>& rom, std::string savefile) : rom(rom)
+MBC3::MBC3(std::vector<u8>& rom, std::string savefile) : rom(rom)
 {
   std::ifstream file{savefile, std::ios::binary};
   file.unsetf(std::ios::skipws);
@@ -18,7 +18,7 @@ MBC3::MBC3(std::vector<byte>& rom, std::string savefile) : rom(rom)
   }
 }
 
-byte MBC3::Read(half addr)
+u8 MBC3::Read(u16 addr)
 {
   switch (addr)
   {
@@ -31,7 +31,7 @@ byte MBC3::Read(half addr)
   }
 }
 
-void MBC3::Write(half addr, byte val)
+void MBC3::Write(u16 addr, u8 val)
 {
   switch (addr)
   {

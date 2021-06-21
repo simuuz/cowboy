@@ -6,7 +6,8 @@ namespace natsukashii::core
 {
 Mem::~Mem()
 {
-  cart->Save(savefile);
+  if(cart != nullptr)
+    cart->Save(savefile);
 }
 
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
@@ -67,7 +68,7 @@ void Mem::LoadROM(std::string path)
     exit(1);
   }
 
-  rom.insert(rom.begin(), std::istream_iterator<byte>(file), std::istream_iterator<byte>());
+  rom.insert(rom.begin(), std::istream_iterator<u8>(file), std::istream_iterator<u8>());
   file.close();
 
   rom_opened = true;
@@ -108,7 +109,7 @@ void Mem::LoadBootROM(std::string path)
   file.close();
 }
 
-byte Mem::Read(half addr)
+u8 Mem::Read(u16 addr)
 {
   switch (addr)
   {
@@ -143,7 +144,7 @@ byte Mem::Read(half addr)
   }
 }
 
-void Mem::Write(half addr, byte val)
+void Mem::Write(u16 addr, u8 val)
 {
   switch (addr)
   {
@@ -170,12 +171,11 @@ void Mem::Write(half addr, byte val)
   case 0xffff:
     ie = val;
     break;
-  default:
-    break;
+  default: break;
   }
 }
 
-byte Mem::ReadIO(half addr)
+u8 Mem::ReadIO(u16 addr)
 {
   switch (addr & 0xff)
   {
@@ -219,19 +219,15 @@ byte Mem::ReadIO(half addr)
   }
 }
 
-void Mem::WriteIO(half addr, byte val)
+void Mem::WriteIO(u16 addr, u8 val)
 {
   switch (addr & 0xff)
   {
   case 0:
     HandleJoypad(val);
     break;
-  case 0x01:
-    printf("%c", val);
-    break;
-  case 0x02: break;
-  case 0x30 ... 0x3f:
-    break;
+  case 0x01 ... 0x02: break;
+  case 0x30 ... 0x3f: break;
   case 0x04:
     io.div = 0;
     break;
@@ -278,15 +274,15 @@ void Mem::WriteIO(half addr, byte val)
   }
 }
 
-void Mem::HandleJoypad(byte val)
+void Mem::HandleJoypad(u8 val)
 {
-  button = !bit<byte, 5>(val);
-  dpad = !bit<byte, 4>(val);
+  button = !bit<u8, 5>(val);
+  dpad = !bit<u8, 4>(val);
 }
 
 void Mem::DoInputs(int key, int action)
 {
-  byte input = ((byte)(~button) << 5) | ((byte)(~dpad) << 4);
+  u8 input = ((u8)(~button) << 5) | ((u8)(~dpad) << 4);
   
   if(action == GLFW_PRESS) held = true;
   if(action == GLFW_RELEASE) held = false;

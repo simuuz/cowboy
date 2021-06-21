@@ -46,7 +46,7 @@ const std::string cb_opcode_disasm[256] =
   "SET 6, B", "SET 6, C", "SET 6, D", "SET 6, E", "SET 6, H", "SET 6, L", "SET 6, (HL)", "SET 6, A", "SET 7, B", "SET 7, C", "SET 7, D", "SET 7, E", "SET 7, H", "SET 7, L", "SET 7, (HL)", "SET 7, A"
 };
 
-static const std::string GetInstructionDisasm(byte idx, byte idx1)
+static const std::string GetInstructionDisasm(u8 idx, u8 idx1)
 {
   if(idx >= 0 && idx <= 255 && idx1 >= 0 && idx1 <= 255)
   {

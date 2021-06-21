@@ -2,7 +2,7 @@
 
 namespace natsukashii::core
 {
-MBC5::MBC5(std::vector<byte>& rom, std::string savefile) : rom(rom.begin(), rom.end())
+MBC5::MBC5(std::vector<u8>& rom, std::string savefile) : rom(rom.begin(), rom.end())
 {
   std::ifstream file{savefile, std::ios::binary};
   file.unsetf(std::ios::skipws);
@@ -18,7 +18,7 @@ MBC5::MBC5(std::vector<byte>& rom, std::string savefile) : rom(rom.begin(), rom.
   }
 }
 
-byte MBC5::Read(half addr)
+u8 MBC5::Read(u16 addr)
 {
   switch (addr)
   {
@@ -31,7 +31,7 @@ byte MBC5::Read(half addr)
   }
 }
 
-void MBC5::Write(half addr, byte val)
+void MBC5::Write(u16 addr, u8 val)
 {
   switch (addr)
   {
@@ -42,7 +42,7 @@ void MBC5::Write(half addr, byte val)
     romBank = val & 0xff;
     break;
   case 0x3000 ... 0x3fff:
-    setbit<half, 8>(romBank, val & 1);
+    setbit<u16, 8>(romBank, val & 1);
     break;
   case 0x4000 ... 0x5fff:
     ramBank = val;

@@ -86,7 +86,7 @@ void Ppu::Reset()
   }
 }
 
-void Ppu::CompareLYC(byte& intf)
+void Ppu::CompareLYC(u8& intf)
 {
   io.stat.lyceq = io.lyc == io.ly;
   if (io.lyc == io.ly && io.stat.lyceq_int)
@@ -95,7 +95,7 @@ void Ppu::CompareLYC(byte& intf)
   }
 }
 
-void Ppu::Step(int cycles, byte& intf)
+void Ppu::Step(int cycles, u8& intf)
 {
   if (!io.lcdc.enabled)
   {
@@ -157,7 +157,7 @@ void Ppu::Step(int cycles, byte& intf)
   }
 }
 
-void Ppu::ChangeMode(Mode m, byte& intf)
+void Ppu::ChangeMode(Mode m, u8& intf)
 {
   mode = m;
   switch (m)
@@ -188,7 +188,7 @@ void Ppu::ChangeMode(Mode m, byte& intf)
   }
 }
 
-byte Ppu::ReadIO(half addr)
+u8 Ppu::ReadIO(u16 addr)
 {
   switch (addr & 0xff)
   {
@@ -219,17 +219,12 @@ byte Ppu::ReadIO(half addr)
   }
 }
 
-void Ppu::WriteIO(Mem& mem, half addr, byte val, byte& intf)
+void Ppu::WriteIO(Mem& mem, u16 addr, u8 val, u8& intf)
 {
   switch (addr & 0xff)
   {
   case 0x40:
-    io.old_lcdc.raw = io.lcdc.raw;
     io.lcdc.raw = val;
-    if(!io.old_lcdc.enabled && io.lcdc.enabled) {
-      curr_cycles = 0;
-      intf |= 2;
-    }
     break;
   case 0x41:
     io.stat.write(val);
@@ -245,8 +240,8 @@ void Ppu::WriteIO(Mem& mem, half addr, byte val, byte& intf)
     break;
   case 0x46:  // OAM DMA very simple implementation
   {
-    half start = (half)val << 8;
-    for (byte i = 0; i < 0xa0; i++)
+    u16 start = (u16)val << 8;
+    for (u8 i = 0; i < 0xa0; i++)
     {
       oam[i] = mem.Read(start | i);
     }
@@ -273,18 +268,18 @@ void Ppu::WriteIO(Mem& mem, half addr, byte val, byte& intf)
 }
 
 template <typename T>
-void Ppu::WriteVRAM(half addr, T val)
+void Ppu::WriteVRAM(u16 addr, T val)
 {
-  *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]) = val;
+  *reinterpret_cast<T*>(&(reinterpret_cast<u8*>(vram.data()))[addr & 0x1fff]) = val;
 }
 
 template <typename T>
-T Ppu::ReadVRAM(half addr)
+T Ppu::ReadVRAM(u16 addr)
 {
-  return *reinterpret_cast<T*>(&(reinterpret_cast<byte*>(vram.data()))[addr & 0x1fff]);
+  return *reinterpret_cast<T*>(&(reinterpret_cast<u8*>(vram.data()))[addr & 0x1fff]);
 }
 
-word Ppu::GetColor(byte idx)
+u32 Ppu::GetColor(u8 idx)
 {
   switch(idx)
   {
@@ -308,21 +303,21 @@ void Ppu::Scanline()
 void Ppu::RenderBGs()
 {
   fbIndex = io.ly * WIDTH;
-  half bg_tilemap = io.lcdc.bg_tilemap_area == 1 ? 0x9C00 : 0x9800;
-  half window_tilemap = io.lcdc.window_tilemap_area == 1 ? 0x9C00 : 0x9800;
-  half tiledata = io.lcdc.bgwin_tiledata_area == 1 ? 0x8000 : 0x8800;
+  u16 bg_tilemap = io.lcdc.bg_tilemap_area == 1 ? 0x9C00 : 0x9800;
+  u16 window_tilemap = io.lcdc.window_tilemap_area == 1 ? 0x9C00 : 0x9800;
+  u16 tiledata = io.lcdc.bgwin_tiledata_area == 1 ? 0x8000 : 0x8800;
 
   bool render_window = (io.wy <= io.ly && io.lcdc.window_enable);
 
   for(int x = 0; x < WIDTH; x++)
   {
-    half tileline = 0;
-    sbyte scrolled_x = io.scx + x;
-    sbyte scrolled_y = io.scy + io.ly;
+    u16 tileline = 0;
+    s8 scrolled_x = io.scx + x;
+    s8 scrolled_y = io.scy + io.ly;
     
     if(io.lcdc.bgwin_priority) {
-      byte index = 0;
-      shalf real_wx = (shalf)io.wx - 7;
+      u8 index = 0;
+      s16 real_wx = (s16)io.wx - 7;
       if(render_window && real_wx <= x)
       {
         scrolled_x = x - real_wx;
@@ -337,19 +332,19 @@ void Ppu::RenderBGs()
 
       if(tiledata == 0x8000)
       {
-        tileline = ReadVRAM<half>(tiledata + ((half)index << 4) + ((half)(scrolled_y & 7) << 1));
+        tileline = ReadVRAM<u16>(tiledata + ((u16)index << 4) + ((u16)(scrolled_y & 7) << 1));
       }
       else
       {
-        tileline = ReadVRAM<half>(0x9000 + shalf((sbyte)index) * 16 + ((half)(scrolled_y & 7) << 1));
+        tileline = ReadVRAM<u16>(0x9000 + s16((s8)index) * 16 + ((u16)(scrolled_y & 7) << 1));
       }
     }
 
-    byte high = (tileline >> 8);
-    byte low = (tileline & 0xff);
+    u8 high = (tileline >> 8);
+    u8 low = (tileline & 0xff);
 
-    byte colorID = ((byte)bit<byte>(high, 7 - (scrolled_x & 7)) << 1) | ((byte)bit<byte>(low, 7 - (scrolled_x & 7)));
-    byte color_index = (io.bgp >> (colorID << 1)) & 3;
+    u8 colorID = ((u8)bit<u8>(high, 7 - (scrolled_x & 7)) << 1) | ((u8)bit<u8>(low, 7 - (scrolled_x & 7)));
+    u8 color_index = (io.bgp >> (colorID << 1)) & 3;
     colorIDbg[fbIndex] = colorID;
     pixels[fbIndex] = GetColor(color_index);
     fbIndex++;
@@ -365,12 +360,12 @@ std::vector<Sprite> Ppu::FetchSprites()
 {
   std::vector<Sprite> sprites;
   
-  byte height = io.lcdc.obj_size ? 16 : 8;
+  u8 height = io.lcdc.obj_size ? 16 : 8;
 
   for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4)
   {
     Sprite sprite(oam[i] - 16, oam[i + 1] - 8, oam[i + 2], oam[i + 3]);
-    if(io.ly >= (shalf)sprite.ypos && io.ly < ((shalf)sprite.ypos + height))
+    if(io.ly >= (s16)sprite.ypos && io.ly < ((s16)sprite.ypos + height))
     {
       sprites.push_back(sprite);
     }
@@ -392,7 +387,7 @@ void Ppu::RenderSprites()
   
   for(auto& sprite : sprites)
   {
-    half tile_y;
+    u16 tile_y;
     if(io.lcdc.obj_size)
     {
       tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 15) : io.ly - sprite.ypos;
@@ -402,19 +397,19 @@ void Ppu::RenderSprites()
       tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 7) & 7 : (io.ly - sprite.ypos) & 7;
     }
     
-    byte pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
+    u8 pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
     fbIndex = sprite.xpos + WIDTH * io.ly;
-    half tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
-    half tile = ReadVRAM<half>(0x8000 | ((tile_index << 4) + (tile_y << 1)));
+    u16 tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
+    u16 tile = ReadVRAM<u16>(0x8000 | ((tile_index << 4) + (tile_y << 1)));
 
     for(int x = 0; x < 8; x++)
     {
-      sbyte tile_x = (sprite.attribs.xflip) ? 7 - x : x;
-      byte high = tile >> 8;
-      byte low = tile & 0xff;
-      byte colorID = (bit<byte>(high, 7 - tile_x) << 1) | bit<byte>(low, 7 - tile_x);
-      byte colorIndex = (pal >> (colorID << 1)) & 3;
-      word color = GetColor(colorIndex);
+      s8 tile_x = (sprite.attribs.xflip) ? 7 - x : x;
+      u8 high = tile >> 8;
+      u8 low = tile & 0xff;
+      u8 colorID = (bit<u8>(high, 7 - tile_x) << 1) | bit<u8>(low, 7 - tile_x);
+      u8 colorIndex = (pal >> (colorID << 1)) & 3;
+      u32 color = GetColor(colorIndex);
       
       if((sprite.xpos + x) < 166 && colorID != 0 && pixels[fbIndex] != color)
       {

@@ -16,8 +16,8 @@ namespace natsukashii::core
 class Cart
 {
 public:
-  virtual byte Read(half addr) { return 0xff; }
-  virtual void Write(half addr, byte val) { }
+  virtual u8 Read(u16 addr) { return 0xff; }
+  virtual void Write(u16 addr, u8 val) { }
   virtual void Clear() { }
   virtual void Save(std::string filename) { }
 };
@@ -25,78 +25,78 @@ public:
 class NoMBC : public Cart
 {
 public:
-  NoMBC(std::vector<byte>& rom);
-  byte Read(half addr);
-  void Write(half addr, byte val);
+  NoMBC(std::vector<u8>& rom);
+  u8 Read(u16 addr);
+  void Write(u16 addr, u8 val);
   void Save(std::string filename) {}
 private:
-  std::vector<byte> rom;
+  std::vector<u8> rom;
 };
 
 class MBC1 : public Cart
 {
 public:
-  MBC1(std::vector<byte>& rom, std::string savefile);
-  byte Read(half addr);
-  void Write(half addr, byte val);
+  MBC1(std::vector<u8>& rom, std::string savefile);
+  u8 Read(u16 addr);
+  void Write(u16 addr, u8 val);
   void Save(std::string filename);
 private:
-  byte romBank = 1;
-  byte ramBank = 1;
-  byte romSize;
-  byte ramSize;
+  u8 romBank = 1;
+  u8 ramBank = 1;
+  u8 romSize;
+  u8 ramSize;
   bool mode = false;
   bool ramEnable = false;
-  static constexpr half bitmasks[7] = {0x1, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x1f};
-  static constexpr word RAM_SIZES[6] = {0, 2 * 1024, 8 * 1024, 32 * 1024, 128 * 1024, 64 * 1024};
+  static constexpr u16 bitmasks[7] = {0x1, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x1f};
+  static constexpr u32 RAM_SIZES[6] = {0, 2 * 1024, 8 * 1024, 32 * 1024, 128 * 1024, 64 * 1024};
   
-  std::array<byte, ERAM_SZ> ram;
-  std::vector<byte> rom;
+  std::array<u8, ERAM_SZ> ram;
+  std::vector<u8> rom;
 };
 
 class MBC2 : public Cart
 {
 public:
-  MBC2(std::vector<byte>& rom, std::string savefile);
-  byte Read(half addr);
-  void Write(half addr, byte val);
+  MBC2(std::vector<u8>& rom, std::string savefile);
+  u8 Read(u16 addr);
+  void Write(u16 addr, u8 val);
   void Save(std::string filename);
 private:
-  byte romBank = 1;
+  u8 romBank = 1;
   bool ramEnable = false;
 
-  std::array<byte, ERAM_SZ> ram;
-  std::vector<byte> rom;
+  std::array<u8, ERAM_SZ> ram;
+  std::vector<u8> rom;
 };
 
 class MBC3 : public Cart
 {
 public:
-  MBC3(std::vector<byte>& rom, std::string savefile);
-  byte Read(half addr);
-  void Write(half addr, byte val);
+  MBC3(std::vector<u8>& rom, std::string savefile);
+  u8 Read(u16 addr);
+  void Write(u16 addr, u8 val);
   void Save(std::string filename);
 private:
-  byte ramBank = 0;
-  byte romBank = 0;
+  u8 ramBank = 0;
+  u8 romBank = 0;
 
-  std::array<byte, ERAM_SZ> ram;
-  std::vector<byte> rom;
+  std::array<u8, ERAM_SZ> ram;
+  std::vector<u8> rom;
   bool ramEnable = false;
 };
 
 class MBC5 : public Cart
 {
 public:
-  MBC5(std::vector<byte>& rom, std::string savefile);
-  byte Read(half addr);
-  void Write(half addr, byte val);
+  MBC5(std::vector<u8>& rom, std::string savefile);
+  u8 Read(u16 addr);
+  void Write(u16 addr, u8 val);
   void Save(std::string filename);
 private:
-  half romBank = 1;
-  byte ramBank = 1;
-  std::array<byte, ERAM_SZ> ram;
-  std::vector<byte> rom;
+  u16 romBank = 1;
+  u8 ramBank = 1;
+  std::array<u8, ERAM_SZ> ram;
+  std::vector<u8> rom;
   bool ramEnable = false;
 };
 
@@ -107,10 +107,10 @@ public:
   Mem(bool skip, std::string bootrom_path);
   void LoadROM(std::string filename);
   void Reset();
-  byte Read(half addr);
-  void Write(half addr, byte val);
+  u8 Read(u16 addr);
+  void Write(u16 addr, u8 val);
 
-  byte ie = 0;
+  u8 ie = 0;
   bool skip;
 
   struct Joypad
@@ -129,11 +129,11 @@ public:
         unsigned btn_b_right:1;
       };
 
-      byte raw;
+      u8 raw;
     };
 
     Joypad() : raw(0xff) {}
-    void write(byte val) {
+    void write(u8 val) {
       raw = val;
       raw |= (0b11000000);
     }
@@ -141,8 +141,8 @@ public:
 
   struct IO
   {
-    byte bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
-    byte nr41, nr42, nr43, nr44, nr50, nr51, nr52;
+    u8 bootrom = 1, tac = 0, tima = 0, tma = 0, intf = 0, div = 0;
+    u8 nr41, nr42, nr43, nr44, nr50, nr51, nr52;
     Joypad joy;
   } io;
 
@@ -155,19 +155,19 @@ private:
   Cart* cart = nullptr;
   void LoadBootROM(std::string filename);
 
-  void WriteIO(half addr, byte val);
-  byte ReadIO(half addr);
+  void WriteIO(u16 addr, u8 val);
+  u8 ReadIO(u16 addr);
 
-  byte bootrom[BOOTROM_SZ];
-  byte extram[EXTRAM_SZ];
-  byte wram[WRAM_SZ];
-  byte eram[ERAM_SZ];
-  byte hram[HRAM_SZ];
-  std::vector<byte> rom;
+  u8 bootrom[BOOTROM_SZ];
+  u8 extram[EXTRAM_SZ];
+  u8 wram[WRAM_SZ];
+  u8 eram[ERAM_SZ];
+  u8 hram[HRAM_SZ];
+  std::vector<u8> rom;
 
   bool dpad = false;
   bool button = false;
 
-  void HandleJoypad(byte val);
+  void HandleJoypad(u8 val);
 };
 }  // namespace natsukashii::core

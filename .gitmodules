@@ -7,3 +7,9 @@
 [submodule "include/external/implot"]
 	path = include/external/implot
 	url = https://github.com/epezent/implot
+[submodule "miniaudio"]
+	path = miniaudio
+	url = https://github.com/mackron/miniaudio
+[submodule "include/external/miniaudio"]
+	path = include/external/miniaudio
+	url = https://github.com/mackron/miniaudio

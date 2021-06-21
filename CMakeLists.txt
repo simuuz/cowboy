@@ -11,6 +11,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 file(GLOB_RECURSE IMPLOT_SRC "include/external/implot/*.cpp")
 file(GLOB_RECURSE EMU_SRC "src/*.cpp")
 
+if(WIN32)
+  set(FLAGS "-O3 -static")
+else()
+  set(FLAGS "-O3")
+endif()
+
 set(IMGUI_SRC
     include/external/imgui/imgui.cpp
     include/external/imgui/imgui_demo.cpp
@@ -28,11 +34,13 @@ include_directories(
   include/external/imgui/backends/
   include/external/implot/
   include/external/nativefiledialog-extended/
+  include/external/miniaudio/
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 find_package(OpenGL REQUIRED)
+find_package(SDL2 REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 add_subdirectory(include/external/nativefiledialog-extended/)
@@ -47,6 +55,7 @@ add_executable(natsukashii
 #target_link_options(natsukashii PRIVATE -fsanitize=address)
 
 target_link_libraries(natsukashii PRIVATE OpenGL::GL)
+target_link_libraries(natsukashii PRIVATE SDL2)
 target_link_libraries(natsukashii PRIVATE GLEW::glew)
 target_link_libraries(natsukashii PRIVATE glfw)
 target_link_libraries(natsukashii PRIVATE nfd)

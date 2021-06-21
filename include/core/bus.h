@@ -6,12 +6,12 @@ namespace natsukashii::core
 struct Bus
 {
   Bus(bool skip, std::string bootrom_path);
-  byte ReadByte(half addr);
-  byte NextByte(half addr, half& pc);
-  void WriteByte(half addr, byte val);
-  half ReadHalf(half addr);
-  half NextHalf(half addr, half& pc);
-  void WriteHalf(half addr, half val);
+  u8 ReadByte(u16 addr);
+  u8 NextByte(u16 addr, u16& pc, int& cycles);
+  void WriteByte(u16 addr, u8 val);
+  u16 ReadHalf(u16 addr);
+  u16 NextHalf(u16 addr, u16& pc, int& cycles);
+  void WriteHalf(u16 addr, u16 val);
   void LoadROM(std::string filename);
   void Reset();
   bool romopened = false;

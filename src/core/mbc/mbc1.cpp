@@ -2,7 +2,7 @@
 
 namespace natsukashii::core
 {
-MBC1::MBC1(std::vector<byte>& rom, std::string savefile) : rom(rom)
+MBC1::MBC1(std::vector<u8>& rom, std::string savefile) : rom(rom)
 {
   std::ifstream file{savefile, std::ios::binary};
   file.unsetf(std::ios::skipws);
@@ -21,10 +21,10 @@ MBC1::MBC1(std::vector<byte>& rom, std::string savefile) : rom(rom)
   ramSize = rom[0x149];
 }
 
-byte MBC1::Read(half addr)
+u8 MBC1::Read(u16 addr)
 {
-  byte zeroBank = 0;
-  byte highBank = 0;
+  u8 zeroBank = 0;
+  u8 highBank = 0;
   switch (addr)
   {
   case 0 ... 0x3fff:
@@ -36,11 +36,11 @@ byte MBC1::Read(half addr)
         zeroBank = 0;
         break;
       case 5:
-        setbit<byte, 5>(zeroBank, ramBank & 1);
+        setbit<u8, 5>(zeroBank, ramBank & 1);
         break;
       case 6:
-        setbit<byte, 5>(zeroBank, ramBank & 1);
-        setbit<byte, 6>(zeroBank, ramBank >> 1);
+        setbit<u8, 5>(zeroBank, ramBank & 1);
+        setbit<u8, 6>(zeroBank, ramBank >> 1);
         break;
       }
       return rom[(0x4000 * zeroBank + addr) % rom.size()];
@@ -55,11 +55,11 @@ byte MBC1::Read(half addr)
     switch (romSize)
     {
     case 5:
-      setbit<byte, 5>(highBank, ramBank & 1);
+      setbit<u8, 5>(highBank, ramBank & 1);
       break;
     case 6:
-      setbit<byte, 5>(highBank, ramBank & 1);
-      setbit<byte, 6>(highBank, ramBank >> 1);
+      setbit<u8, 5>(highBank, ramBank & 1);
+      setbit<u8, 6>(highBank, ramBank >> 1);
       break;
     }
     return rom[(0x4000 * highBank + (addr - 0x4000)) % rom.size()];
@@ -90,7 +90,7 @@ byte MBC1::Read(half addr)
   }
 }
 
-void MBC1::Write(half addr, byte val) 
+void MBC1::Write(u16 addr, u8 val) 
 {
   switch (addr)
   {

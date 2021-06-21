@@ -24,7 +24,7 @@ MainWindow::~MainWindow()
   NFD_Quit();
 }
 
-MainWindow::MainWindow(std::string title)
+MainWindow::MainWindow(std::string title) : file("config.ini")
 {
   glfwSetErrorCallback(glfw_error_callback);
   if(!glfwInit())
@@ -63,12 +63,10 @@ MainWindow::MainWindow(std::string title)
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  mINI::INIFile file{"config.ini"};
-  mINI::INIStructure ini;
-
   if (!file.read(ini))
   {
     ini["emulator"]["skip"] = "false";
+    ini["emulator"]["lock_fps"] = "true";
     ini["emulator"]["bootrom"] = "bootrom.bin";
     ini["palette"]["color1"] = "e0f8d0ff";
     ini["palette"]["color2"] = "88c070ff";
@@ -78,6 +76,7 @@ MainWindow::MainWindow(std::string title)
   }
 
   bool skip = ini["emulator"]["skip"] == "true";
+  lock_fps = ini["emulator"]["lock_fps"] == "true";
   std::string bootrom = ini["emulator"]["bootrom"];
   core = std::make_unique<Core>(skip, bootrom);
 
@@ -117,8 +116,7 @@ void MainWindow::Run()
 {
   int i = 0;
   ImGuiIO& io = ImGui::GetIO(); (void)io;
-  auto start = std::chrono::high_resolution_clock::now();
-  float frametime = 60;
+  
   while(!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
@@ -127,7 +125,11 @@ void MainWindow::Run()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    core->Run(io.Framerate, key, action);
+    if(lock_fps) {
+      core->Run(io.Framerate, key, action);
+    } else {
+      core->Run(59.727, key, action);
+    }
 
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
@@ -135,7 +137,7 @@ void MainWindow::Run()
     }
 
     i++;
-    if(i >= 1000) {
+    if(i >= io.Framerate) {
       i = 0;
       char title[50]{0};
       sprintf(title, "natsukashii [%.2f fps | %.2f ms]", io.Framerate, 1000 / io.Framerate);
@@ -226,6 +228,10 @@ void MainWindow::MenuBar()
       }
 
       ImGui::Checkbox("Show debug windows", &show_debug_windows);
+      if(ImGui::Checkbox("Lock FPS", &lock_fps)) {
+        ini["emulator"]["lock_fps"] = lock_fps ? "true" : "false";
+        file.write(ini);
+      }
 
       ImGui::EndMenu();
     }
@@ -235,20 +241,6 @@ void MainWindow::MenuBar()
 
 void MainWindow::Settings()
 {
-  mINI::INIFile file{"config.ini"};
-  mINI::INIStructure ini;
-
-  if (!file.read(ini))
-  {
-    ini["emulator"]["skip"] = "false";
-    ini["emulator"]["bootrom"] = "bootrom.bin";
-    ini["palette"]["color1"] = "e0f8d0ff";
-    ini["palette"]["color2"] = "88c070ff";
-    ini["palette"]["color3"] = "346856ff";
-    ini["palette"]["color4"] = "81820ff";
-    file.generate(ini);
-  }
-
   bool skip = ini["emulator"]["skip"] == "true";
   std::string bootrom = ini["emulator"]["bootrom"];
 
@@ -346,10 +338,10 @@ void MainWindow::GraphicsSettings(mINI::INIFile& file, mINI::INIStructure& ini)
 
   std::stringstream sstream;
 
-  word color1_ = word((byte(255 * color1[0]) << 24) | (byte(255 * color1[1]) << 16) | (byte(255 * color1[2]) << 8) | byte(255 * color1[3]));
-  word color2_ = word((byte(255 * color2[0]) << 24) | (byte(255 * color2[1]) << 16) | (byte(255 * color2[2]) << 8) | byte(255 * color2[3]));
-  word color3_ = word((byte(255 * color3[0]) << 24) | (byte(255 * color3[1]) << 16) | (byte(255 * color3[2]) << 8) | byte(255 * color3[3]));
-  word color4_ = word((byte(255 * color4[0]) << 24) | (byte(255 * color4[1]) << 16) | (byte(255 * color4[2]) << 8) | byte(255 * color4[3]));
+  u32 color1_ = u32((u8(255 * color1[0]) << 24) | (u8(255 * color1[1]) << 16) | (u8(255 * color1[2]) << 8) | u8(255 * color1[3]));
+  u32 color2_ = u32((u8(255 * color2[0]) << 24) | (u8(255 * color2[1]) << 16) | (u8(255 * color2[2]) << 8) | u8(255 * color2[3]));
+  u32 color3_ = u32((u8(255 * color3[0]) << 24) | (u8(255 * color3[1]) << 16) | (u8(255 * color3[2]) << 8) | u8(255 * color3[3]));
+  u32 color4_ = u32((u8(255 * color4[0]) << 24) | (u8(255 * color4[1]) << 16) | (u8(255 * color4[2]) << 8) | u8(255 * color4[3]));
 
   core->cpu.bus->ppu.color1 = color1_;
   core->cpu.bus->ppu.color2 = color2_;

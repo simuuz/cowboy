@@ -11,32 +11,32 @@
 #include <GLFW/glfw3.h>
 #include <utility>
 
-using byte = uint8_t;
-using half = uint16_t;
-using word = uint32_t;
-using sbyte = int8_t;
-using shalf = int16_t;
-using sword = int32_t;
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using s8 = int8_t;
+using s16 = int16_t;
+using s32 = int32_t;
 
 template <typename T>
-static constexpr bool bit(T num, byte pos)
+static constexpr bool bit(T num, u8 pos)
 {
   return (num >> pos) & 1;
 }
 
-template <typename T, byte pos>
+template <typename T, u8 pos>
 static constexpr bool bit(T num)
 {
   return (num >> pos) & 1;
 }
 
 template <typename T>
-void setbit(T& num, byte pos, bool val)
+void setbit(T& num, u8 pos, bool val)
 {
   num ^= (-(!!val) ^ num) & (1 << pos);
 }
 
-template <typename T, byte pos>
+template <typename T, u8 pos>
 void setbit(T& num, bool val)
 {
   num ^= (-(!!val) ^ num) & (1 << pos);

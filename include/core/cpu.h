@@ -15,63 +15,63 @@ public:
   int cycles = 0;
   void HandleTimers();
   bool skip;
-  byte opcode;
+  u8 opcode;
   struct registers
   {
     union
     {
       struct
       {
-        byte f, a;
+        u8 f, a;
       };
-      half af;
+      u16 af;
     };
 
     union
     {
       struct
       {
-        byte c, b;
+        u8 c, b;
       };
-      half bc;
+      u16 bc;
     };
 
     union
     {
       struct
       {
-        byte e, d;
+        u8 e, d;
       };
-      half de;
+      u16 de;
     };
 
     union
     {
       struct
       {
-        byte l, h;
+        u8 l, h;
       };
-      half hl;
+      u16 hl;
     };
 
-    half sp = 0, pc = 0;
+    u16 sp = 0, pc = 0;
   } regs;
 
 private:
   void UpdateF(bool z, bool n, bool h, bool c);
-  bool Cond(byte opcode);
+  bool Cond(u8 opcode);
 
   template <int group>
-  half ReadR16(byte bits);
+  u16 ReadR16(u8 bits);
   template <int group>
-  void WriteR16(byte bits, half val);
+  void WriteR16(u8 bits, u16 val);
 
-  byte ReadR8(byte bits);
-  void WriteR8(byte bits, byte value);
+  u8 ReadR8(u8 bits);
+  void WriteR8(u8 bits, u8 value);
 
-  void Execute(byte opcode);
-  void Push(half val);
-  half Pop();
+  void Execute(u8 opcode);
+  void Push(u16 val);
+  u16 Pop();
   FILE* log;
   void HandleInterrupts();
   int tima_cycles = 0;
@@ -81,42 +81,3 @@ private:
   bool ei = false;
 };
 }  // namespace natsukashii::core
-
-static const int opcycles[256] = {
-    // 0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
-    4,  12, 8,  8,  4,  4,  8,  4,  20, 8,  8,  8, 4,  4,  8, 4,   // 0
-    4,  12, 8,  8,  4,  4,  8,  4,  12, 8,  8,  8, 4,  4,  8, 4,   // 1
-    8,  12, 8,  8,  4,  4,  8,  4,  8,  8,  8,  8, 4,  4,  8, 4,   // 2
-    8,  12, 8,  8,  12, 12, 12, 4,  8,  8,  8,  8, 4,  4,  8, 4,   // 3
-    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,   // 4
-    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,   // 5
-    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,   // 6
-    8,  8,  8,  8,  8,  8,  4,  8,  4,  4,  4,  4, 4,  4,  8, 4,   // 7
-    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,   // 8
-    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,   // 9
-    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,   // A
-    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,   // B
-    8,  12, 12, 16, 12, 16, 8,  16, 8,  16, 12, 0, 12, 24, 8, 16,  // C
-    8,  12, 12, 0,  12, 16, 8,  16, 8,  16, 12, 0, 12, 0,  8, 16,  // D
-    12, 12, 8,  0,  0,  16, 8,  16, 16, 4,  16, 0, 0,  0,  8, 16,  // E
-    12, 12, 8,  4,  0,  16, 8,  16, 12, 8,  16, 4, 0,  0,  8, 16   // F
-};
-
-static const int cbopcycles[256] = {
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 0
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 1
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 2
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 3
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 4
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 5
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 6
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 7
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 8
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // 9
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // A
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // B
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // C
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // D
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8,  // E
-    8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8   // F
-};  // 0  1  2  3  4  5  6   7  8  9  A  B  C  D  E   F

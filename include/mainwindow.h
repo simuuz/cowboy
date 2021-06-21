@@ -27,6 +27,9 @@ struct MainWindow
   bool show_palette = false;
   bool show_debug_windows = false;
   bool show_settings = false;
+  bool lock_fps = true;
+  mINI::INIFile file;
+  mINI::INIStructure ini;
   GLFWwindow* window = nullptr;
   std::unique_ptr<Core> core;
   unsigned int id = 0;

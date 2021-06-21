@@ -18,7 +18,7 @@ void Bus::Reset()
   mem.Reset();
 }
 
-byte Bus::ReadByte(half addr)
+u8 Bus::ReadByte(u16 addr)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
     return ppu.vram[addr & 0x1fff];
@@ -30,8 +30,9 @@ byte Bus::ReadByte(half addr)
   return mem.Read(addr);
 }
 
-byte Bus::NextByte(half addr, half& pc)
+u8 Bus::NextByte(u16 addr, u16& pc, int& cycles)
 {
+  cycles+=4;
   pc++;
   if (addr >= 0x8000 && addr <= 0x9fff)
     return ppu.vram[addr & 0x1fff];
@@ -43,17 +44,17 @@ byte Bus::NextByte(half addr, half& pc)
   return mem.Read(addr);
 }
 
-half Bus::ReadHalf(half addr)
+u16 Bus::ReadHalf(u16 addr)
 {
   return (ReadByte(addr + 1) << 8) | ReadByte(addr);
 }
 
-half Bus::NextHalf(half addr, half& pc)
+u16 Bus::NextHalf(u16 addr, u16& pc, int& cycles)
 {
-  return (NextByte(addr + 1, pc) << 8) | NextByte(addr, pc);
+  return (NextByte(addr + 1, pc, cycles) << 8) | NextByte(addr, pc, cycles);
 }
 
-void Bus::WriteByte(half addr, byte val)
+void Bus::WriteByte(u16 addr, u8 val)
 {
   if (addr >= 0x8000 && addr <= 0x9fff)
   {
@@ -74,7 +75,7 @@ void Bus::WriteByte(half addr, byte val)
   mem.Write(addr, val);
 }
 
-void Bus::WriteHalf(half addr, half val)
+void Bus::WriteHalf(u16 addr, u16 val)
 {
   WriteByte(addr + 1, val >> 8);
   WriteByte(addr, val);

@@ -25,15 +25,15 @@ private:
         unsigned obj_to_bg_prio:1;
       };
 
-      byte raw;
+      u8 raw;
     };
 
-    Attributes(byte val) : raw(val) { }
+    Attributes(u8 val) : raw(val) { }
   };
 public:
-  Sprite(byte ypos = 0, byte xpos = 0, byte tileidx = 0, byte attribs = 0)
+  Sprite(u8 ypos = 0, u8 xpos = 0, u8 tileidx = 0, u8 attribs = 0)
         : ypos(ypos), xpos(xpos), tileidx(tileidx), attribs(attribs) { }
-  byte ypos, xpos, tileidx;
+  u8 ypos, xpos, tileidx;
   Attributes attribs;
 };
 
@@ -42,12 +42,12 @@ class Ppu
 public:
   Ppu(bool skip);
   void Reset();
-  void Step(int cycles, byte& intf);
+  void Step(int cycles, u8& intf);
 
-  std::array<word, FBSIZE> pixels;
-  word color1, color2, color3, color4;
-  std::array<byte, VRAM_SZ> vram;
-  std::array<byte, OAM_SZ> oam;
+  std::array<u32, FBSIZE> pixels;
+  u32 color1, color2, color3, color4;
+  std::array<u8, VRAM_SZ> vram;
+  std::array<u8, OAM_SZ> oam;
 
   friend class Bus;
   bool render = false;
@@ -56,7 +56,7 @@ private:
   bool reset = false;
   bool skip = false;
 
-  std::array<byte, FBSIZE> indices;
+  std::array<u8, FBSIZE> indices;
 
   enum Mode
   {
@@ -66,7 +66,7 @@ private:
     LCDTransfer
   };
 
-  word GetColor(byte idx);
+  u32 GetColor(u8 idx);
   Mode mode = OAM;
   
   struct LCDC
@@ -85,7 +85,7 @@ private:
         unsigned enabled:1;
       };
       
-      byte raw;
+      u8 raw;
     };
 
     LCDC() : raw(0) {}
@@ -106,18 +106,18 @@ private:
         unsigned:1;
       };
 
-      byte raw;
+      u8 raw;
     };
 
     STAT() : raw(0) {}
 
-    void write(byte value)
+    void write(u8 value)
     {
       raw = value;
       raw |= 0x80;
     }
 
-    byte read()
+    u8 read()
     {
       return (1 << 7) | (raw & 0x7f);
     }
@@ -125,31 +125,31 @@ private:
   
   struct IO
   {
-    byte bgp = 0, scy = 0, scx = 0;
+    u8 bgp = 0, scy = 0, scx = 0;
     LCDC lcdc, old_lcdc;
-    byte wx = 0, wy = 0, obp0 = 0, obp1 = 0;
-    byte lyc = 0, ly = 0;
+    u8 wx = 0, wy = 0, obp0 = 0, obp1 = 0;
+    u8 lyc = 0, ly = 0;
     STAT stat;
   } io;
 
-  byte window_internal_counter = 0;
-  word fbIndex = 0;
+  u8 window_internal_counter = 0;
+  u32 fbIndex = 0;
 
-  byte colorIDbg[FBSIZE];
+  u8 colorIDbg[FBSIZE];
 
   int curr_cycles = 0;
 
-  void WriteIO(Mem& mem, half addr, byte val, byte& intf);
-  byte ReadIO(half addr);
+  void WriteIO(Mem& mem, u16 addr, u8 val, u8& intf);
+  u8 ReadIO(u16 addr);
   template <typename T>
-  void WriteVRAM(half addr, T val);
+  void WriteVRAM(u16 addr, T val);
   template <typename T>
-  T ReadVRAM(half addr);
-  void ChangeMode(Mode m, byte& intf);
+  T ReadVRAM(u16 addr);
+  void ChangeMode(Mode m, u8& intf);
   std::vector<Sprite> FetchSprites();
   void RenderSprites();
   void RenderBGs();
   void Scanline();
-  void CompareLYC(byte& intf);
+  void CompareLYC(u8& intf);
 };
 }  // namespace natsukashii::core
