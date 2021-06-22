@@ -10,8 +10,6 @@ Apu::~Apu() {
 	ma_device_uninit(&device);
 }
 
-
-
 Apu::Apu(bool skip) : skip(skip)
 {
 	ma_device_config config;
@@ -135,11 +133,5 @@ void Apu::sample() {
 	u8 sample2 = sample_sq2();
 	if (sample2 > 0.1) sample2 = 0.1;
 	if (sample2 < -0.1) sample2 = -0.1;
-
-	while(ma_device_start(&device) > (1024 * 4)) {
-		
-	}
-  
-	ma_device_stop(&device);
 }
 }

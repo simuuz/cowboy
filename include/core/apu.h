@@ -155,8 +155,6 @@ private:
 	constexpr static int frequency = 48000;
 	constexpr static u8 channels = 2;
 
-	using Callback = void (*)(ma_device* device, void* output, const void* input, u32 frame_count);
-	Callback callback;
 	u16 reload_timer2();
 	u8 sample_sq2();
 	void sample();
