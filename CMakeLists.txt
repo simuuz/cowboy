@@ -11,12 +11,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 file(GLOB_RECURSE IMPLOT_SRC "include/external/implot/*.cpp")
 file(GLOB_RECURSE EMU_SRC "src/*.cpp")
 
-if(WIN32)
-  set(FLAGS "-O3 -static")
-else()
-  set(FLAGS "-O3")
-endif()
-
 set(IMGUI_SRC
     include/external/imgui/imgui.cpp
     include/external/imgui/imgui_demo.cpp
@@ -37,7 +31,7 @@ include_directories(
   include/external/miniaudio/
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)

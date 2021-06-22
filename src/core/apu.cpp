@@ -71,6 +71,34 @@ void Apu::Reset()
 	nr52.raw = skip ? 0xF1 : 0;
 }
 
+void Apu::WriteIO(u16 addr, u8 val) {
+  switch(addr & 0xff) {
+    case 0x10: nr10.raw = val; break;
+    case 0x11: nr11.raw = val; break;
+    case 0x12: nr12.raw = val; break;
+    case 0x13: nr13 = val; break;
+    case 0x14: nr14.raw = val; break;
+    case 0x16: nr21.raw = val; break;
+    case 0x17: nr22.raw = val; break;
+    case 0x18: nr23 = val; break;
+    case 0x19: nr24.raw = val; break;
+    case 0x1A ... 0x3F: break;
+  }
+}
+
+u8 Apu::ReadIO(u16 addr) {
+  switch(addr & 0xff) {
+    case 0x10: return nr10.raw;
+    case 0x11: return nr11.duty;
+    case 0x12: return nr12.raw;
+    case 0x14: return nr14.len_enable;
+    case 0x16: return nr21.duty;
+    case 0x17: return nr22.raw;
+    case 0x19: return nr24.len_enable;
+    case 0x1A ... 0x3F: return 0xff;
+  }
+}
+
 void Apu::Step(u64 cycles) {
 	timer2 -= cycles;
 	if(timer2 <= 0) {

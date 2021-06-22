@@ -4,10 +4,10 @@
 namespace natsukashii::core
 {
 constexpr s8 duty_sq2[4][8] = {
-	{-1,-1,-1,-1,-1,-1,-1,+1},
-	{+1,-1,-1,-1,-1,-1,-1,+1},
-	{+1,-1,-1,-1,-1,+1,+1,+1},
-	{-1,+1,+1,+1,+1,+1,+1,-1}
+	{-1,-1,-1,-1,-1,-1,-1, 1},
+	{ 1,-1,-1,-1,-1,-1,-1, 1},
+	{ 1,-1,-1,-1,-1, 1, 1, 1},
+	{-1, 1, 1, 1, 1, 1, 1,-1}
 };
 
 class Apu {
@@ -16,6 +16,7 @@ public:
 	~Apu();
 	void Reset();
 	void Step(u64 cycles);
+	friend class Bus;
 private:
 	bool skip;
 	union {
@@ -154,8 +155,6 @@ private:
 	constexpr static int frequency = 48000;
 	constexpr static int samples = 512;
 	constexpr static u8 channels = 2;
-	constexpr static int maxSampleCycles = 4194304 / frequency;
-	constexpr static int maxSequencerCycles = 4194304 / samples;
 
 	u16 reload_timer2();
 	s8 sample_sq2();
@@ -163,6 +162,8 @@ private:
 	u8 sample_rate = 88;
 	SDL_AudioDeviceID audio_device;
 	u8 ch2_duty_index;
+	u8 ReadIO(u16 addr);
+	void WriteIO(u16 addr, u8 val);
 
 	s16 timer2;
 	int frequency_timer;
