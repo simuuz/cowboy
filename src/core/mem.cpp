@@ -181,9 +181,6 @@ u8 Mem::ReadIO(u16 addr)
   {
   case 0:
     return io.joy.raw;
-  case 1 ... 0x02:
-  case 0x30 ... 0x3f:
-    return 0xff;
   case 0x04:
     return io.div;
   case 0x05:
@@ -208,8 +205,7 @@ void Mem::WriteIO(u16 addr, u8 val)
   case 0:
     HandleJoypad(val);
     break;
-  case 0x01 ... 0x02: break;
-  case 0x30 ... 0x3f: break;
+  case 0x01: case 0x02: break;
   case 0x04:
     io.div = 0;
     break;

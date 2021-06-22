@@ -45,9 +45,9 @@ MainWindow::MainWindow(std::string title) : file("config.ini")
     exit(1);
   }
 
-  const char* glsl_version = "#version 450";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+  const char* glsl_version = "#version 330";
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
   const GLFWvidmode *details = glfwGetVideoMode(glfwGetPrimaryMonitor());
   int w = details->width - (details->width / 4), h = details->height - (details->height / 4);
@@ -115,6 +115,7 @@ void MainWindow::OpenFile()
 
 void MainWindow::UpdateTexture()
 {
+  assert(core->bus.ppu.pixels.data());
   glBindTexture(GL_TEXTURE_2D, id);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, core->bus.ppu.pixels.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

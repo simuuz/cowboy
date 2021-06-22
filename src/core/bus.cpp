@@ -22,7 +22,7 @@ u8 Bus::ReadByte(u16 addr)
 {
   switch(addr) {
   case 0x8000 ... 0x9fff:
-    return ppu.vram[addr & 0xffff];
+    return ppu.vram[addr & 0x1fff];
   case 0xfe00 ... 0xfe9f:
     return ppu.oam[addr & 0xff];
   case 0xff40 ... 0xff4b:
@@ -56,7 +56,7 @@ void Bus::WriteByte(u16 addr, u8 val)
 {
   switch(addr) {
   case 0x8000 ... 0x9fff:
-    ppu.vram[addr & 0xffff] = val;
+    ppu.vram[addr & 0x1fff] = val;
     break;
   case 0xfe00 ... 0xfe9f:
     ppu.oam[addr & 0xff] = val;

@@ -25,7 +25,7 @@ void DebugWindow::Perf(float fps)
   ImGui::End();
 }
 
-void DebugWindow::Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
+void DebugWindow::Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& pause, float fps)
 {
   ImGui::Begin("Debugger");
   static float w = ImGui::GetWindowSize().x / 2;
@@ -59,7 +59,7 @@ void DebugWindow::Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& ru
   ImGui::BeginChild("child2", ImVec2(w, 0), true);
 
   ImGui::Checkbox("Debug", &debug);
-  if(ImGui::Button("Step") && debug && init && running) {
+  if(ImGui::Button("Step") && debug && init) {
     cpu.Step();
     bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
     cpu.HandleTimers();

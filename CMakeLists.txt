@@ -12,31 +12,28 @@ file(GLOB_RECURSE IMPLOT_SRC "include/external/implot/*.cpp")
 file(GLOB_RECURSE EMU_SRC "src/*.cpp")
 
 set(IMGUI_SRC
-    include/external/imgui/imgui.cpp
-    include/external/imgui/imgui_demo.cpp
-    include/external/imgui/imgui_draw.cpp
-    include/external/imgui/imgui_tables.cpp
-    include/external/imgui/imgui_widgets.cpp
-    include/external/imgui/backends/imgui_impl_opengl3.cpp
-    include/external/imgui/backends/imgui_impl_glfw.cpp)
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/imgui.cpp
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/imgui_demo.cpp
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/imgui_draw.cpp
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/imgui_tables.cpp
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/imgui_widgets.cpp
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/backends/imgui_impl_opengl3.cpp
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/backends/imgui_impl_glfw.cpp)
 
 include_directories(
-  include/
-  include/core/
-  include/external/
-  include/external/imgui/
-  include/external/imgui/backends/
-  include/external/implot/
-  include/external/nativefiledialog-extended/
-  include/external/miniaudio/
+  ${CMAKE_SOURCE_DIR}/include/
+  ${CMAKE_SOURCE_DIR}/include/core/
+  ${CMAKE_SOURCE_DIR}/include/external/
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/backends/
+  ${CMAKE_SOURCE_DIR}/include/external/implot/
+  ${CMAKE_SOURCE_DIR}/include/external/nativefiledialog-extended/
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-
 find_package(OpenGL REQUIRED)
-find_package(SDL2 REQUIRED)
+find_package(glfw3 3.3 REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(glfw3 REQUIRED)
+find_package(SDL2 REQUIRED)
 add_subdirectory(include/external/nativefiledialog-extended/)
 
 add_executable(natsukashii
@@ -45,11 +42,13 @@ add_executable(natsukashii
   ${EMU_SRC}
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
 #target_compile_options(natsukashii PRIVATE -fsanitize=address)
 #target_link_options(natsukashii PRIVATE -fsanitize=address)
 
 target_link_libraries(natsukashii PRIVATE OpenGL::GL)
-target_link_libraries(natsukashii PRIVATE SDL2)
-target_link_libraries(natsukashii PRIVATE GLEW::glew)
 target_link_libraries(natsukashii PRIVATE glfw)
+target_link_libraries(natsukashii PRIVATE GLEW::glew)
+target_link_libraries(natsukashii PRIVATE SDL2)
 target_link_libraries(natsukashii PRIVATE nfd)

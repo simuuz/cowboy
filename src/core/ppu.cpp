@@ -224,7 +224,11 @@ void Ppu::WriteIO(Mem& mem, u16 addr, u8 val, u8& intf)
   switch (addr & 0xff)
   {
   case 0x40:
+    io.old_lcdc.raw = io.lcdc.raw;
     io.lcdc.raw = val;
+    if(!io.old_lcdc.enabled && io.lcdc.enabled) {
+      intf |= 2;
+    }
     break;
   case 0x41:
     io.stat.write(val);
@@ -283,14 +287,10 @@ u32 Ppu::GetColor(u8 idx)
 {
   switch(idx)
   {
-  case 0:
-    return color1;
-  case 1:
-    return color2;
-  case 2:
-    return color3;
-  case 3:
-    return color4;
+  case 0: return color1;
+  case 1: return color2;
+  case 2: return color3;
+  case 3: return color4;
   }
 }
 

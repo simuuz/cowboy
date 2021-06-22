@@ -3,7 +3,7 @@
 namespace natsukashii::core
 {
 Apu::~Apu() {
-	SDL_CloseAudioDevice(audio_device);
+	//SDL_CloseAudioDevice(audio_device);
 }
 
 Apu::Apu(bool skip) : skip(skip)
@@ -128,7 +128,7 @@ void Apu::sample() {
 	while((SDL_GetQueuedAudioSize(audio_device)) > (1024 * 4)) {
 		SDL_Delay(4);
 	}
-
+  
 	SDL_QueueAudio(audio_device, &sample2, sizeof(sample2));
 }
 }

@@ -6,3 +6,4 @@ roms/
 DMG_ROM.bin
 bootrom.bin
 *.ini
+*.dll
