@@ -14,7 +14,7 @@ struct Core
   void LoadROM(std::string path);
   Bus bus;
   Cpu cpu;
-  bool debug = true;
+  bool debug = false;
   bool pause = false;
   bool running = false;
   bool init = false;

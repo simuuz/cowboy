@@ -25,7 +25,7 @@ struct MainWindow
   void GraphicsSettings(mINI::INIFile& file, mINI::INIStructure& ini);
   bool running = true;
   bool show_palette = false;
-  bool show_debug_windows = true;
+  bool show_debug_windows = false;
   bool show_settings = false;
   mINI::INIFile file;
   mINI::INIStructure ini;

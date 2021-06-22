@@ -9,7 +9,6 @@
 #include "implot.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <SDL2/SDL.h>
 #include <utility>
 
 using u8 = uint8_t;

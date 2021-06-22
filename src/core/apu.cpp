@@ -1,26 +1,35 @@
 #include "apu.h"
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"
 
 namespace natsukashii::core
 {
+ma_device device;
+
 Apu::~Apu() {
-	//SDL_CloseAudioDevice(audio_device);
+	ma_device_uninit(&device);
 }
+
+
 
 Apu::Apu(bool skip) : skip(skip)
 {
-	SDL_AudioSpec spec;
-	SDL_zero(spec);
-	spec.freq = frequency;
-	spec.format = AUDIO_F32SYS;
-	spec.channels = channels;
-	spec.samples = samples;
-	spec.callback = nullptr;
-	audio_device = SDL_OpenAudioDevice(nullptr, 0, &spec, nullptr, 0);
-	if(audio_device == 0) {
-		printf("Failed to open audio device: %s\n", SDL_GetError());
+	ma_device_config config;
+	config = ma_device_config_init(ma_device_type_playback);
+	config.playback.format = ma_format_u8;
+	config.playback.channels = channels;
+	config.dataCallback = 
+	config.sampleRate = frequency;
+
+	if (ma_device_init(nullptr, &config, &device) != MA_SUCCESS) {
+		printf("Failed to open playback device\n");
 		exit(1);
-	} else {
-		SDL_PauseAudioDevice(audio_device, 0);
+	}
+
+	if (ma_device_start(&device) != MA_SUCCESS) {
+		printf("Failed to start playback device.\n");
+		ma_device_uninit(&device);
+		exit(1);
 	}
 
 	nr13 = 0;
@@ -109,7 +118,7 @@ void Apu::Step(u64 cycles) {
 	sample_rate -= cycles;
 	if(sample_rate <= 0) {
 		sample();
-		sample_rate += 88;
+		sample_rate += 4213440 / frequency;
 	}
 }
 
@@ -117,18 +126,20 @@ u16 Apu::reload_timer2() {
 	return (2048 - ((nr24.freq << 8) | nr23)) * 2;
 }
 
-s8 Apu::sample_sq2() {
-	s8 duty = duty_sq2[nr21.duty][ch2_duty_index];
+u8 Apu::sample_sq2() {
+	u8 duty = duty_sq2[nr21.duty][ch2_duty_index];
 	return nr22.volume * duty;
 }
 
 void Apu::sample() {
-	s8 sample2 = sample_sq2();
+	u8 sample2 = sample_sq2();
+	if (sample2 > 0.1) sample2 = 0.1;
+	if (sample2 < -0.1) sample2 = -0.1;
 
-	while((SDL_GetQueuedAudioSize(audio_device)) > (1024 * 4)) {
-		SDL_Delay(4);
+	while(ma_device_start(&device) > (1024 * 4)) {
+		
 	}
   
-	SDL_QueueAudio(audio_device, &sample2, sizeof(sample2));
+	ma_device_stop(&device);
 }
 }
