@@ -8,6 +8,8 @@
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 #include <GL/glew.h>
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
 #include <GLFW/glfw3.h>
 #include <utility>
 

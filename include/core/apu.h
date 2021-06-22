@@ -3,21 +3,18 @@
 
 namespace natsukashii::core
 {
-constexpr u8 duty_sq2[4][8] = {
-	{0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 1, 1, 1},
-	{0, 1, 1, 1, 1, 1, 1, 0}
+constexpr s8 duty_sq2[4][8] = {
+	{-5, -5, -5, -5, -5, -5, -5,  5},
+	{ 5, -5, -5, -5, -5, -5, -5,  5},
+	{ 5, -5, -5, -5, -5,  5,  5,  5},
+	{-5,  5,  5,  5,  5,  5,  5, -5}
 };
 
-class Apu {
-public:
+struct Apu {
 	Apu(bool skip);
 	~Apu();
 	void Reset();
 	void Step(u64 cycles);
-	friend class Bus;
-private:
 	bool skip;
 	union {
 		struct {
@@ -152,17 +149,14 @@ private:
 		u8 raw;
 	} nr52;
 
-	constexpr static int frequency = 48000;
-	constexpr static u8 channels = 2;
-
 	u16 reload_timer2();
-	u8 sample_sq2();
+	s8 sample_sq2();
 	void sample();
 	s8 sample_rate = 88;
 	u8 ch2_duty_index;
 	u8 ReadIO(u16 addr);
 	void WriteIO(u16 addr, u8 val);
-
+	SDL_AudioDeviceID device;
 	s16 timer2;
 	int frequency_timer;
 };
