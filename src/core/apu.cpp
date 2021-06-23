@@ -136,7 +136,7 @@ u16 Apu::reload_timer2() {
 
 s16 Apu::sample_sq2() {
 	s16 duty = duty_sq2[nr21.duty][ch2_duty_index];
-	return nr22.volume * duty * 2;
+	return nr22.volume * duty;
 }
 
 void Apu::sample() {
