@@ -52,6 +52,8 @@ public:
   friend class Bus;
   bool render = false;
 private:
+  bool oam_lock = false;
+  bool vram_lock = false;
   bool latch = false;
   bool reset = false;
   bool skip = false;

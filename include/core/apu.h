@@ -145,11 +145,13 @@ struct Apu {
 	u8 ReadIO(u16 addr);
 	void WriteIO(u16 addr, u8 val);
 	u16 reload_timer2();
-	s8 sample_sq2();
+	s16 sample_sq2();
 	void sample();
 	bool skip;
-	float sample_rate = 87.78;
+	float sample_clock = 87.78;
 	u8 ch2_duty_index;
+	int buffer_pos = 0;
+	s16 buffer[1024]{0};
 	SDL_AudioDeviceID device;
 	s16 timer2;
 	int frequency_timer;

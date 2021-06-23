@@ -11,7 +11,7 @@ constexpr float duty_sq2[4][8] = {
 
 constexpr int FREQUENCY = 48000;
 constexpr int CHANNELS = 2;
-constexpr int SAMPLE_RATE = 512;
+constexpr int SAMPLE_RATE = 2048;
 
 Apu::~Apu() {
 	SDL_CloseAudioDevice(device);
@@ -22,7 +22,7 @@ Apu::Apu(bool skip) : skip(skip)
 	SDL_Init(SDL_INIT_AUDIO);
 	SDL_AudioSpec spec = {
 		.freq = FREQUENCY,
-		.format = AUDIO_S8,
+		.format = AUDIO_S16,
 		.channels = CHANNELS,
 		.silence = 0,
 		.samples = SAMPLE_RATE,
@@ -123,10 +123,10 @@ void Apu::Step(u64 cycles) {
 		timer2 += reload_timer2();
 	}
 
-	sample_rate -= cycles;
-	if(sample_rate <= 0) {
+	sample_clock -= cycles;
+	if(sample_clock <= 0) {
 		sample();
-		sample_rate += 4194300 / FREQUENCY;
+		sample_clock += 4194300 / FREQUENCY;
 	}
 }
 
@@ -134,20 +134,18 @@ u16 Apu::reload_timer2() {
 	return (2048 - ((nr24.freq << 8) | nr23)) << 2;
 }
 
-s8 Apu::sample_sq2() {
-	s8 duty = duty_sq2[nr21.duty][ch2_duty_index];
-	return nr22.volume * duty;
+s16 Apu::sample_sq2() {
+	s16 duty = duty_sq2[nr21.duty][ch2_duty_index];
+	return nr22.volume * duty * 2;
 }
 
 void Apu::sample() {
-	s8 sample2 = sample_sq2();
-	if(sample2 < -1) sample2 = -1;
-	if(sample2 > 1) sample2 = 1;
-
-	SDL_QueueAudio(device, &sample2, 1);
-
-	while (SDL_GetQueuedAudioSize(device) > CHANNELS * SAMPLE_RATE * 2) {
-		SDL_Delay(1);
+	buffer[buffer_pos] = sample_sq2();
+	buffer_pos++;
+	if(buffer_pos >= 1024) {
+		buffer_pos = 0;
+		SDL_QueueAudio(device, buffer, 1024 * sizeof(s16));
+		while (SDL_GetQueuedAudioSize(device) > 4096) {	}
 	}
 }
 

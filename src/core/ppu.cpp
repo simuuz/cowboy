@@ -163,6 +163,8 @@ void Ppu::ChangeMode(Mode m, u8& intf)
   switch (m)
   {
   case HBlank:
+    vram_lock = false;
+    oam_lock = false;
     if (io.stat.hblank_int)
     {
       intf |= 2;
@@ -176,12 +178,15 @@ void Ppu::ChangeMode(Mode m, u8& intf)
     }
     break;
   case OAM:
+    oam_lock = true;
     if (io.stat.oam_int)
     {
       intf |= 2;
     }
     break;
   case LCDTransfer:
+    vram_lock = true;
+    oam_lock = true;
     render = true;
     Scanline();
     break;

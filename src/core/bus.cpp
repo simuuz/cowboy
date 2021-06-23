@@ -22,9 +22,9 @@ u8 Bus::ReadByte(u16 addr)
 {
   switch(addr) {
   case 0x8000 ... 0x9fff:
-    return ppu.vram[addr & 0x1fff];
+    return ppu.vram_lock ? 0xff : ppu.vram[addr & 0x1fff];
   case 0xfe00 ... 0xfe9f:
-    return ppu.oam[addr & 0xff];
+    return ppu.oam_lock ? 0xff : ppu.oam[addr & 0xff];
   case 0xff40 ... 0xff4b:
     return ppu.ReadIO(addr);
   case 0xff10 ... 0xff3f:
@@ -56,10 +56,10 @@ void Bus::WriteByte(u16 addr, u8 val)
 {
   switch(addr) {
   case 0x8000 ... 0x9fff:
-    ppu.vram[addr & 0x1fff] = val;
+    if(!ppu.vram_lock) ppu.vram[addr & 0x1fff] = val;
     break;
   case 0xfe00 ... 0xfe9f:
-    ppu.oam[addr & 0xff] = val;
+    if(!ppu.oam_lock) ppu.oam[addr & 0xff] = val;
     break;
   case 0xff40 ... 0xff4b:
     ppu.WriteIO(mem, addr, val, mem.io.intf);
