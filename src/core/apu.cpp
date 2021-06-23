@@ -2,16 +2,16 @@
 
 namespace natsukashii::core
 {
-constexpr float duty_sq2[4][8] = {
-	{-1, -1, -1, -1, -1, -1, -1,  1},
-	{ 1, -1, -1, -1, -1, -1, -1,  1},
-	{ 1, -1, -1, -1, -1,  1,  1,  1},
-	{-1,  1,  1,  1,  1,  1,  1, -1}
+constexpr u16 duty_sq2[4][8] = {
+	{0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 0}
 };
 
 constexpr int FREQUENCY = 48000;
 constexpr int CHANNELS = 2;
-constexpr int SAMPLE_RATE = 2048;
+constexpr int SAMPLES = 512;
 
 Apu::~Apu() {
 	SDL_CloseAudioDevice(device);
@@ -22,10 +22,10 @@ Apu::Apu(bool skip) : skip(skip)
 	SDL_Init(SDL_INIT_AUDIO);
 	SDL_AudioSpec spec = {
 		.freq = FREQUENCY,
-		.format = AUDIO_S16,
+		.format = AUDIO_U16SYS,
 		.channels = CHANNELS,
 		.silence = 0,
-		.samples = SAMPLE_RATE,
+		.samples = SAMPLES,
 		.padding = 0,
 		.size = 0,
 		.callback = NULL,
@@ -126,7 +126,7 @@ void Apu::Step(u64 cycles) {
 	sample_clock -= cycles;
 	if(sample_clock <= 0) {
 		sample();
-		sample_clock += 4194300 / FREQUENCY;
+		sample_clock = 4194300 / FREQUENCY;
 	}
 }
 
@@ -134,18 +134,19 @@ u16 Apu::reload_timer2() {
 	return (2048 - ((nr24.freq << 8) | nr23)) << 2;
 }
 
-s16 Apu::sample_sq2() {
-	s16 duty = duty_sq2[nr21.duty][ch2_duty_index];
+u16 Apu::sample_sq2() {
+	u16 duty = duty_sq2[nr21.duty][ch2_duty_index];
 	return nr22.volume * duty;
 }
 
 void Apu::sample() {
 	buffer[buffer_pos] = sample_sq2();
 	buffer_pos++;
-	if(buffer_pos >= 1024) {
+	if(buffer_pos >= SAMPLES) {
 		buffer_pos = 0;
-		SDL_QueueAudio(device, buffer, 1024 * sizeof(s16));
-		while (SDL_GetQueuedAudioSize(device) > 4096) {	}
+		SDL_QueueAudio(device, buffer.data(), SAMPLES * CHANNELS * 2);
+		buffer.fill(0);
+		while (SDL_GetQueuedAudioSize(device) > SAMPLES * CHANNELS * 8) {	}
 	}
 }
 
