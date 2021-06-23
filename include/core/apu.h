@@ -4,6 +4,7 @@
 #include "ch3.h"
 #include "ch4.h"
 #include "control.h"
+#include <mutex>
 
 namespace natsukashii::core
 {
@@ -24,6 +25,7 @@ struct Apu {
 	bool skip;
 	float sample_clock = 87.78;
 	int buffer_pos = 0;
+	std::mutex m;
 	std::array<u8, 1024> buffer{0};
 	SDL_AudioDeviceID device;
 	int frequency_timer;

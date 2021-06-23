@@ -97,6 +97,7 @@ void Ppu::CompareLYC(u8& intf)
 
 void Ppu::Step(u64 cycles, u8& intf)
 {
+  m.lock();
   if (!io.lcdc.enabled)
   {
     return;
@@ -155,6 +156,7 @@ void Ppu::Step(u64 cycles, u8& intf)
     }
     break;
   }
+  m.unlock();
 }
 
 void Ppu::ChangeMode(Mode m, u8& intf)

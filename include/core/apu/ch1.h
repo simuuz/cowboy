@@ -31,7 +31,7 @@ struct CH1
   union {
 		struct {
 			unsigned period:3;
-			unsigned add_mode:1;
+			unsigned direction:1;
 			unsigned volume:4;
 		};
 

@@ -82,6 +82,7 @@ u8 Apu::ReadIO(u16 addr) {
 }
 
 void Apu::Step(u64 cycles) {
+	m.lock();
 	ch1.step(cycles);
 	ch2.step(cycles);
 
@@ -90,6 +91,7 @@ void Apu::Step(u64 cycles) {
 		sample();
 		sample_clock = 4194300 / FREQUENCY;
 	}
+	m.unlock();
 }
 
 void Apu::sample() {
