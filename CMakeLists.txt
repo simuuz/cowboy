@@ -23,6 +23,7 @@ set(IMGUI_SRC
 include_directories(
   ${CMAKE_SOURCE_DIR}/include/
   ${CMAKE_SOURCE_DIR}/include/core/
+  ${CMAKE_SOURCE_DIR}/include/core/apu/
   ${CMAKE_SOURCE_DIR}/include/external/
   ${CMAKE_SOURCE_DIR}/include/external/imgui/
   ${CMAKE_SOURCE_DIR}/include/external/imgui/backends/
