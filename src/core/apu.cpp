@@ -11,7 +11,7 @@ constexpr u16 duty_sq2[4][8] = {
 
 constexpr int FREQUENCY = 48000;
 constexpr int CHANNELS = 2;
-constexpr int SAMPLES = 512;
+constexpr int SAMPLES = 1024;
 
 Apu::~Apu() {
 	SDL_CloseAudioDevice(device);
@@ -144,9 +144,8 @@ void Apu::sample() {
 	buffer_pos++;
 	if(buffer_pos >= SAMPLES) {
 		buffer_pos = 0;
-		SDL_QueueAudio(device, buffer.data(), SAMPLES * CHANNELS * 2);
-		buffer.fill(0);
-		while (SDL_GetQueuedAudioSize(device) > SAMPLES * CHANNELS * 8) {	}
+		SDL_QueueAudio(device, buffer.data(), SAMPLES * CHANNELS);
+		while (SDL_GetQueuedAudioSize(device) > SAMPLES * CHANNELS * 4) {	}
 	}
 }
 
