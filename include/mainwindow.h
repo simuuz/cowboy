@@ -1,6 +1,7 @@
 #pragma once
 #include "core.h"
 #include <nfd.hpp>
+#include <thread>
 
 namespace natsukashii::frontend
 {

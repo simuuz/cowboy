@@ -27,6 +27,7 @@ MainWindow::~MainWindow()
   glfwDestroyWindow(window);
   glfwTerminate();
   NFD_Quit();
+  delete gui;
 }
 
 MainWindow::MainWindow(std::string title) : file("config.ini")
@@ -224,12 +225,7 @@ void MainWindow::MenuBar()
         UpdateTexture();
       }
 
-      bool settings_clicked = ImGui::MenuItem("Settings");
-      if(ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Any setting needs restart to take effect");
-      }
-      if(settings_clicked)
-      {
+      if(ImGui::MenuItem("Settings")) {
         show_settings = true;
       }
 

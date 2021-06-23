@@ -1,6 +1,5 @@
 #pragma once
 #include "debugwindow.h"
-#include <thread>
 
 namespace natsukashii::core
 {

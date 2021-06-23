@@ -1,6 +1,5 @@
 #pragma once
 #include "mem.h"
-#include <mutex>
 
 constexpr int VRAM_SZ = 0x2000;
 constexpr int OAM_SZ = 0xa0;
@@ -141,7 +140,6 @@ private:
   u8 colorIDbg[FBSIZE];
 
   u64 curr_cycles = 0;
-  std::mutex m;
 
   void WriteIO(Mem& mem, u16 addr, u8 val, u8& intf);
   u8 ReadIO(u16 addr);
