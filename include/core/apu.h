@@ -17,14 +17,14 @@ struct Apu {
 	CH4 ch4;
 	Control control;
 	void Reset();
-	void Step(u64 cycles);
+	void Step(u64 cycles, bool unlocked);
 	u8 ReadIO(u16 addr);
 	void WriteIO(u16 addr, u8 val);
-	void sample();
+	void sample(bool unlocked);
 	bool skip;
 	float sample_clock = 87.78;
 	int buffer_pos = 0;
-	std::array<u8, 1024> buffer{0};
+	std::array<u8, 4096> buffer{0};
 	SDL_AudioDeviceID device;
 	int frequency_timer;
 };

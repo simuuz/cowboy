@@ -37,6 +37,11 @@ public:
   Attributes attribs;
 };
 
+struct Sprites {
+  std::array<Sprite, 10> s;
+  u8 count = 0;
+};
+
 class Ppu
 {
 public:
@@ -141,6 +146,8 @@ private:
 
   u64 curr_cycles = 0;
 
+  Sprites sprites;
+
   void WriteIO(Mem& mem, u16 addr, u8 val, u8& intf);
   u8 ReadIO(u16 addr);
   template <typename T>
@@ -148,7 +155,7 @@ private:
   template <typename T>
   T ReadVRAM(u16 addr);
   void ChangeMode(Mode m, u8& intf);
-  std::vector<Sprite> FetchSprites();
+  Sprites FetchSprites();
   void RenderSprites();
   void RenderBGs();
   void Scanline();

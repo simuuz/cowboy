@@ -27,7 +27,6 @@ MainWindow::~MainWindow()
   glfwDestroyWindow(window);
   glfwTerminate();
   NFD_Quit();
-  delete gui;
 }
 
 MainWindow::MainWindow(std::string title) : file("config.ini")
@@ -133,9 +132,9 @@ void MainWindow::Run()
     ImGui::NewFrame();
 
     if(lock_fps) {
-      core->Run(io.Framerate, key, action);
+      core->Run(!lock_fps, io.Framerate, key, action);
     } else {
-      core->Run(59.727, key, action);
+      core->Run(!lock_fps, 59.727, key, action);
     }
 
     if(core->bus.ppu.render) {
@@ -273,7 +272,7 @@ void MainWindow::Settings()
   ImGui::SameLine();
 
   ImGui::BeginChild("child2", ImVec2(0, 0), true);
-  if(general)
+  if (general)
   {
     GeneralSettings(file, ini, skip, bootrom);
   }

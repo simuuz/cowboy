@@ -4,7 +4,7 @@ namespace natsukashii::core
 {
 constexpr int FREQUENCY = 48000;
 constexpr int CHANNELS = 1;
-constexpr int SAMPLES = 1024;
+constexpr int SAMPLES = 4096;
 
 Apu::~Apu() {
 	SDL_CloseAudioDevice(device);
@@ -17,10 +17,7 @@ Apu::Apu(bool skip) : skip(skip)
 		.freq = FREQUENCY,
 		.format = AUDIO_U8,
 		.channels = CHANNELS,
-		.silence = 0,
 		.samples = SAMPLES,
-		.padding = 0,
-		.size = 0,
 		.callback = NULL,
 		.userdata = NULL,
 	};
@@ -30,7 +27,7 @@ Apu::Apu(bool skip) : skip(skip)
 		printf("Failed to open audio device: %s\n", SDL_GetError());
 		exit(1);
 	}
-  
+	
 	SDL_PauseAudioDevice(device, 0);
 }
 
@@ -41,10 +38,7 @@ void Apu::Reset()
 		.freq = FREQUENCY,
 		.format = AUDIO_U8,
 		.channels = CHANNELS,
-		.silence = 0,
 		.samples = SAMPLES,
-		.padding = 0,
-		.size = 0,
 		.callback = NULL,
 		.userdata = NULL,
 	};
@@ -81,23 +75,27 @@ u8 Apu::ReadIO(u16 addr) {
   }
 }
 
-void Apu::Step(u64 cycles) {
+void Apu::Step(u64 cycles, bool unlocked) {
 	ch1.step(cycles);
 	ch2.step(cycles);
 
 	sample_clock -= cycles;
 	if(sample_clock <= 0) {
-		sample();
+		sample(unlocked);
 		sample_clock = 4194300 / FREQUENCY;
 	}
 }
 
-void Apu::sample() {
+void Apu::sample(bool unlocked) {
+	if(unlocked) {
+		return;
+	}
+		
 	buffer[buffer_pos++] = ch1.sample() + ch2.sample();
 	if(buffer_pos >= SAMPLES) {
 		buffer_pos = 0;
 		u32 len = SAMPLES * CHANNELS * sizeof(u8);
-		while (SDL_GetQueuedAudioSize(device) > len * 4) {	}
+		while(SDL_GetQueuedAudioSize(device) > len * 4) {	}
 		SDL_QueueAudio(device, buffer.data(), len);
 	}
 }

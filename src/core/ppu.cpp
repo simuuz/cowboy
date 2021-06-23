@@ -361,24 +361,26 @@ void Ppu::RenderBGs()
   }
 }
 
-std::vector<Sprite> Ppu::FetchSprites()
+Sprites Ppu::FetchSprites()
 {
-  std::vector<Sprite> sprites;
-  
+  Sprites sprites;
   u8 height = io.lcdc.obj_size ? 16 : 8;
 
-  for(int i = 0; i < 0xa0 && sprites.size() < 10; i+=4)
+  for(int i = 0; i < 0xa0 && sprites.count < 10; i+=4)
   {
     Sprite sprite(oam[i] - 16, oam[i + 1] - 8, oam[i + 2], oam[i + 3]);
     if(io.ly >= (s16)sprite.ypos && io.ly < ((s16)sprite.ypos + height))
     {
-      sprites.push_back(sprite);
+      sprites.s[sprites.count] = sprite;
+      sprites.count++;
     }
   }
 
-  std::stable_sort(sprites.begin(), sprites.end(), [](Sprite a, Sprite b) {
-    return b.xpos <= a.xpos;
-  });
+  std::stable_sort(sprites.s.begin(), sprites.s.begin() + sprites.count, 
+    [](Sprite a, Sprite b){
+      return b.xpos <= a.xpos;
+    }
+  );
 
   return sprites;
 }
@@ -388,37 +390,37 @@ void Ppu::RenderSprites()
   if(!io.lcdc.obj_enable)
     return;
 
-  std::vector<Sprite> sprites = FetchSprites();
+  sprites = FetchSprites();
   
-  for(auto& sprite : sprites)
+  for(int i = 0; i < sprites.count; i++)
   {
     u16 tile_y;
     if(io.lcdc.obj_size)
     {
-      tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 15) : io.ly - sprite.ypos;
+      tile_y = (sprites.s[i].attribs.yflip) ? ((io.ly - sprites.s[i].ypos) ^ 15) : io.ly - sprites.s[i].ypos;
     }
     else
     {
-      tile_y = (sprite.attribs.yflip) ? ((io.ly - sprite.ypos) ^ 7) & 7 : (io.ly - sprite.ypos) & 7;
+      tile_y = (sprites.s[i].attribs.yflip) ? ((io.ly - sprites.s[i].ypos) ^ 7) & 7 : (io.ly - sprites.s[i].ypos) & 7;
     }
     
-    u8 pal = (sprite.attribs.palnum) ? io.obp1 : io.obp0;
-    fbIndex = sprite.xpos + WIDTH * io.ly;
-    u16 tile_index = io.lcdc.obj_size ? sprite.tileidx & ~1 : sprite.tileidx;
+    u8 pal = (sprites.s[i].attribs.palnum) ? io.obp1 : io.obp0;
+    fbIndex = sprites.s[i].xpos + WIDTH * io.ly;
+    u16 tile_index = io.lcdc.obj_size ? sprites.s[i].tileidx & ~1 : sprites.s[i].tileidx;
     u16 tile = ReadVRAM<u16>(0x8000 | ((tile_index << 4) + (tile_y << 1)));
 
     for(int x = 0; x < 8; x++)
     {
-      s8 tile_x = (sprite.attribs.xflip) ? 7 - x : x;
+      s8 tile_x = (sprites.s[i].attribs.xflip) ? 7 - x : x;
       u8 high = tile >> 8;
       u8 low = tile & 0xff;
       u8 colorID = (bit<u8>(high, 7 - tile_x) << 1) | bit<u8>(low, 7 - tile_x);
       u8 colorIndex = (pal >> (colorID << 1)) & 3;
       u32 color = GetColor(colorIndex);
       
-      if((sprite.xpos + x) < 166 && colorID != 0 && pixels[fbIndex] != color)
+      if((sprites.s[i].xpos + x) < 166 && colorID != 0 && pixels[fbIndex] != color)
       {
-        if(sprite.attribs.obj_to_bg_prio)
+        if(sprites.s[i].attribs.obj_to_bg_prio)
         {
           if(colorIDbg[fbIndex] < 1)
           {

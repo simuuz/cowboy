@@ -4,7 +4,7 @@ namespace natsukashii::core
 {
 Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(skip, &bus) {}
 
-void Core::Run(float fps, int key, int action)
+void Core::Run(bool unlocked, float fps, int key, int action)
 {
   if(init && !pause && !debug)
   {
@@ -12,7 +12,7 @@ void Core::Run(float fps, int key, int action)
     {
       cpu.Step();
       bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
-      bus.apu.Step(cpu.cycles);
+      bus.apu.Step(cpu.cycles, unlocked);
       bus.mem.DoInputs(key, action);
       cpu.HandleTimers();
     }
