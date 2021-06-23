@@ -31,11 +31,13 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include/external/miniaudio/
 )
 
-find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 find_package(GLEW REQUIRED)
 add_subdirectory(include/external/nativefiledialog-extended/)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -static-libstdc++ -static-libgcc")
 
 add_executable(natsukashii
   ${IMGUI_SRC}
@@ -43,8 +45,8 @@ add_executable(natsukashii
   ${EMU_SRC}
 )
 
-target_link_libraries(natsukashii PRIVATE SDL2)
-target_link_libraries(natsukashii PRIVATE OpenGL::GL)
-target_link_libraries(natsukashii PRIVATE glfw)
-target_link_libraries(natsukashii PRIVATE GLEW::glew)
-target_link_libraries(natsukashii PRIVATE nfd)
+target_link_libraries(natsukashii SDL2)
+target_link_libraries(natsukashii OpenGL::GL)
+target_link_libraries(natsukashii glfw)
+target_link_libraries(natsukashii GLEW::glew)
+target_link_libraries(natsukashii nfd)

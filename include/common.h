@@ -2,16 +2,16 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <utility>
 #include "ini.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-#include <GLFW/glfw3.h>
-#include <utility>
 
 using u8 = uint8_t;
 using u16 = uint16_t;
