@@ -66,10 +66,10 @@ class DebugWindow
 public:
   DebugWindow() {}
 
-  void Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps);
+  void Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float frametime);
 private:
   void Perf(float fps);
-  void Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps);
+  void Debugger(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float frametime);
   void Disasm(Cpu& cpu, Bus& bus);
   std::string opcode;
   template<typename T>

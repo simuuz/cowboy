@@ -2,15 +2,15 @@
 
 namespace natsukashii::frontend
 {
-void DebugWindow::Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float fps)
+void DebugWindow::Main(Cpu& cpu, Bus& bus, bool& debug, bool& init, bool& running, float frametime)
 {
-  Debugger(cpu, bus, debug, init, running, fps);
-  Perf(fps);
+  Debugger(cpu, bus, debug, init, running, 1000 / frametime);
+  Perf(frametime);
 }
 
-void DebugWindow::Perf(float fps)
+void DebugWindow::Perf(float frametime)
 {
-  frame_times.add_point(1000 / fps);
+  frame_times.add_point(frametime);
   ImGui::Begin("Profiler");
 
   ImPlot::GetStyle().AntiAliasedLines = true;

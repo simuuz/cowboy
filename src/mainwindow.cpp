@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include <sstream>
-#include <chrono>
 
 namespace natsukashii::frontend
 {
@@ -122,7 +121,7 @@ void MainWindow::Run()
 {
   int i = 0;
   ImGuiIO& io = ImGui::GetIO(); (void)io;
-  
+
   while(!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
@@ -134,7 +133,15 @@ void MainWindow::Run()
     if(lock_fps) {
       core->Run(!lock_fps, io.Framerate, key, action);
     } else {
-      core->Run(!lock_fps, 59.727, key, action);
+      core->Run(!lock_fps, 60, key, action);
+    }
+
+    i++;
+    if(i >= io.Framerate) {
+      i = 0;
+      char title[50]{0};
+      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", io.Framerate, io.DeltaTime);
+      glfwSetWindowTitle(window, title);
     }
 
     if(core->bus.ppu.render) {
@@ -142,16 +149,8 @@ void MainWindow::Run()
       UpdateTexture();
     }
 
-    i++;
-    if(i >= io.Framerate) {
-      i = 0;
-      char title[50]{0};
-      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", io.Framerate, 1000 / io.Framerate);
-      glfwSetWindowTitle(window, title);
-    }
-
     if(show_debug_windows)
-      dbg.Main(core->cpu, core->bus, core->debug, core->init, core->running, io.Framerate);
+      dbg.Main(core->cpu, core->bus, core->debug, core->init, core->running, io.DeltaTime);
 
     if(show_settings)
       Settings();

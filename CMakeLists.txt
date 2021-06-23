@@ -38,7 +38,7 @@ find_package(glfw3 3.3 REQUIRED)
 find_package(GLEW REQUIRED)
 add_subdirectory(include/external/nativefiledialog-extended/)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -static-libstdc++ -static-libgcc")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -static-libstdc++ -static-libgcc")
 
 add_executable(natsukashii
   ${IMGUI_SRC}
