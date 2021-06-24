@@ -31,7 +31,7 @@ struct CH1
   union {
 		struct {
 			unsigned period:3;
-			unsigned direction:1;
+			unsigned add_mode:1;
 			unsigned volume:4;
 		};
 
@@ -53,26 +53,30 @@ struct CH1
 
 	u8 duty_index = 0;
 
-  constexpr static float duty[4][8] = {
-    {-0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, 0.1},
-    {0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, 0.1},
-    {0.1, -0.1, -0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
-    {-0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, -0.1}
+  constexpr static u8 duty[4][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 1, 1, 1},
+    {0, 1, 1, 1, 1, 1, 1, 0}
   };
 
 	s16 timer;
 
 	u8 sweep_period_timer;
+	u8 period_timer;
 
 	u8 read(u16 addr);
 	void write(u16 addr, u8 val);
 	void step_length();
 	void step_sweep();
+	void step_volume();
 	void tick();
+
+	u8 current_volume;
 
 	u16 shadow_frequency;
 
-	float sample();
+	u8 sample();
 	u16 calculate_frequency();
 };
 }

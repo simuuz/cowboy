@@ -6,30 +6,30 @@ constexpr int OAM_SZ = 0xa0;
 constexpr int WIDTH = 160;
 constexpr int HEIGHT = 144;
 constexpr int FBSIZE = WIDTH * HEIGHT;
-constexpr u32 colors[4] = { 0xffbf81ff, 0xe95863ff, 0xd31c5dff, 0x761077ff };
+constexpr u32 colors[4] = { 0xFED018, 0xD35600, 0x5E1210, 0x0D0405 };
 
 namespace natsukashii::core
 {
 struct ColorRGBA {
   u8 r, g, b;
   ColorRGBA() : r(0), g(0), b(0) {}
-  ColorRGBA(const u32& c) : r(c >> 24), g(c >> 16), b(c >> 8) {}
+  ColorRGBA(const u32& c) : r(c >> 16), g(c >> 8), b(c & 0xff) {}
   auto operator=(const u32& c) {
-    r = c >> 24;
-    g = c >> 16;
-    b = c >> 8;
+    r = c >> 16;
+    g = c >> 8;
+    b = c & 0xff;
   }
 
   auto operator!=(const u32& c) {
-    return r != (c >> 24) &&
-           g != (c >> 16) &&
-           b != (c >> 8);
+    return r != (c >> 16) &&
+           g != (c >> 8) &&
+           b != (c & 0xff);
   }
 
   auto operator==(const u32& c) {
-    return r == (c >> 24) &&
-           g == (c >> 16) &&
-           b == (c >> 8);
+    return r == (c >> 16) &&
+           g == (c >> 8) &&
+           b == (c & 0xff);
   }
 };
 

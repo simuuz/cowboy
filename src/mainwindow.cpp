@@ -1,6 +1,4 @@
 #include "mainwindow.h"
-//#include <chrono>
-//#include <thread>
 
 namespace natsukashii::frontend
 {
@@ -70,7 +68,11 @@ void MainWindow::Run()
       case SDL_QUIT: running = false; break;
       case SDL_KEYDOWN:
         switch(key) {
-          case SDLK_BACKSPACE: OpenFile(); break;
+          case SDLK_o: OpenFile(); break;
+          case SDLK_s: core->Stop(); break;
+          case SDLK_r: core->Reset(); break;
+          case SDLK_p: core->Pause(); break;
+          case SDLK_q: running = false; core->Stop(); break;
         }
         break;
     }
@@ -79,8 +81,9 @@ void MainWindow::Run()
 
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
-      UpdateTexture();
     }
+    
+    UpdateTexture();
   }
 }
 } // natsukashii::frontend

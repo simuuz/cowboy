@@ -15,7 +15,6 @@ struct Core
   Bus bus;
   Cpu cpu;
   bool pause = false;
-  bool running = false;
   bool init = false;
 };
 }  // namespace natsukashii::core

@@ -24,6 +24,25 @@ void CH2::step_length() {
   }
 }
 
+void CH2::step_volume() {
+  if(nr22.period != 0) {
+    if(period_timer > 0) {
+      period_timer--;
+    }
+
+    if(period_timer == 0) {
+      period_timer = nr22.period;
+      if((current_volume < 0xF && nr22.add_mode) || (current_volume > 0 && !nr22.add_mode)) {
+        if(nr22.add_mode) {
+          current_volume++;
+        } else {
+          current_volume--;
+        }
+      }
+    }
+  }
+}
+
 void CH2::tick() {
   timer -= 4;
   
@@ -33,10 +52,10 @@ void CH2::tick() {
   }
 }
 
-float CH2::sample() {
+u8 CH2::sample() {
   if(nr24.enabled) {
-    float duty = this->duty[nr21.duty][duty_index];
-    return nr22.volume * 0.01 * duty;
+    u8 duty = this->duty[nr21.duty][duty_index];
+    return nr22.volume * duty;
   } else {
     return 0;
   }

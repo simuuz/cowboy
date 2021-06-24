@@ -41,18 +41,21 @@ struct CH2
   
 	u8 duty_index = 0;
 
-  constexpr static float duty[4][8] = {
-    {-0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, 0.1},
-    {0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, 0.1},
-    {0.1, -0.1, -0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
-    {-0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, -0.1}
+  constexpr static u8 duty[4][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 1, 1, 1},
+    {0, 1, 1, 1, 1, 1, 1, 0}
   };
 	
 	s16 timer;
 
-  float sample();
+  u8 sample();
 	void step_length();
+	void step_volume();
 	void tick();
+
+	u8 period_timer, current_volume;
 
   u8 read(u16 addr);
   void write(u16 addr, u8 val);

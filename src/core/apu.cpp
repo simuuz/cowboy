@@ -11,7 +11,7 @@ Apu::Apu(bool skip) : skip(skip)
 	memset(buffer, 0, SAMPLES * 2);
 	SDL_AudioSpec spec = {
 		.freq = FREQUENCY,
-		.format = AUDIO_F32SYS,
+		.format = AUDIO_U16SYS,
 		.channels = CHANNELS,
 		.samples = SAMPLES,
 		.callback = NULL,
@@ -33,7 +33,7 @@ void Apu::Reset()
 	SDL_CloseAudioDevice(device);
 	SDL_AudioSpec spec = {
 		.freq = FREQUENCY,
-		.format = AUDIO_F32SYS,
+		.format = AUDIO_U16SYS,
 		.channels = CHANNELS,
 		.samples = SAMPLES,
 		.callback = NULL,
@@ -85,9 +85,9 @@ void Apu::Step(u8 cycles) {
 				ch1.step_length();
 				ch2.step_length();
 				break;
-				case 1: case 5: break;
+				case 1: case 3: case 5: break;
 				case 2:
-				ch1.step_length();
+				ch1.step_length();	
 				ch2.step_length();
 				ch1.step_sweep();
 				break;
@@ -100,19 +100,23 @@ void Apu::Step(u8 cycles) {
 				ch2.step_length();
 				ch1.step_sweep();
 				break;
+				case 7:
+				ch1.step_volume();
+				ch2.step_volume();
+				break;
 			}
 
 			frame_sequencer_position = (frame_sequencer_position + 1) & 7;
 		}
 		
-		if(sample_clock % ((4194300 / FREQUENCY) + (FREQUENCY / SAMPLES)) == 0) {
-			buffer[buffer_pos++] = control.nr50.l_vol * (ch1.sample() + ch2.sample());
-			buffer[buffer_pos++] = control.nr50.r_vol * (ch1.sample() + ch2.sample());
+		if(sample_clock % (4194304 / FREQUENCY) == 0) {
+			buffer[buffer_pos++] = ((control.nr50.l_vol - 200) * ((float)(ch1.sample() + ch2.sample()) - 200)) - 200;
+			buffer[buffer_pos++] = ((control.nr50.r_vol - 200) * ((float)(ch1.sample() + ch2.sample()) - 200)) - 200;
 		}
 
 		if(buffer_pos >= SAMPLES * 2) {
 			buffer_pos = 0;
-			u32 len = SAMPLES * CHANNELS * sizeof(float);
+			u32 len = SAMPLES * CHANNELS * sizeof(u16);
 			while(SDL_GetQueuedAudioSize(device) > len * 4) {	}
 			SDL_QueueAudio(device, buffer, len);
 		}

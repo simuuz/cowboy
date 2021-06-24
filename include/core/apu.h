@@ -4,7 +4,7 @@
 #include "ch3.h"
 #include "ch4.h"
 #include "control.h"
-constexpr int FREQUENCY = 48000;
+constexpr int FREQUENCY = 96000;
 constexpr int CHANNELS = 2;
 constexpr int SAMPLES = 8192;
 
@@ -25,10 +25,9 @@ struct Apu {
 	void WriteIO(u16 addr, u8 val);
 	bool skip;
 	u32 sample_clock = 0;
-	u32 counter = 4194300 / FREQUENCY;
 	int buffer_pos = 0;
 	u8 frame_sequencer_position = 0;
-	float buffer[SAMPLES * 2];
+	u16 buffer[SAMPLES * 2];
 	SDL_AudioDeviceID device;
 	int frequency_timer;
 };
