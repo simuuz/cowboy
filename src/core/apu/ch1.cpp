@@ -47,6 +47,24 @@ void CH1::step_volume() {
   }
 }
 
+void CH1::tick() {  
+  if(timer <= 0) {
+    duty_index = (duty_index + 1) & 7;
+    timer = (2048 - (((u16)nr14.freq << 8) | nr13)) << 2;
+  }
+  
+  timer--;
+}
+
+u8 CH1::sample() {
+  if(nr14.enabled) {
+    u8 duty = this->duty[nr11.duty][duty_index];
+    return nr12.volume * duty;
+  } else {
+    return 0;
+  }
+}
+
 void CH1::step_sweep() {
   if(sweep_period_timer > 0) {
     sweep_period_timer--;
@@ -64,24 +82,6 @@ void CH1::step_sweep() {
         calculate_frequency();
       }
     }
-  }
-}
-
-void CH1::tick() {
-  timer -= 4;
-  
-  if(timer <= 0) {
-    duty_index = (duty_index + 1) & 7;
-    timer = (2048 - (((u16)nr14.freq << 8) | nr13)) << 2;
-  }
-}
-
-u8 CH1::sample() {
-  if(nr14.enabled) {
-    u8 duty = this->duty[nr11.duty][duty_index];
-    return nr12.volume * duty;
-  } else {
-    return 0;
   }
 }
 

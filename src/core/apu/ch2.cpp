@@ -44,7 +44,7 @@ void CH2::step_volume() {
 }
 
 void CH2::tick() {
-  timer -= 4;
+  timer--;
   
   if(timer <= 0) {
     duty_index = (duty_index + 1) & 7;
