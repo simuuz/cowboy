@@ -25,7 +25,7 @@ void CH2::step_length() {
 }
 
 void CH2::tick() {
-  timer--;
+  timer -= 4;
   
   if(timer <= 0) {
     duty_index = (duty_index + 1) & 7;
@@ -36,7 +36,7 @@ void CH2::tick() {
 float CH2::sample() {
   if(nr24.enabled) {
     float duty = this->duty[nr21.duty][duty_index];
-    return nr22.volume * 0.25 * duty;
+    return nr22.volume * 0.01 * duty;
   } else {
     return 0;
   }

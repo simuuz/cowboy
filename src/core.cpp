@@ -4,20 +4,21 @@ namespace natsukashii::core
 {
 Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(skip, &bus) {}
 
-void Core::Run(bool unlocked, float fps, int key, int action)
+void Core::Run(int key, int action)
 {
+  ImGuiIO& io = ImGui::GetIO(); (void)io;
   if(init && !pause && !debug)
   {
-    while(cpu.total_cycles < 4194300 / fps)  // TODO: This is not proper cycling
+    while(cpu.total_cycles < 4194304 / io.Framerate)  // TODO: This is not proper cycling
     {
       cpu.Step();
       bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
-      bus.apu.Step(cpu.cycles, unlocked);
+      bus.apu.Step();
       bus.mem.DoInputs(key, action);
       cpu.HandleTimers();
     }
 
-    cpu.total_cycles -= 4194300 / fps;
+    cpu.total_cycles -= 4194304 / io.Framerate;
   }
 }
 

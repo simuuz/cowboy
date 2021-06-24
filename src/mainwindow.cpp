@@ -4,14 +4,9 @@
 namespace natsukashii::frontend
 {
 int key, action;
-bool lock_fps;
 
 static void key_callback(GLFWwindow* window, int key_, int scancode, int action_, int mods)
 {
-  if(key_ == GLFW_KEY_LEFT_SHIFT && action_ == GLFW_PRESS) {
-    lock_fps = !lock_fps;
-  }
-
   key = key_;
   action = action_;
 }
@@ -70,7 +65,6 @@ MainWindow::MainWindow(std::string title) : file("config.ini")
   if (!file.read(ini))
   {
     ini["emulator"]["skip"] = "false";
-    ini["emulator"]["lock_fps"] = "true";
     ini["emulator"]["bootrom"] = "bootrom.bin";
     ini["palette"]["color1"] = "e0f8d0ff";
     ini["palette"]["color2"] = "88c070ff";
@@ -80,7 +74,6 @@ MainWindow::MainWindow(std::string title) : file("config.ini")
   }
 
   bool skip = ini["emulator"]["skip"] == "true";
-  lock_fps = ini["emulator"]["lock_fps"] == "true";
   std::string bootrom = ini["emulator"]["bootrom"];
   core = std::make_unique<Core>(skip, bootrom);
 
@@ -130,11 +123,7 @@ void MainWindow::Run()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    if(lock_fps) {
-      core->Run(!lock_fps, io.Framerate, key, action);
-    } else {
-      core->Run(!lock_fps, 59.727, key, action);
-    }
+    core->Run(key, action);
 
     i++;
     if(i >= io.Framerate) {
@@ -228,10 +217,6 @@ void MainWindow::MenuBar()
       }
 
       ImGui::Checkbox("Show debug windows", &show_debug_windows);
-      if(ImGui::Checkbox("Lock FPS", &lock_fps)) {
-        ini["emulator"]["lock_fps"] = lock_fps ? "true" : "false";
-        file.write(ini);
-      }
 
       ImGui::EndMenu();
     }

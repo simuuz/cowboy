@@ -49,7 +49,7 @@ void CH1::step_sweep() {
 }
 
 void CH1::tick() {
-  timer--;
+  timer -= 4;
   
   if(timer <= 0) {
     duty_index = (duty_index + 1) & 7;
@@ -60,7 +60,7 @@ void CH1::tick() {
 float CH1::sample() {
   if(nr14.enabled) {
     float duty = this->duty[nr11.duty][duty_index];
-    return nr12.volume * 0.25 * duty;
+    return nr12.volume * 0.01 * duty;
   } else {
     return 0;
   }

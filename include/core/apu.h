@@ -6,21 +6,21 @@
 #include "control.h"
 constexpr int FREQUENCY = 48000;
 constexpr int CHANNELS = 2;
-constexpr int SAMPLES = 4096;
+constexpr int SAMPLES = 8192;
 
 namespace natsukashii::core
 {
 struct Apu {
-	Apu(bool skip);
 	~Apu();
+	Apu(bool skip);
+	void Reset();
+	void Step();
 
 	CH1 ch1;
 	CH2 ch2;
 	CH3 ch3;
 	CH4 ch4;
 	Control control;
-	void Reset();
-	void Step(u8 cycles, bool unlocked);
 	u8 ReadIO(u16 addr);
 	void WriteIO(u16 addr, u8 val);
 	bool skip;
@@ -28,7 +28,7 @@ struct Apu {
 	u32 counter = 4194300 / FREQUENCY;
 	int buffer_pos = 0;
 	u8 frame_sequencer_position = 0;
-	float buffer[SAMPLES];
+	float buffer[SAMPLES * 2];
 	SDL_AudioDeviceID device;
 	int frequency_timer;
 };
