@@ -6,9 +6,33 @@ constexpr int OAM_SZ = 0xa0;
 constexpr int WIDTH = 160;
 constexpr int HEIGHT = 144;
 constexpr int FBSIZE = WIDTH * HEIGHT;
+constexpr u32 colors[4] = { 0xffbf81ff, 0xe95863ff, 0xd31c5dff, 0x761077ff };
 
 namespace natsukashii::core
 {
+struct ColorRGBA {
+  u8 r, g, b;
+  ColorRGBA() : r(0), g(0), b(0) {}
+  ColorRGBA(const u32& c) : r(c >> 24), g(c >> 16), b(c >> 8) {}
+  auto operator=(const u32& c) {
+    r = c >> 24;
+    g = c >> 16;
+    b = c >> 8;
+  }
+
+  auto operator!=(const u32& c) {
+    return r != (c >> 24) &&
+           g != (c >> 16) &&
+           b != (c >> 8);
+  }
+
+  auto operator==(const u32& c) {
+    return r == (c >> 24) &&
+           g == (c >> 16) &&
+           b == (c >> 8);
+  }
+};
+
 struct Sprite
 {
 private:
@@ -49,8 +73,7 @@ public:
   void Reset();
   void Step(u8 cycles, u8& intf);
 
-  std::array<u32, FBSIZE> pixels;
-  u32 color1, color2, color3, color4;
+  std::array<ColorRGBA, FBSIZE> pixels;
   std::array<u8, VRAM_SZ> vram;
   std::array<u8, OAM_SZ> oam;
 
@@ -63,8 +86,6 @@ private:
   bool reset = false;
   bool skip = false;
 
-  std::array<u8, FBSIZE> indices;
-
   enum Mode
   {
     HBlank,
@@ -72,8 +93,7 @@ private:
     OAM,
     LCDTransfer
   };
-
-  u32 GetColor(u8 idx);
+  
   Mode mode = OAM;
   
   struct LCDC

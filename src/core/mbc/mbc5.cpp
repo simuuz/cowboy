@@ -54,7 +54,7 @@ void MBC5::Write(u16 addr, u8 val)
     }
     break;
   default:
-    printf("Unhandled write MBC5, addr %04X val %02X\n", addr, val);
+    break;
   }
 }
 

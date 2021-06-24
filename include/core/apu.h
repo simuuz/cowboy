@@ -14,7 +14,7 @@ struct Apu {
 	~Apu();
 	Apu(bool skip);
 	void Reset();
-	void Step();
+	void Step(u8 cycles);
 
 	CH1 ch1;
 	CH2 ch2;

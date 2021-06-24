@@ -1,9 +1,3 @@
 [submodule "include/external/nativefiledialog-extended"]
 	path = include/external/nativefiledialog-extended
 	url = https://github.com/btzy/nativefiledialog-extended
-[submodule "include/external/imgui"]
-	path = include/external/imgui
-	url = https://github.com/ocornut/imgui
-[submodule "include/external/implot"]
-	path = include/external/implot
-	url = https://github.com/epezent/implot

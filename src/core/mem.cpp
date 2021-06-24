@@ -237,26 +237,26 @@ void Mem::HandleJoypad(u8 val)
 
 void Mem::DoInputs(int key, int action)
 {
-  u8 input = ((u8)(~button) << 5) | ((u8)(~dpad) << 4);
+  u8 input = ((u8)(!button) << 5) | ((u8)(!dpad) << 4);
   
-  if(action == GLFW_PRESS) held = true;
-  if(action == GLFW_RELEASE) held = false;
+  if(action == SDL_KEYDOWN) held = true;
+  if(action == SDL_KEYUP) held = false;
   
   if(button && !dpad) {
-    input |= (!(held && key == GLFW_KEY_ENTER      ) << 3) |
-             (!(held && key == GLFW_KEY_RIGHT_SHIFT) << 2) |
-             (!(held && key == GLFW_KEY_Z          ) << 1) |
-             (!(held && key == GLFW_KEY_X          ) << 0);
+    input |= (!(held && key == SDLK_RETURN) << 3) |
+             (!(held && key == SDLK_RSHIFT) << 2) |
+             (!(held && key == SDLK_z     ) << 1) |
+             (!(held && key == SDLK_x     ) << 0);
   } else if(dpad && !button) {
-    input |= (!(held && key == GLFW_KEY_DOWN ) << 3) |
-             (!(held && key == GLFW_KEY_UP   ) << 2) |
-             (!(held && key == GLFW_KEY_LEFT ) << 1) |
-             (!(held && key == GLFW_KEY_RIGHT) << 0);
+    input |= (!(held && key == SDLK_DOWN ) << 3) |
+             (!(held && key == SDLK_UP   ) << 2) |
+             (!(held && key == SDLK_LEFT ) << 1) |
+             (!(held && key == SDLK_RIGHT) << 0);
   } else if(dpad && button) {
-    input |= (!(held && (key == GLFW_KEY_DOWN  || key == GLFW_KEY_ENTER      )) << 3) |
-             (!(held && (key == GLFW_KEY_UP    || key == GLFW_KEY_RIGHT_SHIFT)) << 2) |
-             (!(held && (key == GLFW_KEY_LEFT  || key == GLFW_KEY_Z          )) << 1) |
-             (!(held && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_X          )) << 0);
+    input |= (!(held && (key == SDLK_DOWN  || key == SDLK_RETURN)) << 3) |
+             (!(held && (key == SDLK_UP    || key == SDLK_RSHIFT)) << 2) |
+             (!(held && (key == SDLK_LEFT  || key == SDLK_z     )) << 1) |
+             (!(held && (key == SDLK_RIGHT || key == SDLK_x     )) << 0);
   } else {
     input = 0xff;
   }

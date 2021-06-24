@@ -10,24 +10,7 @@ Ppu::Ppu(bool skip) : skip(skip)
   mINI::INIFile file{"config.ini"};
   mINI::INIStructure ini;
 
-  if (!file.read(ini))
-  {
-    ini["emulator"]["skip"] = "false";
-    ini["emulator"]["bootrom"] = "bootrom.bin";
-    ini["palette"]["color1"] = "e0f8d0ff";
-    ini["palette"]["color2"] = "88c070ff";
-    ini["palette"]["color3"] = "346856ff";
-    ini["palette"]["color4"] = "81820ff";
-    file.generate(ini);
-  }
-
-  color1 = std::stoul(ini["palette"]["color1"], nullptr, 16);
-  color2 = std::stoul(ini["palette"]["color2"], nullptr, 16);
-  color3 = std::stoul(ini["palette"]["color3"], nullptr, 16);
-  color4 = std::stoul(ini["palette"]["color4"], nullptr, 16);
-
-  indices.fill(0);
-  pixels.fill(color4);
+  pixels.fill(colors[3]);
   vram.fill(0);
   oam.fill(0);
 
@@ -58,8 +41,7 @@ void Ppu::Reset()
 {
   fbIndex = 0;
   mode = OAM;
-  indices.fill(0);
-  pixels.fill(color4);
+  pixels.fill(colors[3]);
   vram.fill(0);
   oam.fill(0);
 
@@ -288,17 +270,6 @@ T Ppu::ReadVRAM(u16 addr)
   return *reinterpret_cast<T*>(&(reinterpret_cast<u8*>(vram.data()))[addr & 0x1fff]);
 }
 
-u32 Ppu::GetColor(u8 idx)
-{
-  switch(idx)
-  {
-  case 0: return color1;
-  case 1: return color2;
-  case 2: return color3;
-  case 3: return color4;
-  }
-}
-
 void Ppu::Scanline()
 {
   RenderBGs();
@@ -351,7 +322,7 @@ void Ppu::RenderBGs()
     u8 colorID = ((u8)bit<u8>(high, 7 - (scrolled_x & 7)) << 1) | ((u8)bit<u8>(low, 7 - (scrolled_x & 7)));
     u8 color_index = (io.bgp >> (colorID << 1)) & 3;
     colorIDbg[fbIndex] = colorID;
-    pixels[fbIndex] = GetColor(color_index);
+    pixels[fbIndex] = colors[color_index];
     fbIndex++;
   }
   
@@ -416,20 +387,19 @@ void Ppu::RenderSprites()
       u8 low = tile & 0xff;
       u8 colorID = (bit<u8>(high, 7 - tile_x) << 1) | bit<u8>(low, 7 - tile_x);
       u8 colorIndex = (pal >> (colorID << 1)) & 3;
-      u32 color = GetColor(colorIndex);
       
-      if((sprites.s[i].xpos + x) < 166 && colorID != 0 && pixels[fbIndex] != color)
+      if((sprites.s[i].xpos + x) < 166 && colorID != 0 && pixels[fbIndex] != colors[colorIndex])
       {
         if(sprites.s[i].attribs.obj_to_bg_prio)
         {
           if(colorIDbg[fbIndex] < 1)
           {
-            pixels[fbIndex] = color;
+            pixels[fbIndex] = colors[colorIndex];
           }
         }
         else
         {
-          pixels[fbIndex] = color;
+          pixels[fbIndex] = colors[colorIndex];
         }
       }
 

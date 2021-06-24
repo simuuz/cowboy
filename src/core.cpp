@@ -6,19 +6,18 @@ Core::Core(bool skip, std::string bootrom_path) : bus(skip, bootrom_path), cpu(s
 
 void Core::Run(int key, int action)
 {
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
-  if(init && !pause && !debug)
+  if(init && !pause)
   {
-    while(cpu.total_cycles < 4194304 / io.Framerate)  // TODO: This is not proper cycling
+    while(cpu.total_cycles < 70224)  // TODO: This is not proper cycling
     {
       cpu.Step();
       bus.ppu.Step(cpu.cycles, bus.mem.io.intf);
-      bus.apu.Step();
+      bus.apu.Step(cpu.cycles);
       bus.mem.DoInputs(key, action);
       cpu.HandleTimers();
     }
 
-    cpu.total_cycles -= 4194304 / io.Framerate;
+    cpu.total_cycles -= 70224;
   }
 }
 
