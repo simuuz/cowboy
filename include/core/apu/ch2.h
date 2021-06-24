@@ -33,7 +33,7 @@ struct CH2
 			unsigned freq:3;
 			unsigned:3;
 			unsigned len_enable:1;
-			unsigned trigger:1;
+			unsigned enabled:1;
 		};
 
 		u8 raw;
@@ -41,18 +41,18 @@ struct CH2
   
 	u8 duty_index = 0;
 
-  constexpr static u8 duty[4][8] = {
-    {0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1, 1, 1},
-    {0, 1, 1, 1, 1, 1, 1, 0}
+  constexpr static float duty[4][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 0.1},
+    {0.1, 0, 0, 0, 0, 0, 0, 0.1},
+    {0.1, 0, 0, 0, 0, 0.1, 0.1, 0.1},
+    {0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0}
   };
 	
 	s16 timer;
 
-  u8 sample();  
-  s16 reload_timer();
-	void step(u64 cycles);
+  float sample();
+	void step_length();
+	void tick();
 
   u8 read(u16 addr);
   void write(u16 addr, u8 val);

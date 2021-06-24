@@ -2,20 +2,17 @@
 
 namespace natsukashii::core
 {
-constexpr int FREQUENCY = 48000;
-constexpr int CHANNELS = 1;
-constexpr int SAMPLES = 4096;
-
 Apu::~Apu() {
 	SDL_CloseAudioDevice(device);
 }
 
 Apu::Apu(bool skip) : skip(skip)
 {
+	memset(buffer, 0, SAMPLES);
 	SDL_Init(SDL_INIT_AUDIO);
 	SDL_AudioSpec spec = {
 		.freq = FREQUENCY,
-		.format = AUDIO_U8,
+		.format = AUDIO_F32SYS,
 		.channels = CHANNELS,
 		.samples = SAMPLES,
 		.callback = NULL,
@@ -33,10 +30,11 @@ Apu::Apu(bool skip) : skip(skip)
 
 void Apu::Reset()
 {
+	memset(buffer, 0, SAMPLES);
 	SDL_CloseAudioDevice(device);
 	SDL_AudioSpec spec = {
 		.freq = FREQUENCY,
-		.format = AUDIO_U8,
+		.format = AUDIO_F32SYS,
 		.channels = CHANNELS,
 		.samples = SAMPLES,
 		.callback = NULL,
@@ -75,29 +73,50 @@ u8 Apu::ReadIO(u16 addr) {
   }
 }
 
-void Apu::Step(u64 cycles, bool unlocked) {
-	ch1.step(cycles);
-	ch2.step(cycles);
+void Apu::Step(u8 cycles, bool unlocked) {
+	for(int i = 0; i < cycles; i++) {
+		sample_clock++;
+		ch1.tick();
+		ch2.tick();
 
-	sample_clock -= cycles;
-	if(sample_clock <= 0) {
-		sample(unlocked);
-		sample_clock = 4194300 / FREQUENCY;
-	}
-}
+		if(sample_clock >= 8192) {
+			sample_clock = 0;
+			switch(frame_sequencer_position) {
+				case 0:
+				ch1.step_length();
+				ch2.step_length();
+				break;
+				case 1: case 5: break;
+				case 2:
+				ch1.step_length();
+				ch2.step_length();
+				ch1.step_sweep();
+				break;
+				case 4:
+				ch1.step_length();
+				ch2.step_length();
+				break;
+				case 6:
+				ch1.step_length();
+				ch2.step_length();
+				ch1.step_sweep();
+				break;
+			}
 
-void Apu::sample(bool unlocked) {
-	if(unlocked) {
-		return;
-	}
+			frame_sequencer_position = (frame_sequencer_position + 1) & 7;
+		}
 		
-	buffer[buffer_pos++] = ch1.sample() + ch2.sample();
-	if(buffer_pos >= SAMPLES) {
-		buffer_pos = 0;
-		u32 len = SAMPLES * CHANNELS * sizeof(u8);
-		while(SDL_GetQueuedAudioSize(device) > len * 4) {	}
-		SDL_QueueAudio(device, buffer.data(), len);
+		if(sample_clock % (4194300 / FREQUENCY) == 0) {
+			buffer[buffer_pos++] = control.nr50.l_vol * (ch1.sample() + ch2.sample());
+			buffer[buffer_pos++] = control.nr50.r_vol * (ch1.sample() + ch2.sample());
+		}
+
+		if(!unlocked && buffer_pos >= SAMPLES) {
+			buffer_pos = 0;
+			u32 len = SAMPLES * CHANNELS * sizeof(float);
+			while(SDL_GetQueuedAudioSize(device) > len * 4) {	}
+			SDL_QueueAudio(device, buffer, len);
+		}
 	}
 }
-
 }

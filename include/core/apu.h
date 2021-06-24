@@ -4,6 +4,9 @@
 #include "ch3.h"
 #include "ch4.h"
 #include "control.h"
+constexpr int FREQUENCY = 48000;
+constexpr int CHANNELS = 2;
+constexpr int SAMPLES = 4096;
 
 namespace natsukashii::core
 {
@@ -17,14 +20,15 @@ struct Apu {
 	CH4 ch4;
 	Control control;
 	void Reset();
-	void Step(u64 cycles, bool unlocked);
+	void Step(u8 cycles, bool unlocked);
 	u8 ReadIO(u16 addr);
 	void WriteIO(u16 addr, u8 val);
-	void sample(bool unlocked);
 	bool skip;
-	float sample_clock = 87.78;
+	u32 sample_clock = 0;
+	u32 counter = 4194300 / FREQUENCY;
 	int buffer_pos = 0;
-	std::array<u8, 4096> buffer{0};
+	u8 frame_sequencer_position = 0;
+	float buffer[SAMPLES];
 	SDL_AudioDeviceID device;
 	int frequency_timer;
 };

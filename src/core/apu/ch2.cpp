@@ -15,21 +15,31 @@ void CH2::reset()
   nr24.raw = 0;
 }
 
-void CH2::step(u64 cycles) {
-  timer -= cycles;
-	if(timer <= 0) {
-		duty_index = (duty_index + 1) % 8;
-		timer += reload_timer();
-	}
+void CH2::step_length() {
+  if(nr24.len_enable && nr21.len) {
+    nr21.len--;
+    if(nr21.len == 0) {
+      nr24.enabled = 0;
+    }
+  }
 }
 
-u8 CH2::sample() {
-  u8 duty = this->duty[nr21.duty][duty_index];
-  return nr22.volume * 0.25 * duty;
+void CH2::tick() {
+  timer--;
+  
+  if(timer <= 0) {
+    duty_index = (duty_index + 1) & 7;
+    timer = (2048 - (((u16)nr24.freq << 8) | nr23)) << 2;
+  }
 }
 
-s16 CH2::reload_timer() {
-  return (2048 - ((nr24.freq << 8) | nr23)) << 2;
+float CH2::sample() {
+  if(nr24.enabled) {
+    float duty = this->duty[nr21.duty][duty_index];
+    return nr22.volume * 0.25 * duty;
+  } else {
+    return 0;
+  }
 }
 
 u8 CH2::read(u16 addr) {

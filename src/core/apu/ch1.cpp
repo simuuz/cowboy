@@ -19,24 +19,61 @@ void CH1::reset()
   nr14.raw = 0;
 }
 
-void CH1::step(u64 cycles) {
-  timer -= cycles;
-	if(timer <= 0) {
-		duty_index = (duty_index + 1) % 8;
-		timer += reload_timer();
-	}
+void CH1::step_length() {
+  if(nr14.len_enable && nr11.len) {
+    nr11.len--;
+    if(nr11.len == 0) {
+      nr14.enabled = 0;
+    }
+  }
 }
 
-u8 CH1::sample()
-{
-  u8 duty = this->duty[nr11.duty][duty_index];
-	return nr12.volume * 0.25 * duty;
+void CH1::step_sweep() {
+  if(sweep_period_timer > 0) {
+    sweep_period_timer--;
+  }
+
+  if(sweep_period_timer == 0) {
+    sweep_period_timer = nr10.period > 0 ? nr10.period : 8;
+
+    if(nr10.period > 0) {
+      u16 new_freq = calculate_frequency();
+      if(new_freq <= 2047 && nr10.sweep > 0) {
+        nr14.freq = new_freq >> 5;
+        nr13 = new_freq & 0xFF;
+        shadow_frequency = new_freq;
+        calculate_frequency();
+      }
+    }
+  }
 }
 
-s16 CH1::reload_timer() {
-  s16 prev_freq = (2048 - ((nr14.freq << 8) | nr13)) << 1;
-  s16 new_freq = nr10.negate ? prev_freq + (prev_freq / pow(2, nr10.sweep)) : prev_freq - (prev_freq / pow(2, nr10.sweep));
-  return new_freq;
+void CH1::tick() {
+  timer--;
+  
+  if(timer <= 0) {
+    duty_index = (duty_index + 1) & 7;
+    timer = (2048 - (((u16)nr14.freq << 8) | nr13)) << 2;
+  }
+}
+
+float CH1::sample() {
+  if(nr14.enabled) {
+    float duty = this->duty[nr11.duty][duty_index];
+    return nr12.volume * 0.25 * duty;
+  } else {
+    return 0;
+  }
+}
+
+u16 CH1::calculate_frequency() {
+  u16 new_frequency = shadow_frequency >> nr10.sweep;
+  new_frequency = nr10.negate ? shadow_frequency - new_frequency : shadow_frequency + new_frequency;
+  if(new_frequency > 2047) {
+    nr14.enabled = 0;
+  }
+
+  return new_frequency;
 }
 
 u8 CH1::read(u16 addr) {

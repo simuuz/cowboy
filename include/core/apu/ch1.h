@@ -45,7 +45,7 @@ struct CH1
 			unsigned freq:3;
 			unsigned:3;
 			unsigned len_enable:1;
-			unsigned trigger:1;
+			unsigned enabled:1;
 		};
 
 		u8 raw;
@@ -53,20 +53,26 @@ struct CH1
 
 	u8 duty_index = 0;
 
-  constexpr static u8 duty[4][8] = {
-    {0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1, 1, 1},
-    {0, 1, 1, 1, 1, 1, 1, 0}
+  constexpr static float duty[4][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 0.1},
+    {0.1, 0, 0, 0, 0, 0, 0, 0.1},
+    {0.1, 0, 0, 0, 0, 0.1, 0.1, 0.1},
+    {0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0}
   };
 
 	s16 timer;
 
+	u8 sweep_period_timer;
+
 	u8 read(u16 addr);
 	void write(u16 addr, u8 val);
-	void step(u64 cycles);
+	void step_length();
+	void step_sweep();
+	void tick();
 
-	u8 sample();
-	s16 reload_timer();
+	u16 shadow_frequency;
+
+	float sample();
+	u16 calculate_frequency();
 };
 }

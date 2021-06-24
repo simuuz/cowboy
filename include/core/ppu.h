@@ -47,7 +47,7 @@ class Ppu
 public:
   Ppu(bool skip);
   void Reset();
-  void Step(u64 cycles, u8& intf);
+  void Step(u8 cycles, u8& intf);
 
   std::array<u32, FBSIZE> pixels;
   u32 color1, color2, color3, color4;

@@ -47,7 +47,18 @@ struct Control
 		u8 raw;
 	} nr52;
 
-  u8 read(u16 addr) { return 0xff; }
-  void write(u16 addr, u8 val) { }
+  u8 read(u16 addr) {
+		switch(addr & 0xff) {
+			case 0x24: return nr50.raw;
+			default: return 0xff;
+		}
+	}
+  
+	void write(u16 addr, u8 val) {
+		switch(addr & 0xff) {
+			case 0x24: nr50.raw = val; break;
+			default: break;
+		}
+	}
 };
 }

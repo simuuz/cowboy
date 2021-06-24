@@ -133,7 +133,7 @@ void MainWindow::Run()
     if(lock_fps) {
       core->Run(!lock_fps, io.Framerate, key, action);
     } else {
-      core->Run(!lock_fps, 60, key, action);
+      core->Run(!lock_fps, 59.727, key, action);
     }
 
     i++;
