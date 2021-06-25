@@ -110,21 +110,21 @@ u16 CH1::calculate_frequency() {
 u8 CH1::read(u16 addr) {
   switch(addr & 0xff) {
     case 0x10:
-      return (nr10.period << 4) | (nr10.negate) ? 8 : 0 | nr10.sweep | 0x80;
+      return (nr10.period << 4) | (nr10.negate ? 8 : 0) | nr10.sweep | 0x80;
     case 0x11:
       return (nr11.duty << 6) | 0x3F;
     case 0x12:
       return (nr12.volume << 4) | (nr12.add_mode ? 8 : 0) | nr12.period;
     case 0x13: return 0xff;
     case 0x14:
-      return (nr14.len_enable << 6) | 0xBF;
+      return ((u8)nr14.len_enable << 6) | 0xBF;
   }
 }
 
 void CH1::write(u16 addr, u8 val) {
   switch(addr & 0xff) {
     case 0x10:
-      nr10.negate = val >> 3;
+      nr10.negate = (val >> 3) & 1;
       nr10.period = val >> 4;
       nr10.sweep = val & 7;
       break;
@@ -133,7 +133,7 @@ void CH1::write(u16 addr, u8 val) {
       length_counter = 64 - (val & 0x3F);
       break;
     case 0x12:
-      nr12.add_mode = val >> 3;
+      nr12.add_mode = (val >> 3) & 1;
       nr12.volume = val >> 4;
       nr12.period = val & 7;
       dac = (val >> 3) & 0x1F;
@@ -144,9 +144,9 @@ void CH1::write(u16 addr, u8 val) {
     case 0x13:
       frequency = (frequency & 0x700) | val;
       break;
-    case 0x14:
+    case 0x14: {
       frequency = (frequency & 0xff) | ((val & 7) << 8);
-      nr14.len_enable = val >> 6;
+      nr14.len_enable = (val >> 6) & 1;
       bool trigger = val >> 7;
       if(trigger && dac != 0) {
         if(length_counter == 0) {
@@ -162,7 +162,7 @@ void CH1::write(u16 addr, u8 val) {
           calculate_frequency();
         }
       }
-      break;
+    } break;
   }
 }
 }

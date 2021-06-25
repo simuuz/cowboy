@@ -29,8 +29,10 @@ Apu::Apu(bool skip) : skip(skip)
 
 void Apu::Reset()
 {
+	apu_enabled = false;
 	ch1.reset();
 	ch2.reset();
+	ch3.reset();
 	memset(buffer, 0, SAMPLES * 2);
 	SDL_CloseAudioDevice(device);
 	SDL_AudioSpec spec = {
@@ -51,15 +53,37 @@ void Apu::Reset()
 	SDL_PauseAudioDevice(device, 0);
 }
 
-void Apu::WriteIO(u16 addr, u8 val) {
-  switch(addr & 0xff) {
-    case 0x10 ... 0x14: ch1.write(addr, val); break;
-    case 0x16 ... 0x19: ch2.write(addr, val); break;
+void Apu::WriteIO(u16 addr, u8 value) {
+	switch(addr & 0xff) {
+    case 0x10 ... 0x14: ch1.write(addr, value); break;
+    case 0x16 ... 0x19: ch2.write(addr, value); break;
     case 0x1A ... 0x1E: case 0x30 ... 0x3f:
-			ch3.write(addr, val);
+			ch3.write(addr, value);
 			break;
-		case 0x20 ... 0x23: ch4.write(addr, val); break;
-		case 0x24 ... 0x26: control.write(addr, val); break;
+		case 0x20 ... 0x23: ch4.write(addr, value); break;
+		case 0x24:
+			left_volume = (value >> 4) & 7;
+			right_volume = value & 7;
+			left_enable = value & 0x80;
+			right_enable = value & 8;
+			break;
+		case 0x25: nr51 = value; break;
+		case 0x26: {
+			bool enable = value >> 7;
+			if(!enable && apu_enabled) {
+				for(u16 i = 0xff10; i <= 0xff25; i++) {
+					WriteIO(i, 0);
+				}
+
+				apu_enabled = false;
+			} else if(enable && !apu_enabled) {
+				apu_enabled = true;
+				frame_sequencer_position = 0;
+				ch1.duty_index = 0;
+				ch2.duty_index = 0;
+				ch3.wave_pos = 0;
+			}
+		} break;
   }
 }
 
@@ -70,7 +94,13 @@ u8 Apu::ReadIO(u16 addr) {
     case 0x1A ... 0x1E: case 0x30 ... 0x3f:
 			return ch3.read(addr);
 		case 0x20 ... 0x23: return ch4.read(addr);
-		case 0x24 ... 0x26: return control.read(addr);
+		case 0x24:
+			return (left_enable ? 0x80 : 0) | (left_volume << 4) |
+						 (right_enable ? 8 : 0) | right_volume;
+		case 0x25:
+			return nr51;
+		case 0x26:
+			return (((u8)apu_enabled << 7) & 0x70) | (u8)ch1.nr14.enabled | ((u8)ch2.nr24.enabled << 1) | ((u8)ch3.nr34.enabled << 2) | ((u8)ch4.nr44.enabled << 3);
   }
 }
 
@@ -79,27 +109,32 @@ void Apu::Step(u8 cycles) {
 		sample_clock++;
 		ch1.tick();
 		ch2.tick();
+		//ch3.tick();
 
-		if(sample_clock >= 8192) {
+		if((sample_clock % 8192) == 0) {
 			sample_clock = 0;
 			switch(frame_sequencer_position) {
 				case 0:
 				ch1.step_length();
 				ch2.step_length();
+				ch3.step_length();
 				break;
 				case 1: case 3: case 5: break;
 				case 2:
 				ch1.step_length();	
 				ch2.step_length();
+				ch3.step_length();
 				ch1.step_sweep();
 				break;
 				case 4:
 				ch1.step_length();
 				ch2.step_length();
+				ch3.step_length();
 				break;
 				case 6:
 				ch1.step_length();
 				ch2.step_length();
+				ch3.step_length();
 				ch1.step_sweep();
 				break;
 				case 7:
@@ -111,9 +146,9 @@ void Apu::Step(u8 cycles) {
 			frame_sequencer_position = (frame_sequencer_position + 1) & 7;
 		}
 		
-		if(sample_clock % (4194304 / FREQUENCY) == 0) {
-			buffer[buffer_pos++] = ((control.nr50.l_vol / 7) * ((float)(ch1.sample() + ch2.sample()) / 7)) / 7;
-			buffer[buffer_pos++] = ((control.nr50.r_vol / 7) * ((float)(ch1.sample() + ch2.sample()) / 7)) / 7;
+		if((sample_clock % (4194304 / FREQUENCY)) == 0) {
+			buffer[buffer_pos++] = (left_volume / 7) * ((float)((ch1.sample() + ch2.sample() /*+ ch3.sample()*/)) / 8);
+			buffer[buffer_pos++] = (right_volume / 7) * ((float)((ch1.sample() + ch2.sample() /*+ ch3.sample()*/)) / 8);
 		}
 
 		if(buffer_pos >= SAMPLES * 2) {

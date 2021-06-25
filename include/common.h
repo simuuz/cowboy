@@ -40,44 +40,6 @@ void setbit(T& num, bool val)
   num ^= (-(!!val) ^ num) & (1 << pos);
 }
 
-static const std::string mbcs[35] = {
-  "ROM ONLY",
-  "MBC1",
-  "MBC1+RAM",
-  "MBC1+RAM+BATTERY",
-  "",
-  "MBC2",
-  "MBC2+BATTERY",
-  "",
-  "ROM+RAM",
-  "ROM+RAM+BATTERY",
-  "",
-  "MMM01",
-  "MMM01+RAM",
-  "MMM01+RAM+BATTERY",
-  "",
-  "MBC3+TIMER+BATTERY",
-  "MBC3+TIMER+RAM+BATTERY",
-  "MBC3",
-  "MBC3+RAM",
-  "MBC3+RAM+BATTERY",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "MBC5",
-  "MBC5+RAM",
-  "MBC5+RAM+BATTERY",
-  "MBC5+RUMBLE",
-  "MBC5+RUMBLE+RAM",
-  "MBC5+RUMBLE+RAM+BATTERY",
-  "",
-  "MBC6",
-  "",
-  "MBC7+SENSOR+RUMBLE+RAM+BATTERY"
-};
-
 namespace natsukashii::util
 {
 template <typename T, T Begin, class Func, T ...Is>

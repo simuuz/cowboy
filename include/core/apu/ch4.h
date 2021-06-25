@@ -41,7 +41,7 @@ struct CH4
 		struct {
 			unsigned:6;
 			unsigned selection:1;
-			unsigned trigger:1;
+			unsigned enabled:1;
 		};
 
 		u8 raw;

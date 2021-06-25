@@ -81,7 +81,7 @@ u8 CH2::read(u16 addr) {
     case 0x17:
       return (nr22.volume << 4) | (nr22.add_mode ? 8 : 0) | nr22.period;
     case 0x18: return 0xff;
-    case 0x19: return (nr24.len_enable << 6) | 0xBF;
+    case 0x19: return ((u8)nr24.len_enable << 6) | 0xBF;
   }
 }
 
@@ -93,7 +93,7 @@ void CH2::write(u16 addr, u8 val) {
       length_counter = 64 - (val & 0x3F);
       break;
     case 0x17:
-      nr22.add_mode = val >> 3;
+      nr22.add_mode = (val >> 3) & 1;
       nr22.volume = val >> 4;
       nr22.period = val & 7;
       dac = (val >> 3) & 0x1F;
@@ -104,9 +104,9 @@ void CH2::write(u16 addr, u8 val) {
     case 0x18:
       frequency = (frequency & 0x700) | val;
       break;
-    case 0x19:
+    case 0x19: {
       frequency = (frequency & 0xFF) | ((val & 7) << 8);
-      nr24.len_enable = val >> 6;
+      nr24.len_enable = (val >> 6) & 1;
       bool trigger = val >> 7;
 
       if(trigger && dac != 0) {
@@ -118,7 +118,7 @@ void CH2::write(u16 addr, u8 val) {
         period_timer = nr22.period;
         current_volume = nr22.volume;
       }
-      break;
+    } break;
   }
 }
 }

@@ -72,7 +72,6 @@ void Mem::LoadROM(std::string path)
   file.close();
 
   rom_opened = true;
-  printf("%s\n", mbcs[rom[0x147]].c_str());
   
   switch(rom[0x147])
   {

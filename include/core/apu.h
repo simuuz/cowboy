@@ -3,7 +3,7 @@
 #include "ch2.h"
 #include "ch3.h"
 #include "ch4.h"
-#include "control.h"
+
 constexpr int FREQUENCY = 96000;
 constexpr int CHANNELS = 2;
 constexpr int SAMPLES = 8192;
@@ -20,7 +20,10 @@ struct Apu {
 	CH2 ch2;
 	CH3 ch3;
 	CH4 ch4;
-	Control control;
+	
+	bool left_enable, right_enable;
+	u8 left_volume, right_volume;
+	u8 nr51;
 	u8 ReadIO(u16 addr);
 	void WriteIO(u16 addr, u8 val);
 	bool skip;
@@ -29,6 +32,6 @@ struct Apu {
 	u8 frame_sequencer_position = 0;
 	float buffer[SAMPLES * 2];
 	SDL_AudioDeviceID device;
-	int frequency_timer;
+	bool apu_enabled = false;
 };
 } // natsukashii::core
