@@ -8,7 +8,7 @@ void Core::Run(int key, int action)
 {
   if(init && !pause)
   {
-    while(cpu.total_cycles < 70224)  // TODO: This is not proper cycling
+    while(cpu.total_cycles < 70224)
     {
       cpu.Step();
       bus.ppu.Step(cpu.cycles, bus.mem.io.intf);

@@ -26,11 +26,9 @@ struct CH2
 		u8 raw;
 	} nr22;
 
-  u8 nr23 = 0;
-
   union {
 		struct {
-			unsigned freq:3;
+			unsigned:3;
 			unsigned:3;
 			unsigned len_enable:1;
 			unsigned enabled:1;
@@ -49,6 +47,10 @@ struct CH2
   };
 	
 	s16 timer;
+
+	u16 frequency = 0;
+	u8 length_counter = 0;
+	u8 dac = 0;
 
   u8 sample();
 	void step_length();

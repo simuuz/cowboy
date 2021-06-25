@@ -42,14 +42,7 @@ struct CH3
 		u8 raw;
 	} nr34;
 
-	union {
-		struct {
-			unsigned lo:4;
-			unsigned hi:4;
-		};
-
-		u8 raw;
-	} wave_ram[16];
+	u8 wave_ram[16];
 
 	u8 read(u16 addr) { return 0xff; }
 	void write(u16 addr, u8 val) { }

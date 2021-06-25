@@ -16,6 +16,7 @@ void Bus::Reset()
 {
   ppu.Reset();
   mem.Reset();
+  apu.Reset();
 }
 
 u8 Bus::ReadByte(u16 addr)

@@ -27,7 +27,7 @@ struct Apu {
 	u32 sample_clock = 0;
 	int buffer_pos = 0;
 	u8 frame_sequencer_position = 0;
-	u16 buffer[SAMPLES * 2];
+	float buffer[SAMPLES * 2];
 	SDL_AudioDeviceID device;
 	int frequency_timer;
 };

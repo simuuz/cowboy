@@ -14,6 +14,11 @@ struct ColorRGBA {
   u8 r, g, b;
   ColorRGBA() : r(0), g(0), b(0) {}
   ColorRGBA(const u32& c) : r(c >> 16), g(c >> 8), b(c & 0xff) {}
+
+  u32 GetColor() {
+    return (r << 16) | (g << 8) | b;
+  }
+
   auto operator=(const u32& c) {
     r = c >> 16;
     g = c >> 8;
@@ -74,6 +79,7 @@ public:
   void Step(u8 cycles, u8& intf);
 
   std::array<ColorRGBA, FBSIZE> pixels;
+  std::array<ColorRGBA, FBSIZE> old_pixels;
   std::array<u8, VRAM_SZ> vram;
   std::array<u8, OAM_SZ> oam;
 

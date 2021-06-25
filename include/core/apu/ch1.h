@@ -38,11 +38,9 @@ struct CH1
 		u8 raw;
 	} nr12;
 
-  u8 nr13 = 0;
-
   union {
 		struct {
-			unsigned freq:3;
+			unsigned:3;
 			unsigned:3;
 			unsigned len_enable:1;
 			unsigned enabled:1;
@@ -64,6 +62,9 @@ struct CH1
 
 	u8 sweep_period_timer;
 	u8 period_timer;
+	u8 dac = 0;
+	u8 length_counter = 0;
+	bool sweep_enable = false;
 
 	u8 read(u16 addr);
 	void write(u16 addr, u8 val);
@@ -73,7 +74,7 @@ struct CH1
 	void tick();
 
 	u8 current_volume;
-
+	u16 frequency;
 	u16 shadow_frequency;
 
 	u8 sample();
