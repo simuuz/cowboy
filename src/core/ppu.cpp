@@ -290,8 +290,8 @@ namespace natsukashii::core
     for (int x = 0; x < WIDTH; x++)
     {
       u16 tileline = 0;
-      s8 scrolled_x = io.scx + x;
-      s8 scrolled_y = io.scy + io.ly;
+      u8 scrolled_x = io.scx + x;
+      u8 scrolled_y = io.scy + io.ly;
 
       if (io.lcdc.bgwin_priority)
       {

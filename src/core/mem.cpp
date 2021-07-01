@@ -234,28 +234,25 @@ void Mem::HandleJoypad(u8 val)
   dpad = !bit<u8, 4>(val);
 }
 
-void Mem::DoInputs(int key, int action)
+void Mem::DoInputs(int key)
 {
   u8 input = ((u8)(!button) << 5) | ((u8)(!dpad) << 4);
-  
-  if(action == SDL_KEYDOWN) held = true;
-  if(action == SDL_KEYUP) held = false;
-  
+    
   if(button && !dpad) {
-    input |= (!(held && key == SDLK_RETURN) << 3) |
-             (!(held && key == SDLK_RSHIFT) << 2) |
-             (!(held && key == SDLK_z     ) << 1) |
-             (!(held && key == SDLK_x     ) << 0);
+    input |= (!(key == SDLK_RETURN) << 3) |
+             (!(key == SDLK_RSHIFT) << 2) |
+             (!(key == SDLK_z     ) << 1) |
+             (!(key == SDLK_x     ) << 0);
   } else if(dpad && !button) {
-    input |= (!(held && key == SDLK_DOWN ) << 3) |
-             (!(held && key == SDLK_UP   ) << 2) |
-             (!(held && key == SDLK_LEFT ) << 1) |
-             (!(held && key == SDLK_RIGHT) << 0);
+    input |= (!(key == SDLK_DOWN ) << 3) |
+             (!(key == SDLK_UP   ) << 2) |
+             (!(key == SDLK_LEFT ) << 1) |
+             (!(key == SDLK_RIGHT) << 0);
   } else if(dpad && button) {
-    input |= (!(held && (key == SDLK_DOWN  || key == SDLK_RETURN)) << 3) |
-             (!(held && (key == SDLK_UP    || key == SDLK_RSHIFT)) << 2) |
-             (!(held && (key == SDLK_LEFT  || key == SDLK_z     )) << 1) |
-             (!(held && (key == SDLK_RIGHT || key == SDLK_x     )) << 0);
+    input |= (!((key == SDLK_DOWN  || key == SDLK_RETURN)) << 3) |
+             (!((key == SDLK_UP    || key == SDLK_RSHIFT)) << 2) |
+             (!((key == SDLK_LEFT  || key == SDLK_z     )) << 1) |
+             (!((key == SDLK_RIGHT || key == SDLK_x     )) << 0);
   } else {
     input = 0xff;
   }

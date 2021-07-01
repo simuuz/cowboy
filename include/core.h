@@ -7,7 +7,7 @@ namespace natsukashii::core
 struct Core
 {
   Core(bool skip, std::string bootrom_path);
-  void Run(int key, int action);
+  void Run(int key);
   void Reset();
   void Pause();
   void Stop();

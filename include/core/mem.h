@@ -149,7 +149,7 @@ public:
 
   friend class Ppu;
   bool rom_opened = false;
-  void DoInputs(int key, int action);
+  void DoInputs(int key);
 private:
   bool held = false;
   std::string savefile;
