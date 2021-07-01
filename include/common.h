@@ -16,6 +16,8 @@ using s16 = int16_t;
 using s32 = int32_t;
 using s64 = int64_t;
 
+namespace natsukashii::util
+{
 template <typename T>
 static constexpr bool bit(T num, u8 pos)
 {
@@ -38,17 +40,5 @@ template <typename T, u8 pos>
 void setbit(T& num, bool val)
 {
   num ^= (-(!!val) ^ num) & (1 << pos);
-}
-
-namespace natsukashii::util
-{
-template <typename T, T Begin, class Func, T ...Is>
-static constexpr void static_for_impl(Func&& f, std::integer_sequence<T, Is...>) {
-  (f(std::integral_constant<T, Begin + Is>{ }), ...);
-}
-
-template <typename T, T Begin, T End, class Func>
-static constexpr void static_for(Func&& f) {
-  static_for_impl<T, Begin>(std::forward<Func>(f), std::make_integer_sequence<T, End - Begin>{ });
 }
 } // natsukashii::util

@@ -13,6 +13,7 @@ constexpr int ROM_SZ_MIN = 0x8000;
 
 namespace natsukashii::core
 {
+using namespace natsukashii::util;
 class Cart
 {
 public:

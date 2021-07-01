@@ -2,6 +2,7 @@
 
 namespace natsukashii::core
 {
+using namespace natsukashii::util;
 Cpu::Cpu(bool skip, Bus* bus) : bus(bus), skip(skip)
 {
   //log = fopen("07_log.txt", "w");
