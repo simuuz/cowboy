@@ -39,7 +39,7 @@ void MainWindow::OpenFile() {
 }
 
 void MainWindow::UpdateTexture() {
-  SDL_UpdateTexture(texture, nullptr, core->bus.ppu.pixels.data(), WIDTH * sizeof(ColorRGBA));
+  SDL_UpdateTexture(texture, nullptr, core->bus.ppu.pixels, WIDTH * sizeof(ColorRGBA));
   SDL_RenderCopy(renderer, texture, nullptr, nullptr);
   SDL_RenderPresent(renderer);
 }
@@ -47,28 +47,27 @@ void MainWindow::UpdateTexture() {
 void MainWindow::Run() {
   int i = 0;
   bool running = true;
-
+  int key;
   while(running) {
     u32 frameStartTicks = SDL_GetTicks();
     SDL_Event event;
     SDL_PollEvent(&event);
-    int key = SDLK_UNKNOWN, action = event.type;
 
     switch(event.type) {
       case SDL_QUIT: running = false; break;
       case SDL_KEYDOWN:
-        switch(event.key.keysym.sym) {
+        key = event.key.keysym.sym;
+        switch(key) {
           case SDLK_o: OpenFile(); break;
           case SDLK_s: core->Stop(); break;
           case SDLK_r: core->Reset(); break;
           case SDLK_p: core->Pause(); break;
+          case SDLK_1: core->SaveState(1); break;
           case SDLK_q: running = false; core->Stop(); break;
         }
         break;
+      case SDL_KEYUP: key = 0; break;
     }
-
-    if(action == SDL_KEYDOWN)
-      key = event.key.keysym.sym;
 
     core->Run(key);
 

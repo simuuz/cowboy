@@ -15,26 +15,8 @@ struct ColorRGBA {
   ColorRGBA() : r(0), g(0), b(0) {}
   ColorRGBA(const u32& c) : r(c >> 16), g(c >> 8), b(c & 0xff) {}
 
-  u32 GetColor() {
+  constexpr u32 GetColor() {
     return (r << 16) | (g << 8) | b;
-  }
-
-  auto operator=(const u32& c) {
-    r = c >> 16;
-    g = c >> 8;
-    b = c & 0xff;
-  }
-
-  auto operator!=(const u32& c) {
-    return r != (c >> 16) &&
-           g != (c >> 8) &&
-           b != (c & 0xff);
-  }
-
-  auto operator==(const u32& c) {
-    return r == (c >> 16) &&
-           g == (c >> 8) &&
-           b == (c & 0xff);
   }
 };
 
@@ -66,22 +48,17 @@ public:
   Attributes attribs;
 };
 
-struct Sprites {
-  std::array<Sprite, 10> s;
-  u8 count = 0;
-};
-
 class Ppu
 {
 public:
   Ppu(bool skip);
   void Reset();
   void Step(u8 cycles, u8& intf);
+  void SaveState(std::ofstream& savestate);
 
-  std::array<ColorRGBA, FBSIZE> pixels;
-  std::array<ColorRGBA, FBSIZE> old_pixels;
-  std::array<u8, VRAM_SZ> vram;
-  std::array<u8, OAM_SZ> oam;
+  ColorRGBA pixels [FBSIZE];
+  u8 vram[VRAM_SZ];
+  u8 oam[OAM_SZ];
 
   friend class Bus;
   bool render = false;
@@ -144,13 +121,13 @@ private:
 
     STAT() : raw(0) {}
 
-    void write(u8 value)
+    constexpr void write(u8 value)
     {
       raw = value;
       raw |= 0x80;
     }
 
-    u8 read()
+    constexpr u8 read()
     {
       return (1 << 7) | (raw & 0x7f);
     }
@@ -171,8 +148,9 @@ private:
   u8 colorIDbg[FBSIZE];
 
   u64 curr_cycles = 0;
-
-  Sprites sprites;
+  
+  std::array<Sprite, 10> sprites;
+  u8 count = 0;
 
   void WriteIO(Mem& mem, u16 addr, u8 val, u8& intf);
   u8 ReadIO(u16 addr);
@@ -181,7 +159,7 @@ private:
   template <typename T>
   T ReadVRAM(u16 addr);
   void ChangeMode(Mode m, u8& intf);
-  Sprites FetchSprites();
+  void FetchSprites();
   void RenderSprites();
   void RenderBGs();
   void Scanline();

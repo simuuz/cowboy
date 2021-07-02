@@ -61,6 +61,20 @@ void Cpu::Reset()
   }
 }
 
+void Cpu::SaveState(int slot) {
+  namespace fs = std::filesystem;
+  if(!fs::exists("savestates")) {
+    fs::create_directory("savestates");
+  }
+
+  if(!bus->mem.savefile.empty()) {
+    std::ofstream savestate{"savestates/" + bus->mem.savefile + std::to_string(slot), std::ios::binary};
+    savestate.unsetf(std::ios::skipws);
+    bus->SaveState(savestate);
+    savestate.close();
+  }
+}
+
 void Cpu::Step()
 {
   HandleInterrupts();

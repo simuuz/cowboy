@@ -2,6 +2,7 @@
 #include <array>
 #include <iterator>
 #include <vector>
+#include <map>
 #include "common.h"
 
 constexpr int BOOTROM_SZ = 0x100;
@@ -21,6 +22,8 @@ public:
   virtual void Write(u16 addr, u8 val) { }
   virtual void Clear() { }
   virtual void Save(std::string filename) { }
+  virtual u8* GetROM() { }
+  virtual u8* GetRAM() { }
 };
 
 class NoMBC : public Cart
@@ -30,6 +33,8 @@ public:
   u8 Read(u16 addr);
   void Write(u16 addr, u8 val);
   void Save(std::string filename) {}
+  u8* GetROM() { return rom.data(); }
+  u8* GetRAM() { u8 ram[EXTRAM_SZ]{0xff}; return ram; }
 private:
   std::vector<u8> rom;
 };
@@ -41,6 +46,8 @@ public:
   u8 Read(u16 addr);
   void Write(u16 addr, u8 val);
   void Save(std::string filename);
+  u8* GetROM() { return rom.data(); }
+  u8* GetRAM() { return ram.data(); }
 private:
   u8 romBank = 1;
   u8 ramBank = 1;
@@ -51,7 +58,7 @@ private:
   static constexpr u16 bitmasks[7] = {0x1, 0x3, 0x7, 0xf, 0x1f, 0x1f, 0x1f};
   static constexpr u32 RAM_SIZES[6] = {0, 2 * 1024, 8 * 1024, 32 * 1024, 128 * 1024, 64 * 1024};
   
-  std::array<u8, ERAM_SZ> ram;
+  std::array<u8, EXTRAM_SZ> ram;
   std::vector<u8> rom;
 };
 
@@ -62,11 +69,13 @@ public:
   u8 Read(u16 addr);
   void Write(u16 addr, u8 val);
   void Save(std::string filename);
+  u8* GetROM() { return rom.data(); }
+  u8* GetRAM() { return ram.data(); }
 private:
   u8 romBank = 1;
   bool ramEnable = false;
 
-  std::array<u8, ERAM_SZ> ram;
+  std::array<u8, EXTRAM_SZ> ram;
   std::vector<u8> rom;
 };
 
@@ -77,11 +86,13 @@ public:
   u8 Read(u16 addr);
   void Write(u16 addr, u8 val);
   void Save(std::string filename);
+  u8* GetROM() { return rom.data(); }
+  u8* GetRAM() { return ram.data(); }
 private:
   u8 ramBank = 0;
   u8 romBank = 0;
 
-  std::array<u8, ERAM_SZ> ram;
+  std::array<u8, EXTRAM_SZ> ram;
   std::vector<u8> rom;
   bool ramEnable = false;
 };
@@ -93,10 +104,12 @@ public:
   u8 Read(u16 addr);
   void Write(u16 addr, u8 val);
   void Save(std::string filename);
+  u8* GetROM() { return rom.data(); }
+  u8* GetRAM() { return ram.data(); }
 private:
   u16 romBank = 1;
   u8 ramBank = 1;
-  std::array<u8, ERAM_SZ> ram;
+  std::array<u8, EXTRAM_SZ> ram;
   std::vector<u8> rom;
   bool ramEnable = false;
 };
@@ -107,6 +120,7 @@ public:
   ~Mem();
   Mem(bool skip, std::string bootrom_path);
   void LoadROM(std::string filename);
+  void SaveState(std::ofstream& savestate);
   void Reset();
   u8 Read(u16 addr);
   void Write(u16 addr, u8 val);
@@ -148,11 +162,12 @@ public:
   } io;
 
   friend class Ppu;
+  friend class Bus;
   bool rom_opened = false;
   void DoInputs(int key);
+  std::string savefile;
 private:
   bool held = false;
-  std::string savefile;
   Cart* cart = nullptr;
   void LoadBootROM(std::string filename);
 
@@ -160,7 +175,6 @@ private:
   u8 ReadIO(u16 addr);
 
   u8 bootrom[BOOTROM_SZ];
-  u8 extram[EXTRAM_SZ];
   u8 wram[WRAM_SZ];
   u8 eram[ERAM_SZ];
   u8 hram[HRAM_SZ];

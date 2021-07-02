@@ -10,6 +10,16 @@ Mem::~Mem()
     cart->Save(savefile);
 }
 
+void Mem::SaveState(std::ofstream& savestate) {
+  if(cart != nullptr)
+    savestate << cart->GetRAM();
+  
+  savestate << wram;
+  savestate << eram;
+  savestate << hram;
+  savestate << ie;
+}
+
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
 {
   rom_opened = false;
@@ -24,7 +34,6 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
   io.bootrom = skip ? 1 : 0;
 
   LoadBootROM(bootrom_path);
-  memset(extram, 0, EXTRAM_SZ);
   memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);
   memset(hram, 0, HRAM_SZ);
@@ -45,7 +54,6 @@ void Mem::Reset()
 
   io.bootrom = skip ? 1 : 0;
 
-  memset(extram, 0, EXTRAM_SZ);
   memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);
   memset(hram, 0, HRAM_SZ);
@@ -237,24 +245,30 @@ void Mem::HandleJoypad(u8 val)
 void Mem::DoInputs(int key)
 {
   u8 input = ((u8)(!button) << 5) | ((u8)(!dpad) << 4);
-    
-  if(button && !dpad) {
-    input |= (!(key == SDLK_RETURN) << 3) |
-             (!(key == SDLK_RSHIFT) << 2) |
-             (!(key == SDLK_z     ) << 1) |
-             (!(key == SDLK_x     ) << 0);
-  } else if(dpad && !button) {
+  u8 cond = (button << 1) | dpad;
+
+  switch(cond) {
+  case 0b00:
+    input |= 0xff;
+    break;
+  case 0b01:
     input |= (!(key == SDLK_DOWN ) << 3) |
              (!(key == SDLK_UP   ) << 2) |
              (!(key == SDLK_LEFT ) << 1) |
              (!(key == SDLK_RIGHT) << 0);
-  } else if(dpad && button) {
+    break;
+  case 0b10:
+    input |= (!(key == SDLK_RETURN) << 3) |
+             (!(key == SDLK_RSHIFT) << 2) |
+             (!(key == SDLK_z     ) << 1) |
+             (!(key == SDLK_x     ) << 0);
+    break;
+  case 0b11:
     input |= (!((key == SDLK_DOWN  || key == SDLK_RETURN)) << 3) |
              (!((key == SDLK_UP    || key == SDLK_RSHIFT)) << 2) |
              (!((key == SDLK_LEFT  || key == SDLK_z     )) << 1) |
              (!((key == SDLK_RIGHT || key == SDLK_x     )) << 0);
-  } else {
-    input = 0xff;
+    break;
   }
 
   io.joy.write(input);

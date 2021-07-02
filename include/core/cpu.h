@@ -9,6 +9,7 @@ public:
   Cpu(bool skip, Bus* bus);
   void Step();
   void Reset();
+  void SaveState(int slot);
   Bus* bus;
   bool halt = false;
   u64 total_cycles = 0;

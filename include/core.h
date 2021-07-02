@@ -12,6 +12,7 @@ struct Core
   void Pause();
   void Stop();
   void LoadROM(std::string path);
+  void SaveState(int slot);
   Bus bus;
   Cpu cpu;
   bool pause = false;

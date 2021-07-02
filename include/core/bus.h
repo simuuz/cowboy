@@ -14,6 +14,7 @@ struct Bus
   u16 NextHalf(u16 addr, u16& pc, u8& cycles);
   void WriteHalf(u16 addr, u16 val);
   void LoadROM(std::string filename);
+  void SaveState(std::ofstream& savestate);
   void Reset();
   bool romopened = false;
   Mem mem;
