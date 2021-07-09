@@ -12,20 +12,20 @@ Mem::~Mem()
 
 void Mem::SaveState(std::ofstream& savestate) {
   if(cart != nullptr)
-    savestate << cart->GetRAM();
+    savestate.write((char*)cart->GetRAM(), EXTRAM_SZ);
   
-  savestate << wram;
-  savestate << hram;
-  savestate << ie;
+  savestate.write((char*)wram, WRAM_SZ);
+  savestate.write((char*)hram, HRAM_SZ);
+  savestate.write((char*)&ie, 1);
 }
 
 void Mem::LoadState(std::ifstream& loadstate) {
   if(cart != nullptr)
     cart->SetRam(loadstate);
   
-  loadstate >> wram;
-  loadstate >> hram;
-  loadstate >> ie;
+  loadstate.read((char*)wram, WRAM_SZ);
+  loadstate.read((char*)hram, HRAM_SZ);
+  loadstate.read((char*)&ie, 1);
 }
 
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)

@@ -63,13 +63,19 @@ void Cpu::Reset()
 
 void Cpu::SaveState(int slot) {
   namespace fs = std::filesystem;
-  if(!fs::exists("savestates")) {
+  if(!fs::exists(fs::absolute("savestates"))) {
     fs::create_directory("savestates");
   }
 
   if(bus->mem.savefile != "") {
     std::ofstream savestate{fs::absolute("savestates/" + fs::path(bus->mem.savefile).stem().string() + std::to_string(slot) + ".state"), std::ios::binary};
     savestate.unsetf(std::ios::skipws);
+    savestate.write((char*)&regs.af, 2);
+    savestate.write((char*)&regs.bc, 2);
+    savestate.write((char*)&regs.de, 2);
+    savestate.write((char*)&regs.hl, 2);
+    savestate.write((char*)&regs.sp, 2);
+    savestate.write((char*)&regs.pc, 2);
     bus->SaveState(savestate);
     savestate.close();
   }
@@ -77,13 +83,19 @@ void Cpu::SaveState(int slot) {
 
 void Cpu::LoadState(int slot) {
   namespace fs = std::filesystem;
-  if(!fs::exists("savestates")) {
+  if(!fs::exists(fs::absolute("savestates"))) {
     return;
   }
 
   if(bus->mem.savefile != "") {
     std::ifstream loadstate{fs::absolute("savestates/" + fs::path(bus->mem.savefile).stem().string() + std::to_string(slot) + ".state"), std::ios::binary};
     loadstate.unsetf(std::ios::skipws);
+    loadstate.read((char*)&regs.af, 2);
+    loadstate.read((char*)&regs.bc, 2);
+    loadstate.read((char*)&regs.de, 2);
+    loadstate.read((char*)&regs.hl, 2);
+    loadstate.read((char*)&regs.sp, 2);
+    loadstate.read((char*)&regs.pc, 2);
     bus->LoadState(loadstate);
     loadstate.close();
   }

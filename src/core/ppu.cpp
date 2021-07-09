@@ -41,13 +41,13 @@ Ppu::Ppu(bool skip) : skip(skip)
 }
 
 void Ppu::SaveState(std::ofstream& savestate) {
-  savestate << vram;
-  savestate << oam;
+  savestate.write((char*)vram, VRAM_SZ);
+  savestate.write((char*)oam, OAM_SZ);
 }
 
 void Ppu::LoadState(std::ifstream& loadstate) {
-  loadstate >> vram;
-  loadstate >> oam;
+  loadstate.read((char*)vram, VRAM_SZ);
+  loadstate.read((char*)oam, OAM_SZ);
 }
 
 void Ppu::Reset()

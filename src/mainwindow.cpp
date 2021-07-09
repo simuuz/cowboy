@@ -9,6 +9,18 @@ MainWindow::~MainWindow() {
   NFD_Quit();
 }
 
+using KeySaveState = std::pair<SDL_KeyCode, int>;
+
+constexpr std::array<KeySaveState, 10> savestate_buttons{
+  std::make_pair(SDLK_0, 0), std::make_pair(SDLK_1, 1), std::make_pair(SDLK_2, 2), std::make_pair(SDLK_3, 3), std::make_pair(SDLK_4, 4),
+  std::make_pair(SDLK_5, 5), std::make_pair(SDLK_6, 6), std::make_pair(SDLK_7, 7), std::make_pair(SDLK_8, 8), std::make_pair(SDLK_9, 9)
+};
+
+constexpr std::array<KeySaveState, 10> loadstate_buttons{
+  std::make_pair(SDLK_F10, 0), std::make_pair(SDLK_F1, 1), std::make_pair(SDLK_F2, 2), std::make_pair(SDLK_F3, 3), std::make_pair(SDLK_F4, 4),
+  std::make_pair(SDLK_F5,  5), std::make_pair(SDLK_F6, 6), std::make_pair(SDLK_F7, 7), std::make_pair(SDLK_F8, 8), std::make_pair(SDLK_F9, 9)
+};
+
 MainWindow::MainWindow(std::string title) : file("config.ini") {
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
   window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH * 3, HEIGHT * 3, SDL_WINDOW_RESIZABLE);
@@ -55,18 +67,27 @@ void MainWindow::Run() {
 
     switch(event.type) {
       case SDL_QUIT: running = false; break;
-      case SDL_KEYDOWN:
+      case SDL_KEYDOWN: {
         key = event.key.keysym.sym;
+
+        for(int i = 0; i < 10; i++) {
+          if(savestate_buttons[i].first == key) {
+            core->SaveState(savestate_buttons[i].second);
+          }
+
+          if(loadstate_buttons[i].first == key) {
+            core->LoadState(loadstate_buttons[i].second);
+          }
+        }
+
         switch(key) {
           case SDLK_o: OpenFile(); break;
           case SDLK_s: core->Stop(); break;
           case SDLK_r: core->Reset(); break;
           case SDLK_p: core->Pause(); break;
-          case SDLK_1: core->SaveState(1); break;
-          case SDLK_F1: core->LoadState(1); break;
           case SDLK_q: running = false; core->Stop(); break;
         }
-        break;
+      } break;
       case SDL_KEYUP: key = 0; break;
     }
 
