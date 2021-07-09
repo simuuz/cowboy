@@ -67,11 +67,25 @@ void Cpu::SaveState(int slot) {
     fs::create_directory("savestates");
   }
 
-  if(!bus->mem.savefile.empty()) {
-    std::ofstream savestate{"savestates/" + bus->mem.savefile + std::to_string(slot), std::ios::binary};
+  if(bus->mem.savefile != "") {
+    std::ofstream savestate{fs::absolute("savestates/" + fs::path(bus->mem.savefile).stem().string() + std::to_string(slot) + ".state"), std::ios::binary};
     savestate.unsetf(std::ios::skipws);
     bus->SaveState(savestate);
     savestate.close();
+  }
+}
+
+void Cpu::LoadState(int slot) {
+  namespace fs = std::filesystem;
+  if(!fs::exists("savestates")) {
+    return;
+  }
+
+  if(bus->mem.savefile != "") {
+    std::ifstream loadstate{fs::absolute("savestates/" + fs::path(bus->mem.savefile).stem().string() + std::to_string(slot) + ".state"), std::ios::binary};
+    loadstate.unsetf(std::ios::skipws);
+    bus->LoadState(loadstate);
+    loadstate.close();
   }
 }
 

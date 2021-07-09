@@ -45,6 +45,11 @@ void Ppu::SaveState(std::ofstream& savestate) {
   savestate << oam;
 }
 
+void Ppu::LoadState(std::ifstream& loadstate) {
+  loadstate >> vram;
+  loadstate >> oam;
+}
+
 void Ppu::Reset()
 {
   fbIndex = 0;

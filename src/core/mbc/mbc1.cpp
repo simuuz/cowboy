@@ -13,7 +13,7 @@ MBC1::MBC1(std::vector<u8>& rom, std::string savefile) : rom(rom)
   }
   else
   {
-    file.read((char*)ram.data(), ERAM_SZ);
+    file.read((char*)ram.data(), EXTRAM_SZ);
     file.close();
   }
 
@@ -74,11 +74,11 @@ u8 MBC1::Read(u16 addr)
       {
         if (mode)
         {
-        	return ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ];
+        	return ram[(0x2000 * ramBank + (addr - 0xa000)) % EXTRAM_SZ];
         }
         else
         {
-          return ram[(addr - 0xa000) % ERAM_SZ];
+          return ram[(addr - 0xa000) % EXTRAM_SZ];
         }
       }
     }
@@ -118,11 +118,11 @@ void MBC1::Write(u16 addr, u8 val)
       {
         if (mode)
         {
-          ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ] = val;
+          ram[(0x2000 * ramBank + (addr - 0xa000)) % EXTRAM_SZ] = val;
         }
         else
         {
-          ram[(addr - 0xa000) % ERAM_SZ] = val;
+          ram[(addr - 0xa000) % EXTRAM_SZ] = val;
         }
       }
     }
@@ -133,7 +133,7 @@ void MBC1::Write(u16 addr, u8 val)
 void MBC1::Save(std::string filename)
 {
   FILE* file = fopen(filename.c_str(), "wb");
-  fwrite(ram.data(), 1, ERAM_SZ, file);
+  fwrite(ram.data(), 1, EXTRAM_SZ, file);
   fclose(file);
 }
 } // natsukashii::core

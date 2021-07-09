@@ -10,6 +10,7 @@ public:
   void Step();
   void Reset();
   void SaveState(int slot);
+  void LoadState(int slot);
   Bus* bus;
   bool halt = false;
   u64 total_cycles = 0;

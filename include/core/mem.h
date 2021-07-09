@@ -7,7 +7,6 @@
 
 constexpr int BOOTROM_SZ = 0x100;
 constexpr int EXTRAM_SZ = 0x2000;
-constexpr int ERAM_SZ = 0x2000;
 constexpr int WRAM_SZ = 0x2000;
 constexpr int HRAM_SZ = 0x7f;
 constexpr int ROM_SZ_MIN = 0x8000;
@@ -24,6 +23,7 @@ public:
   virtual void Save(std::string filename) { }
   virtual u8* GetROM() { }
   virtual u8* GetRAM() { }
+  virtual void SetRam(std::ifstream& rhs) { }
 };
 
 class NoMBC : public Cart
@@ -35,6 +35,7 @@ public:
   void Save(std::string filename) {}
   u8* GetROM() { return rom.data(); }
   u8* GetRAM() { u8 ram[EXTRAM_SZ]{0xff}; return ram; }
+  void SetRam(std::ifstream& rhs) { }
 private:
   std::vector<u8> rom;
 };
@@ -48,6 +49,9 @@ public:
   void Save(std::string filename);
   u8* GetROM() { return rom.data(); }
   u8* GetRAM() { return ram.data(); }
+  void SetRam(std::ifstream& rhs) {
+    rhs.read((char*)ram.data(), EXTRAM_SZ);
+  }
 private:
   u8 romBank = 1;
   u8 ramBank = 1;
@@ -71,6 +75,9 @@ public:
   void Save(std::string filename);
   u8* GetROM() { return rom.data(); }
   u8* GetRAM() { return ram.data(); }
+  void SetRam(std::ifstream& rhs) {
+    rhs.read((char*)ram.data(), EXTRAM_SZ);
+  }
 private:
   u8 romBank = 1;
   bool ramEnable = false;
@@ -88,6 +95,9 @@ public:
   void Save(std::string filename);
   u8* GetROM() { return rom.data(); }
   u8* GetRAM() { return ram.data(); }
+  void SetRam(std::ifstream& rhs) {
+    rhs.read((char*)ram.data(), EXTRAM_SZ);
+  }
 private:
   u8 ramBank = 0;
   u8 romBank = 0;
@@ -106,6 +116,9 @@ public:
   void Save(std::string filename);
   u8* GetROM() { return rom.data(); }
   u8* GetRAM() { return ram.data(); }
+  void SetRam(std::ifstream& rhs) {
+    rhs.read((char*)ram.data(), EXTRAM_SZ);
+  }
 private:
   u16 romBank = 1;
   u8 ramBank = 1;
@@ -121,6 +134,7 @@ public:
   Mem(bool skip, std::string bootrom_path);
   void LoadROM(std::string filename);
   void SaveState(std::ofstream& savestate);
+  void LoadState(std::ifstream& loadstate);
   void Reset();
   u8 Read(u16 addr);
   void Write(u16 addr, u8 val);
@@ -176,7 +190,6 @@ private:
 
   u8 bootrom[BOOTROM_SZ];
   u8 wram[WRAM_SZ];
-  u8 eram[ERAM_SZ];
   u8 hram[HRAM_SZ];
   std::vector<u8> rom;
 

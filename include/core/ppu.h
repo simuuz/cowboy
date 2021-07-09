@@ -55,6 +55,7 @@ public:
   void Reset();
   void Step(u8 cycles, u8& intf);
   void SaveState(std::ofstream& savestate);
+  void LoadState(std::ifstream& loadstate);
 
   ColorRGBA pixels [FBSIZE];
   u8 vram[VRAM_SZ];

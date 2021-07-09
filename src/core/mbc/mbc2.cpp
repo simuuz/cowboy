@@ -13,7 +13,7 @@ MBC2::MBC2(std::vector<u8>& rom, std::string savefile) : rom(rom)
   }
   else
   {
-    file.read((char*)ram.data(), ERAM_SZ);
+    file.read((char*)ram.data(), EXTRAM_SZ);
     file.close();
   }
 }
@@ -58,7 +58,7 @@ void MBC2::Write(u16 addr, u8 val)
 void MBC2::Save(std::string filename)
 {
   FILE* file = fopen(filename.c_str(), "wb");
-  fwrite(ram.data(), 1, ERAM_SZ, file);
+  fwrite(ram.data(), 1, EXTRAM_SZ, file);
   fclose(file);
 }
 } // natsukashii::core

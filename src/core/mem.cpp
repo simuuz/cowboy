@@ -15,9 +15,17 @@ void Mem::SaveState(std::ofstream& savestate) {
     savestate << cart->GetRAM();
   
   savestate << wram;
-  savestate << eram;
   savestate << hram;
   savestate << ie;
+}
+
+void Mem::LoadState(std::ifstream& loadstate) {
+  if(cart != nullptr)
+    cart->SetRam(loadstate);
+  
+  loadstate >> wram;
+  loadstate >> hram;
+  loadstate >> ie;
 }
 
 Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
@@ -34,7 +42,6 @@ Mem::Mem(bool skip, std::string bootrom_path) : skip(skip)
   io.bootrom = skip ? 1 : 0;
 
   LoadBootROM(bootrom_path);
-  memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);
   memset(hram, 0, HRAM_SZ);
 }
@@ -54,7 +61,6 @@ void Mem::Reset()
 
   io.bootrom = skip ? 1 : 0;
 
-  memset(eram, 0, ERAM_SZ);
   memset(wram, 0, WRAM_SZ);
   memset(hram, 0, HRAM_SZ);
 }
@@ -134,10 +140,8 @@ u8 Mem::Read(u16 addr)
     return cart->Read(addr);
   case 0xa000 ... 0xbfff:
     return cart->Read(addr);
-  case 0xc000 ... 0xdfff:
+  case 0xc000 ... 0xfdff:
     return wram[addr & 0x1fff];
-  case 0xe000 ... 0xfdff:
-    return eram[addr & 0x1dff];
   case 0xfea0 ... 0xfeff:
     return 0xff;
   case 0xff00 ... 0xff77:
@@ -161,11 +165,8 @@ void Mem::Write(u16 addr, u8 val)
   case 0xa000 ... 0xbfff:
     cart->Write(addr, val);
     break;
-  case 0xc000 ... 0xdfff:
+  case 0xc000 ... 0xfdff:
     wram[addr & 0x1fff] = val;
-    break;
-  case 0xe000 ... 0xfdff:
-    eram[addr & 0x1dff] = val;
     break;
   case 0xfea0 ... 0xfeff:
     break;

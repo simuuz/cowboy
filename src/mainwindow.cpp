@@ -63,6 +63,7 @@ void MainWindow::Run() {
           case SDLK_r: core->Reset(); break;
           case SDLK_p: core->Pause(); break;
           case SDLK_1: core->SaveState(1); break;
+          case SDLK_F1: core->LoadState(1); break;
           case SDLK_q: running = false; core->Stop(); break;
         }
         break;

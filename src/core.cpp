@@ -43,4 +43,8 @@ void Core::Stop() {
 void Core::SaveState(int slot) {
   cpu.SaveState(slot);
 }
+
+void Core::LoadState(int slot) {
+  cpu.LoadState(slot);
+}
 }  // namespace natsukashii::core

@@ -13,7 +13,7 @@ MBC3::MBC3(std::vector<u8>& rom, std::string savefile) : rom(rom)
   }
   else
   {
-    file.read((char*)ram.data(), ERAM_SZ);
+    file.read((char*)ram.data(), EXTRAM_SZ);
     file.close();
   }
 }
@@ -27,7 +27,7 @@ u8 MBC3::Read(u16 addr)
   case 0x4000 ... 0x7fff:
     return rom[(0x4000 * romBank + (addr - 0x4000)) % rom.size()];
   case 0xa000 ... 0xbfff:
-    return ramEnable ? ram[(0x2000 * ramBank + (addr - 0xa000)) % ERAM_SZ] : 0xff;
+    return ramEnable ? ram[(0x2000 * ramBank + (addr - 0xa000)) % EXTRAM_SZ] : 0xff;
   }
 }
 
@@ -51,7 +51,7 @@ void MBC3::Write(u16 addr, u8 val)
   case 0xa000 ... 0xbfff:
     if (ramEnable)
     {
-      ram[(0x2000 * ramBank + (addr - 0xA000)) % ERAM_SZ] = val;
+      ram[(0x2000 * ramBank + (addr - 0xA000)) % EXTRAM_SZ] = val;
     }
     break;
   }
@@ -60,7 +60,7 @@ void MBC3::Write(u16 addr, u8 val)
 void MBC3::Save(std::string filename)
 {
   FILE* file = fopen(filename.c_str(), "wb");
-  fwrite(ram.data(), 1, ERAM_SZ, file);
+  fwrite(ram.data(), 1, EXTRAM_SZ, file);
   fclose(file);
 }
 } // natsukashii::core

@@ -73,4 +73,9 @@ void Bus::SaveState(std::ofstream& savestate) {
   mem.SaveState(savestate);
   ppu.SaveState(savestate);
 }
+
+void Bus::LoadState(std::ifstream& loadstate) {
+  mem.LoadState(loadstate);
+  ppu.LoadState(loadstate);
+}
 }  // namespace natsukashii::core
