@@ -39,6 +39,8 @@ MainWindow::MainWindow(std::string title) : file("config.ini") {
   core = std::make_unique<Core>(skip, bootrom);
 
   NFD_Init();
+  emu_thread = std::thread([&] { core->RunAsync(); } ); // Wake up emulator thread
+  emu_thread.detach();
 }
 
 void MainWindow::OpenFile() {
@@ -59,28 +61,33 @@ void MainWindow::UpdateTexture() {
 void MainWindow::Run() {
   int i = 0;
   bool running = true;
-  int key;
+  
   while(running) {
     u32 frameStartTicks = SDL_GetTicks();
+    
+    if(core->init && !core->pause) {
+      PingEmuThread();
+    }
+
     SDL_Event event;
     SDL_PollEvent(&event);
 
     switch(event.type) {
       case SDL_QUIT: running = false; break;
       case SDL_KEYDOWN: {
-        key = event.key.keysym.sym;
+        core->key = event.key.keysym.sym;
 
         for(int i = 0; i < 10; i++) {
-          if(savestate_buttons[i].first == key) {
+          if(savestate_buttons[i].first == core->key) {
             core->SaveState(savestate_buttons[i].second);
           }
 
-          if(loadstate_buttons[i].first == key) {
+          if(loadstate_buttons[i].first == core->key) {
             core->LoadState(loadstate_buttons[i].second);
           }
         }
 
-        switch(key) {
+        switch(core->key) {
           case SDLK_o: OpenFile(); break;
           case SDLK_s: core->Stop(); break;
           case SDLK_r: core->Reset(); break;
@@ -88,10 +95,8 @@ void MainWindow::Run() {
           case SDLK_q: running = false; core->Stop(); break;
         }
       } break;
-      case SDL_KEYUP: key = 0; break;
+      case SDL_KEYUP: core->key = 0; break;
     }
-
-    core->Run(key);
 
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
@@ -99,8 +104,24 @@ void MainWindow::Run() {
     
     UpdateTexture();
 
-    while ((SDL_GetTicks() - frameStartTicks) < (1000 / 60))
-      SDL_Delay(1);
+    if(core->init && !core->pause) {
+      WaitEmuThread();
+    }
+
+    //while ((SDL_GetTicks() - frameStartTicks) < (1000 / 60))
+    //  SDL_Delay(1);
   }
 }
+
+void MainWindow::PingEmuThread() {
+  std::lock_guard <std::mutex> lock (core->emu_mutex);
+  
+  core->run_emu_thread = true;
+  core->emu_condition_variable.notify_one();
+}
+
+void MainWindow::WaitEmuThread() {
+  while (core->run_emu_thread) {}
+}
+
 } // natsukashii::frontend

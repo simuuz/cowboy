@@ -1,6 +1,7 @@
 #pragma once
 #include "core.h"
 #include <nfd.hpp>
+#include <thread>
 
 namespace natsukashii::frontend
 {
@@ -14,6 +15,11 @@ struct MainWindow
   void Run();
   void OpenFile();
   void UpdateTexture();
+
+  std::thread emu_thread;
+  void PingEmuThread();
+  void WaitEmuThread();
+
   bool running = true;
   mINI::INIFile file;
   mINI::INIStructure ini;
