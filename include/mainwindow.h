@@ -15,6 +15,7 @@ struct MainWindow
   void Run();
   void OpenFile();
   void UpdateTexture();
+  void MenuBar();
 
   std::thread emu_thread;
   void PingEmuThread();
@@ -23,9 +24,8 @@ struct MainWindow
   bool running = true;
   mINI::INIFile file;
   mINI::INIStructure ini;
-  SDL_Window* window = nullptr;
-  SDL_Texture* texture = nullptr;
-  SDL_Renderer* renderer = nullptr;
+  GLFWwindow* window = nullptr;
+  unsigned int id;
   std::unique_ptr<Core> core;
 };
 } // natsukashii::frontend

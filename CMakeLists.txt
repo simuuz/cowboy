@@ -8,26 +8,37 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB_RECURSE EMU_SRC "src/*.cpp")
+file(GLOB IMGUI_SRC_BASE "${CMAKE_SOURCE_DIR}/include/external/imgui/*.cpp")
+set(IMGUI_SRC_BACKEND 
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/backends/imgui_impl_glfw.cpp
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/backends/imgui_impl_opengl3.cpp)
+
+set(IMGUI_SRC ${IMGUI_SRC_BASE} ${IMGUI_SRC_BACKEND})
+
+file(GLOB_RECURSE EMU_SRC "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/include/
   ${CMAKE_SOURCE_DIR}/include/core/
   ${CMAKE_SOURCE_DIR}/include/core/apu/
   ${CMAKE_SOURCE_DIR}/include/external/
+  ${CMAKE_SOURCE_DIR}/include/external/glad/include/
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/
+  ${CMAKE_SOURCE_DIR}/include/external/imgui/backends/
   ${CMAKE_SOURCE_DIR}/include/external/nativefiledialog-extended/
 )
 
+find_package(OpenGL REQUIRED)
+find_package(glfw3 3.3 REQUIRED)
 find_package(SDL2 REQUIRED)
 add_subdirectory(include/external/nativefiledialog-extended/)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
-add_executable(natsukashii
+add_executable(${CMAKE_PROJECT_NAME}
   ${IMGUI_SRC}
-  ${IMPLOT_SRC}
   ${EMU_SRC}
+  ${CMAKE_SOURCE_DIR}/include/external/glad/src/glad.c
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} -static SDL2main SDL2 gcc stdc++ winpthread winmm version Imm32 Setupapi)
-target_link_libraries(natsukashii nfd)
+target_link_libraries(${CMAKE_PROJECT_NAME} nfd -static SDL2main SDL2 glfw3 OpenGL::GL gcc stdc++ winpthread winmm version Imm32 Setupapi)

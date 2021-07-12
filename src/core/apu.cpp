@@ -8,6 +8,7 @@ Apu::~Apu() {
 
 Apu::Apu(bool skip) : skip(skip)
 {
+	SDL_Init(SDL_INIT_AUDIO);
 	memset(buffer, 0, SAMPLES * 2);
 	SDL_AudioSpec spec = {
 		.freq = FREQUENCY,

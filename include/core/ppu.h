@@ -6,20 +6,10 @@ constexpr int OAM_SZ = 0xa0;
 constexpr int WIDTH = 160;
 constexpr int HEIGHT = 144;
 constexpr int FBSIZE = WIDTH * HEIGHT;
-constexpr u32 colors[4] = { 0xFED018, 0xD35600, 0x5E1210, 0x0D0405 };
+constexpr u32 colors[4] = { 0xFED018FF, 0xD35600FF, 0x5E1210FF, 0x0D0405FF };
 
 namespace natsukashii::core
 {
-struct ColorRGBA {
-  u8 r, g, b;
-  ColorRGBA() : r(0), g(0), b(0) {}
-  ColorRGBA(const u32& c) : r(c >> 16), g(c >> 8), b(c & 0xff) {}
-
-  constexpr u32 GetColor() {
-    return (r << 16) | (g << 8) | b;
-  }
-};
-
 struct Sprite
 {
 private:
@@ -57,9 +47,9 @@ public:
   void SaveState(std::ofstream& savestate);
   void LoadState(std::ifstream& loadstate);
 
-  ColorRGBA pixels [FBSIZE];
-  u8 vram[VRAM_SZ];
-  u8 oam[OAM_SZ];
+  u32 pixels[FBSIZE]{0x0D0405FF};
+  u8 vram[VRAM_SZ]{0};
+  u8 oam[OAM_SZ]{0};
 
   friend class Bus;
   bool render = false;
@@ -146,7 +136,7 @@ private:
   u8 window_internal_counter = 0;
   u32 fbIndex = 0;
 
-  u8 colorIDbg[FBSIZE];
+  u8 colorIDbg[FBSIZE]{0};
 
   u64 curr_cycles = 0;
   

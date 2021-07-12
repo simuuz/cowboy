@@ -253,22 +253,22 @@ void Mem::DoInputs(int key)
     input |= 0xff;
     break;
   case 0b01:
-    input |= (!(key == SDLK_DOWN ) << 3) |
-             (!(key == SDLK_UP   ) << 2) |
-             (!(key == SDLK_LEFT ) << 1) |
-             (!(key == SDLK_RIGHT) << 0);
+    input |= (!(key == GLFW_KEY_DOWN ) << 3) |
+             (!(key == GLFW_KEY_UP   ) << 2) |
+             (!(key == GLFW_KEY_LEFT ) << 1) |
+             (!(key == GLFW_KEY_RIGHT) << 0);
     break;
   case 0b10:
-    input |= (!(key == SDLK_RETURN) << 3) |
-             (!(key == SDLK_RSHIFT) << 2) |
-             (!(key == SDLK_z     ) << 1) |
-             (!(key == SDLK_x     ) << 0);
+    input |= (!(key == GLFW_KEY_ENTER      ) << 3) |
+             (!(key == GLFW_KEY_RIGHT_SHIFT) << 2) |
+             (!(key == GLFW_KEY_Z          ) << 1) |
+             (!(key == GLFW_KEY_X          ) << 0);
     break;
   case 0b11:
-    input |= (!((key == SDLK_DOWN  || key == SDLK_RETURN)) << 3) |
-             (!((key == SDLK_UP    || key == SDLK_RSHIFT)) << 2) |
-             (!((key == SDLK_LEFT  || key == SDLK_z     )) << 1) |
-             (!((key == SDLK_RIGHT || key == SDLK_x     )) << 0);
+    input |= (!((key == GLFW_KEY_DOWN  || key == GLFW_KEY_ENTER      )) << 3) |
+             (!((key == GLFW_KEY_UP    || key == GLFW_KEY_RIGHT_SHIFT)) << 2) |
+             (!((key == GLFW_KEY_LEFT  || key == GLFW_KEY_Z          )) << 1) |
+             (!((key == GLFW_KEY_RIGHT || key == GLFW_KEY_X          )) << 0);
     break;
   }
 

@@ -11,12 +11,6 @@ Ppu::Ppu(bool skip) : skip(skip)
   mINI::INIFile file{"config.ini"};
   mINI::INIStructure ini;
 
-  memset(&pixels[0].r, colors[3] >> 16, FBSIZE);
-  memset(&pixels[0].g, colors[3] >> 8, FBSIZE);
-  memset(&pixels[0].b, colors[3] & 0xff, FBSIZE);
-  memset(vram, 0, VRAM_SZ);
-  memset(oam, 0, OAM_SZ);
-
   io.scx = 0;
   io.scy = 0;
   io.lyc = 0;
@@ -338,9 +332,7 @@ void Ppu::RenderBGs()
     u8 colorID = (bit<u8>(high, 7 - (scrolled_x & 7)) << 1) | (bit<u8>(low, 7 - (scrolled_x & 7)));
     u8 color_index = (io.bgp >> (colorID << 1)) & 3;
     colorIDbg[fbIndex] = colorID;
-    pixels[fbIndex].r = colors[color_index] >> 16;
-    pixels[fbIndex].g = colors[color_index] >> 8;
-    pixels[fbIndex].b = colors[color_index] & 0xff;
+    pixels[fbIndex] = colors[color_index];
     fbIndex++;
   }
 
@@ -403,22 +395,18 @@ void Ppu::RenderSprites()
       u8 colorID = (bit<u8>(high, 7 - tile_x) << 1) | bit<u8>(low, 7 - tile_x);
       u8 colorIndex = (pal >> (colorID << 1)) & 3;
 
-      if ((sprites[i].xpos + x) < 166 && colorID != 0 && pixels[fbIndex].GetColor() != colors[colorIndex])
+      if ((sprites[i].xpos + x) < 166 && colorID != 0 && pixels[fbIndex] != colors[colorIndex])
       {
         if (sprites[i].attribs.obj_to_bg_prio)
         {
           if (colorIDbg[fbIndex] < 1)
           {
-            pixels[fbIndex].r = colors[colorIndex] >> 16;
-            pixels[fbIndex].g = colors[colorIndex] >> 8;
-            pixels[fbIndex].b = colors[colorIndex] & 0xff;
+            pixels[fbIndex] = colors[colorIndex];
           }
         }
         else
         {
-          pixels[fbIndex].r = colors[colorIndex] >> 16;
-          pixels[fbIndex].g = colors[colorIndex] >> 8;
-          pixels[fbIndex].b = colors[colorIndex] & 0xff;
+          pixels[fbIndex] = colors[colorIndex];
         }
       }
 

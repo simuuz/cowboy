@@ -4,8 +4,11 @@
 #include <iostream>
 #include <utility>
 #include "ini.h"
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_glfw.h"
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
 
 using u8 = uint8_t;
 using u16 = uint16_t;

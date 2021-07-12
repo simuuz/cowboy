@@ -3,6 +3,8 @@
 #include "ch2.h"
 #include "ch3.h"
 #include "ch4.h"
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
 
 constexpr int FREQUENCY = 96000;
 constexpr int CHANNELS = 2;

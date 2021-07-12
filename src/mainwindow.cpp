@@ -3,30 +3,97 @@
 namespace natsukashii::frontend
 {
 MainWindow::~MainWindow() {
-  SDL_DestroyTexture(texture);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+  
+  glfwDestroyWindow(window);
+  glfwTerminate();
   NFD_Quit();
 }
 
-using KeySaveState = std::pair<SDL_KeyCode, int>;
+MainWindow* g_window = nullptr;
+
+using KeySaveState = std::pair<int, int>;
 
 constexpr std::array<KeySaveState, 10> savestate_buttons{
-  std::make_pair(SDLK_0, 0), std::make_pair(SDLK_1, 1), std::make_pair(SDLK_2, 2), std::make_pair(SDLK_3, 3), std::make_pair(SDLK_4, 4),
-  std::make_pair(SDLK_5, 5), std::make_pair(SDLK_6, 6), std::make_pair(SDLK_7, 7), std::make_pair(SDLK_8, 8), std::make_pair(SDLK_9, 9)
+  std::make_pair(GLFW_KEY_0, 0), std::make_pair(GLFW_KEY_1, 1), std::make_pair(GLFW_KEY_2, 2), std::make_pair(GLFW_KEY_3, 3), std::make_pair(GLFW_KEY_4, 4),
+  std::make_pair(GLFW_KEY_5, 5), std::make_pair(GLFW_KEY_6, 6), std::make_pair(GLFW_KEY_7, 7), std::make_pair(GLFW_KEY_8, 8), std::make_pair(GLFW_KEY_9, 9)
 };
 
 constexpr std::array<KeySaveState, 10> loadstate_buttons{
-  std::make_pair(SDLK_F10, 0), std::make_pair(SDLK_F1, 1), std::make_pair(SDLK_F2, 2), std::make_pair(SDLK_F3, 3), std::make_pair(SDLK_F4, 4),
-  std::make_pair(SDLK_F5,  5), std::make_pair(SDLK_F6, 6), std::make_pair(SDLK_F7, 7), std::make_pair(SDLK_F8, 8), std::make_pair(SDLK_F9, 9)
+  std::make_pair(GLFW_KEY_F10, 0), std::make_pair(GLFW_KEY_F1, 1), std::make_pair(GLFW_KEY_F2, 2), std::make_pair(GLFW_KEY_F3, 3), std::make_pair(GLFW_KEY_F4, 4),
+  std::make_pair(GLFW_KEY_F5,  5), std::make_pair(GLFW_KEY_F6, 6), std::make_pair(GLFW_KEY_F7, 7), std::make_pair(GLFW_KEY_F8, 8), std::make_pair(GLFW_KEY_F9, 9)
 };
 
+
+static void glfw_error_callback(int error, const char* description)
+{
+  fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
+static void key_callback(GLFWwindow* window, int key_, int scancode, int action, int mods)
+{
+  if(action == GLFW_PRESS) {
+    g_window->core->key = key_;
+    switch(key_) {
+      case GLFW_KEY_O: g_window->OpenFile(); break;
+      case GLFW_KEY_S: g_window->core->Stop(); break;
+      case GLFW_KEY_R: g_window->core->Reset(); break;
+      case GLFW_KEY_P: g_window->core->Pause(); break;
+      case GLFW_KEY_Q: glfwSetWindowShouldClose(window, GLFW_TRUE); g_window->core->Stop(); break;
+    }
+    
+    for(int i = 0; i < 10; i++) {
+      if(savestate_buttons[i].first == g_window->core->key) {
+        g_window->core->SaveState(savestate_buttons[i].second);
+      }
+
+      if(loadstate_buttons[i].first == g_window->core->key) {
+        g_window->core->LoadState(loadstate_buttons[i].second);
+      }
+    }
+  } else {
+    g_window->core->key = 0;
+  }
+}
+
 MainWindow::MainWindow(std::string title) : file("config.ini") {
-  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
-  window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH * 3, HEIGHT * 3, SDL_WINDOW_RESIZABLE);
-  renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
-  SDL_RenderSetLogicalSize(renderer, WIDTH, HEIGHT);
-  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
+  g_window = this;
+  glfwSetErrorCallback(glfw_error_callback);
+  if(!glfwInit())
+  {
+    running = false;
+    core.reset();
+    exit(1);
+  }
+  
+  const char* glsl_version = "#version 450";
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+
+  const GLFWvidmode *details = glfwGetVideoMode(glfwGetPrimaryMonitor());
+  int w = details->width - (details->width / 4), h = details->height - (details->height / 4);
+  window = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
+  glfwSetWindowPos(window, details->width / 2 - w / 2, details->height / 2 - h / 2);
+
+  glfwMakeContextCurrent(window);
+  glfwSwapInterval(0);
+
+  glfwSetKeyCallback(window, key_callback);
+
+  if(!gladLoadGL()) {
+    fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+    exit(1);
+  }
+
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+
+  ImGui::StyleColorsDark();
+
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init(glsl_version);
 
   if (!file.read(ini)) {
     ini["emulator"]["skip"] = "false";
@@ -37,6 +104,14 @@ MainWindow::MainWindow(std::string title) : file("config.ini") {
   bool skip = ini["emulator"]["skip"] == "true";
   std::string bootrom = ini["emulator"]["bootrom"];
   core = std::make_unique<Core>(skip, bootrom);
+  
+  glGenTextures(1, &id);
+  glBindTexture(GL_TEXTURE_2D, id);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, core->bus.ppu.pixels);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
   NFD_Init();
   emu_thread = std::thread([&] { core->RunAsync(); } ); // Wake up emulator thread
@@ -53,63 +128,119 @@ void MainWindow::OpenFile() {
 }
 
 void MainWindow::UpdateTexture() {
-  SDL_UpdateTexture(texture, nullptr, core->bus.ppu.pixels, WIDTH * sizeof(ColorRGBA));
-  SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-  SDL_RenderPresent(renderer);
+  glBindTexture(GL_TEXTURE_2D, id);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, core->bus.ppu.pixels);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 }
 
 void MainWindow::Run() {
   int i = 0;
-  bool running = true;
+  ImGuiIO& io = ImGui::GetIO(); (void)io;
   
-  while(running) {
-    u32 frameStartTicks = SDL_GetTicks();
-    
+  while(!glfwWindowShouldClose(window)) {
     if(core->init && !core->pause) {
       PingEmuThread();
     }
 
-    SDL_Event event;
-    SDL_PollEvent(&event);
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
 
-    switch(event.type) {
-      case SDL_QUIT: running = false; break;
-      case SDL_KEYDOWN: {
-        core->key = event.key.keysym.sym;
-
-        for(int i = 0; i < 10; i++) {
-          if(savestate_buttons[i].first == core->key) {
-            core->SaveState(savestate_buttons[i].second);
-          }
-
-          if(loadstate_buttons[i].first == core->key) {
-            core->LoadState(loadstate_buttons[i].second);
-          }
-        }
-
-        switch(core->key) {
-          case SDLK_o: OpenFile(); break;
-          case SDLK_s: core->Stop(); break;
-          case SDLK_r: core->Reset(); break;
-          case SDLK_p: core->Pause(); break;
-          case SDLK_q: running = false; core->Stop(); break;
-        }
-      } break;
-      case SDL_KEYUP: core->key = 0; break;
-    }
+    glfwPollEvents();
 
     if(core->bus.ppu.render) {
       core->bus.ppu.render = false;
     }
     
     UpdateTexture();
+    
+    i++;
+    if(i >= io.Framerate) {
+      i = 0;
+      char title[50]{0};
+      sprintf(title, "natsukashii [%.2f fps | %.2f ms]", io.Framerate, 1000 / io.Framerate);
+      glfwSetWindowTitle(window, title);
+    }
+
+    ImGui::Begin("Image", (bool*)__null, ImGuiWindowFlags_NoTitleBar);
+
+    float x = ImGui::GetWindowSize().x - 15, y = ImGui::GetWindowSize().y - 15;
+    float current_aspect_ratio = x / y;
+    if(aspect_ratio_gb > current_aspect_ratio) {
+      y = x / aspect_ratio_gb;
+    } else {
+      x = y * aspect_ratio_gb;
+    }
+
+    ImVec2 image_size(x, y);
+    ImVec2 centered((ImGui::GetWindowSize().x - image_size.x) * 0.5, (ImGui::GetWindowSize().y - image_size.y) * 0.5);
+    ImGui::SetCursorPos(centered);
+    ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(id)), image_size);
+    ImGui::End();
+
+    MenuBar();
+
+    ImGui::Render();
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+		glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glfwSwapBuffers(window);
 
     if(core->init && !core->pause) {
       WaitEmuThread();
     }
+  }
+}
 
-    //while ((SDL_GetTicks() - frameStartTicks) < (1000 / 60))
-    //  SDL_Delay(1);
+void MainWindow::MenuBar()
+{
+  if(ImGui::BeginMainMenuBar())
+  {
+    if(ImGui::BeginMenu("File"))
+    {
+      if(ImGui::MenuItem("Open"))
+      {
+        OpenFile();
+      }
+
+      if(ImGui::MenuItem("Exit"))
+      {
+        running = false;
+        core.reset();
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+      }
+      ImGui::EndMenu();
+    }
+    
+    if(ImGui::BeginMenu("Emulation"))
+    {
+      if(ImGui::MenuItem(core->pause ? "Resume" : "Pause"))
+      {
+        core->Pause();
+      }
+
+      if(ImGui::MenuItem("Reset"))
+      {
+        core->Reset();
+      }
+
+      if(ImGui::MenuItem("Stop"))
+      {
+        core->Stop();
+        UpdateTexture();
+      }
+
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
   }
 }
 
